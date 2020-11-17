@@ -25,6 +25,21 @@ func ParseJsonFromFilePath(file string, intoStruct interface{}) error {
 	return nil
 }
 
+func JsonFromFilePathToString(file string) (string, error) {
+	jsonFile, err := os.Open(file)
+	if err != nil {
+		return "", err
+	}
+	defer jsonFile.Close()
+
+	byteValue, err := ioutil.ReadAll(jsonFile)
+	if err != nil {
+		return "", err
+	}
+
+	return string(byteValue), nil
+}
+
 func CreateMockedAPI(funcsMap map[string]func(http.ResponseWriter, *http.Request)) http.Handler {
 	r := http.NewServeMux()
 	for pattern, f := range funcsMap {

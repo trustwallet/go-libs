@@ -41,3 +41,11 @@ func TestParseJsonFromFilePath(t *testing.T) {
 	assert.Nil(t, err)
 	assert.True(t, s.Status)
 }
+
+func TestJsonFromFilePathToString(t *testing.T) {
+	data, err := JsonFromFilePathToString("test.json")
+	assert.Nil(t, err)
+	assert.Equal(t, `{
+  "status": true
+}`, data)
+}
