@@ -12,7 +12,7 @@ func TestGetEthereumTokenTypeByIndex(t *testing.T) {
 	tests := []struct {
 		name string
 		args args
-		want TokenType
+		want Type
 	}{
 		{
 			"Ethereum ERC20",

@@ -3,28 +3,28 @@ package tokentype
 import "github.com/trustwallet/golibs/coin"
 
 type (
-	TokenType       string
+	Type       string
 )
 
 const (
-	ERC20 TokenType = "ERC20"
-	BEP2  TokenType = "BEP2"
-	BEP8  TokenType = "BEP8"
-	BEP20 TokenType = "BEP20"
-	TRC10 TokenType = "TRC10"
-	ETC20 TokenType = "ETC20"
-	POA20 TokenType = "POA20"
-	TRC20 TokenType = "TRC20"
-	TRC21 TokenType = "TRC21"
-	CLO20 TokenType = "CLO20"
-	GO20  TokenType = "G020"
-	WAN20 TokenType = "WAN20"
-	TT20  TokenType = "TT20"
-	KAVA TokenType = "KAVA"
+	ERC20 Type = "ERC20"
+	BEP2  Type = "BEP2"
+	BEP8  Type = "BEP8"
+	BEP20 Type = "BEP20"
+	TRC10 Type = "TRC10"
+	ETC20 Type = "ETC20"
+	POA20 Type = "POA20"
+	TRC20 Type = "TRC20"
+	TRC21 Type = "TRC21"
+	CLO20 Type = "CLO20"
+	GO20  Type = "G020"
+	WAN20 Type = "WAN20"
+	TT20  Type = "TT20"
+	KAVA Type = "KAVA"
 )
 
-func GetEthereumTokenTypeByIndex(coinIndex uint) TokenType {
-	var tokenType TokenType
+func GetEthereumTokenTypeByIndex(coinIndex uint) Type {
+	var tokenType Type
 	switch coinIndex {
 	case coin.Ethereum().ID:
 		tokenType = ERC20
