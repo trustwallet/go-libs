@@ -7,6 +7,8 @@ type (
 )
 
 const (
+	Coin Type = "coin"
+	Gas Type = "gas"
 	ERC20 Type = "ERC20"
 	BEP2  Type = "BEP2"
 	BEP8  Type = "BEP8"
