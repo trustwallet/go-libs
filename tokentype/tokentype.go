@@ -3,12 +3,12 @@ package tokentype
 import "github.com/trustwallet/golibs/coin"
 
 type (
-	Type       string
+	Type string
 )
 
 const (
-	Coin Type = "coin"
-	Gas Type = "gas"
+	Coin  Type = "coin"
+	Gas   Type = "gas"
 	ERC20 Type = "ERC20"
 	BEP2  Type = "BEP2"
 	BEP8  Type = "BEP8"
@@ -22,7 +22,8 @@ const (
 	GO20  Type = "G020"
 	WAN20 Type = "WAN20"
 	TT20  Type = "TT20"
-	KAVA Type = "KAVA"
+	KAVA  Type = "KAVA"
+	SPL   Type = "SPL"
 )
 
 func GetEthereumTokenTypeByIndex(coinIndex uint) Type {
@@ -46,9 +47,10 @@ func GetEthereumTokenTypeByIndex(coinIndex uint) Type {
 		tokenType = TRC21
 	case coin.Bsc().ID, coin.Smartchain().ID:
 		tokenType = BEP20
+	case coin.Solana().ID:
+		tokenType = SPL
 	default:
 		tokenType = ERC20
 	}
 	return tokenType
 }
-
