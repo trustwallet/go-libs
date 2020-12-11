@@ -279,9 +279,9 @@
   sampleAddress: 't1YYnByMzdGhQv3W3rnjHMrJs6HH4Y231gy'
 
 - id: 136
-  symbol: XZC
+  symbol: FIRO
   handle: zcoin
-  name: Zcoin
+  name: Firo
   decimals: 8
   blockTime: 300000
   sampleAddress: 'aEd5XFChyXobvEics2ppAqgK3Bgusjxtik'
