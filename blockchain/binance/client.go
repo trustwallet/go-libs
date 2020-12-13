@@ -1,139 +1,118 @@
 package binance
 
 import (
-	"bytes"
-	"context"
-	"encoding/json"
 	"fmt"
-	"io"
-	"io/ioutil"
 	"net/http"
 	"net/url"
-	"strings"
+	"strconv"
 	"time"
+
+	"github.com/imroc/req"
+	"github.com/patrickmn/go-cache"
+	log "github.com/sirupsen/logrus"
 )
 
-type Request struct {
-	BaseUrl      string
-	Headers      map[string]string
-	HttpClient   *http.Client
-	ErrorHandler func(res *http.Response, uri string) error
+type Client struct {
+	*cache.Cache
+	url         string
+	apiKey      string
+	txPerPage   int
+	tokensLimit int
 }
 
-func (r *Request) SetTimeout(seconds time.Duration) {
-	r.HttpClient.Timeout = time.Second * seconds
-}
-
-func InitClient(baseUrl string) Request {
-	return Request{
-		Headers:      make(map[string]string),
-		HttpClient:   DefaultClient,
-		ErrorHandler: DefaultErrorHandler,
-		BaseUrl:      baseUrl,
+func InitClient(url, apiKey string, txPerPage int, tokensLimit int) Client {
+	return Client{
+		url:         url,
+		apiKey:      apiKey,
+		Cache:       cache.New(5*time.Minute, 10*time.Minute),
+		txPerPage:   txPerPage,
+		tokensLimit: tokensLimit,
 	}
 }
 
-func InitJSONClient(baseUrl string) Request {
-	headers := map[string]string{
-		"Content-Type": "application/json",
-		"Accept":       "application/json",
+func (c Client) Get(path string, params interface{}) (*req.Resp, error) {
+	header := make(http.Header)
+	if c.apiKey != "" {
+		header.Set("apikey", c.apiKey)
 	}
-	return Request{
-		Headers:      headers,
-		HttpClient:   DefaultClient,
-		ErrorHandler: DefaultErrorHandler,
-		BaseUrl:      baseUrl,
-	}
+	return req.Get(c.url+path, header, params)
 }
 
-var DefaultClient = &http.Client{
-	Timeout: time.Second * 15,
-}
-
-var DefaultErrorHandler = func(res *http.Response, uri string) error {
-	return nil
-}
-
-func (r *Request) GetWithContext(result interface{}, path string, query url.Values, ctx context.Context) error {
-	var queryStr = ""
-	if query != nil {
-		queryStr = query.Encode()
-	}
-	uri := strings.Join([]string{r.GetBase(path), queryStr}, "?")
-	return r.Execute("GET", uri, nil, result, ctx)
-}
-
-func (r *Request) Get(result interface{}, path string, query url.Values) error {
-	var queryStr = ""
-	if query != nil {
-		queryStr = query.Encode()
-	}
-	uri := strings.Join([]string{r.GetBase(path), queryStr}, "?")
-	return r.Execute("GET", uri, nil, result, context.Background())
-}
-
-func (r *Request) Post(result interface{}, path string, body interface{}) error {
-	buf, err := GetBody(body)
+func (c Client) FetchLatestBlockNumber() (int64, error) {
+	resp, err := c.Get("/api/v1/node-info", nil)
 	if err != nil {
-		return err
+		return 0, err
 	}
-	uri := r.GetBase(path)
-	return r.Execute("POST", uri, buf, result, context.Background())
+	var result NodeInfoResponse
+	if err := resp.ToJSON(&result); err != nil {
+		log.Error("URL: " + resp.Request().URL.String())
+		log.Error("Status code: " + resp.Response().Status)
+		return 0, err
+	}
+	return int64(result.SyncInfo.LatestBlockHeight), nil
 }
 
-func (r *Request) PostWithContext(result interface{}, path string, body interface{}, ctx context.Context) error {
-	buf, err := GetBody(body)
+func (c Client) FetchTransactionsInBlock(blockNumber int64) (TransactionsInBlockResponse, error) {
+	resp, err := c.Get(fmt.Sprintf("/api/v2/transactions-in-block/%d", blockNumber), nil)
 	if err != nil {
-		return err
+		return TransactionsInBlockResponse{}, err
 	}
-	uri := r.GetBase(path)
-	return r.Execute("POST", uri, buf, result, ctx)
+	var result TransactionsInBlockResponse
+	if err := resp.ToJSON(&result); err != nil {
+		log.Error("URL: " + resp.Request().URL.String())
+		log.Error("Status code: " + resp.Response().Status)
+		return TransactionsInBlockResponse{}, err
+	}
+	return result, nil
 }
 
-func (r *Request) Execute(method string, url string, body io.Reader, result interface{}, ctx context.Context) error {
-	req, err := http.NewRequest(method, url, body)
+func (c Client) FetchTransactionsByAddressAndTokenID(address, tokenID string) ([]Tx, error) {
+	startTime := strconv.Itoa(int(time.Now().AddDate(0, -3, 0).Unix() * 1000))
+	limit := strconv.Itoa(c.txPerPage)
+	params := url.Values{"address": {address}, "txAsset": {tokenID}, "startTime": {startTime}, "limit": {limit}}
+	resp, err := c.Get("/api/v1/transactions", params)
 	if err != nil {
-		return err
+		return nil, err
 	}
-
-	for key, value := range r.Headers {
-		req.Header.Set(key, value)
+	var result TransactionsInBlockResponse
+	if err := resp.ToJSON(&result); err != nil {
+		log.Error("URL: " + resp.Request().URL.String())
+		log.Error("Status code: " + resp.Response().Status)
+		return nil, err
 	}
-
-	c := r.HttpClient
-
-	res, err := c.Do(req.WithContext(ctx))
-	if err != nil {
-		return err
-	}
-
-	err = r.ErrorHandler(res, url)
-	if err != nil {
-		return err
-	}
-	defer res.Body.Close()
-	b, err := ioutil.ReadAll(res.Body)
-	if err != nil {
-		return err
-	}
-	err = json.Unmarshal(b, result)
-	if err != nil {
-		return err
-	}
-	return err
+	return result.Tx, nil
 }
 
-func (r *Request) GetBase(path string) string {
-	if path == "" {
-		return r.BaseUrl
+func (c Client) FetchAccountMeta(address string) (AccountMeta, error) {
+	resp, err := c.Get(fmt.Sprintf("/api/v1/account/%s", address), nil)
+	if err != nil {
+		return AccountMeta{}, err
 	}
-	return fmt.Sprintf("%s/%s", r.BaseUrl, path)
+	var result AccountMeta
+	if err := resp.ToJSON(&result); err != nil {
+		log.Error("URL: " + resp.Request().URL.String())
+		log.Error("Status code: " + resp.Response().Status)
+		return AccountMeta{}, err
+	}
+	return result, nil
 }
 
-func GetBody(body interface{}) (buf io.ReadWriter, err error) {
-	if body != nil {
-		buf = new(bytes.Buffer)
-		err = json.NewEncoder(buf).Encode(body)
+func (c Client) FetchTokens() (Tokens, error) {
+	cachedResult, ok := c.Cache.Get("tokens")
+	if ok {
+		return cachedResult.(Tokens), nil
 	}
-	return
+	result := new(Tokens)
+	query := url.Values{"limit": {strconv.Itoa(c.tokensLimit)}}
+	resp, err := c.Get("/api/v1/tokens", query)
+	if err != nil {
+		return nil, err
+	}
+	if err := resp.ToJSON(&result); err != nil {
+		log.Error("URL: " + resp.Request().URL.String())
+		log.Error("Status code: " + resp.Response().Status)
+		return nil, err
+	}
+	c.Cache.Set("tokens", *result, cache.DefaultExpiration)
+	return *result, nil
 }

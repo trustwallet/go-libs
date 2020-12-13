@@ -57,4 +57,25 @@ type (
 		TxFee       string `json:"txFee"`
 		Value       string `json:"value"`
 	}
+
+	AccountMeta struct {
+		Balances []TokenBalance `json:"balances"`
+	}
+
+	TokenBalance struct {
+		Free   string `json:"free"`
+		Frozen string `json:"frozen"`
+		Locked string `json:"locked"`
+		Symbol string `json:"symbol"`
+	}
+
+	Tokens []Token
+
+	Token struct {
+		Name           string `json:"name"`
+		OriginalSymbol string `json:"original_symbol"`
+		Owner          string `json:"owner"`
+		Symbol         string `json:"symbol"`
+		TotalSupply    string `json:"total_supply"`
+	}
 )
