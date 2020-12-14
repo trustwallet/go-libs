@@ -47,7 +47,7 @@ const (
 {{- if .PreferedSymbol}}
 	{{ .PreferedSymbol }} = {{ .ID }}
 {{- else}}
-	{{ .Symbol }} = {{ .ID }}
+	{{ .Symbol | ToUpper }} = {{ .ID }}
 {{- end}}
 {{- end }}
 )
@@ -57,7 +57,7 @@ var Coins = map[uint]Coin{
 {{- if .PreferedSymbol }}
 	{{ .PreferedSymbol }}: {
 {{- else }}
-	{{ .Symbol }}: {
+	{{ .Symbol | ToUpper }}: {
 {{- end }}
 		ID:               {{.ID}},
 		Handle:           "{{.Handle}}",
@@ -79,7 +79,7 @@ func {{ .Handle.Capitalize }}() Coin {
 {{- if .PreferedSymbol }}
 	return Coins[{{ .PreferedSymbol }}]
 {{- else }}
-	return Coins[{{ .Symbol }}]
+	return Coins[{{ .Symbol | ToUpper }}]
 {{- end}}
 }
 
@@ -121,7 +121,11 @@ func main() {
 	}
 	defer f.Close()
 
-	coinsTemplate := template.Must(template.New("").Parse(templateFile))
+	funcMap := template.FuncMap{
+		"ToUpper": strings.ToUpper,
+	}
+
+	coinsTemplate := template.Must(template.New("").Funcs(funcMap).Parse(templateFile))
 	err = coinsTemplate.Execute(f, map[string]interface{}{
 		"Timestamp": time.Now(),
 		"Coins":     coinList,
