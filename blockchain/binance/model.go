@@ -72,10 +72,11 @@ type (
 	Tokens []Token
 
 	Token struct {
-		Name           string `json:"name"`
-		OriginalSymbol string `json:"original_symbol"`
-		Owner          string `json:"owner"`
-		Symbol         string `json:"symbol"`
-		TotalSupply    string `json:"total_supply"`
+		ContractAddress string `json:"contract_address"`
+		Name            string `json:"name"`
+		OriginalSymbol  string `json:"original_symbol"`
+		Owner           string `json:"owner"`
+		Symbol          string `json:"symbol"`
+		TotalSupply     string `json:"total_supply"`
 	}
 )
