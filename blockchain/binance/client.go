@@ -55,10 +55,9 @@ func (c Client) FetchTransactionsInBlock(blockNumber int64) (TransactionsInBlock
 	return result, nil
 }
 
-func (c Client) FetchTransactionsByAddressAndTokenID(address, tokenID string, txPerPage int) ([]Tx, error) {
+func (c Client) FetchTransactionsByAddressAndTokenID(address, tokenID string, limit int) ([]Tx, error) {
 	startTime := strconv.Itoa(int(time.Now().AddDate(0, -3, 0).Unix() * 1000))
-	limit := strconv.Itoa(txPerPage)
-	params := url.Values{"address": {address}, "txAsset": {tokenID}, "startTime": {startTime}, "limit": {limit}}
+	params := url.Values{"address": {address}, "txAsset": {tokenID}, "startTime": {startTime}, "limit": {strconv.Itoa(limit)}}
 	resp, err := c.Get("/api/v1/transactions", params)
 	if err != nil {
 		return nil, err
@@ -82,9 +81,9 @@ func (c Client) FetchAccountMeta(address string) (AccountMeta, error) {
 	return result, nil
 }
 
-func (c Client) FetchTokens(tokensLimit int) (Tokens, error) {
+func (c Client) FetchTokens(limit int) (Tokens, error) {
 	result := new(Tokens)
-	query := url.Values{"limit": {strconv.Itoa(tokensLimit)}}
+	query := url.Values{"limit": {strconv.Itoa(limit)}}
 	resp, err := c.Get("/api/v1/tokens", query)
 	if err != nil {
 		return nil, err
