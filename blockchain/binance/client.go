@@ -46,6 +46,6 @@ func (c Client) FetchAccountMeta(address string) (result AccountMeta, err error)
 
 func (c Client) FetchTokens(limit int) (result Tokens, err error) {
 	query := url.Values{"limit": {strconv.Itoa(limit)}}
-	err = c.req.Get(result, "/api/v1/tokens", query)
+	err = c.req.Get(&result, "/api/v1/tokens", query)
 	return result, err
 }
