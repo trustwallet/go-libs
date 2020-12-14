@@ -2,10 +2,11 @@ package binance
 
 import (
 	"fmt"
-	"github.com/trustwallet/golibs/client"
 	"net/url"
 	"strconv"
 	"time"
+
+	"github.com/trustwallet/golibs/client"
 )
 
 type Client struct {
@@ -46,5 +47,5 @@ func (c Client) FetchAccountMeta(address string) (result AccountMeta, err error)
 func (c Client) FetchTokens(limit int) (result Tokens, err error) {
 	query := url.Values{"limit": {strconv.Itoa(limit)}}
 	err = c.req.Get(result, "/api/v1/tokens", query)
-	return result, nil
+	return result, err
 }
