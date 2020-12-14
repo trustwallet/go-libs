@@ -54,6 +54,10 @@ var DefaultErrorHandler = func(res *http.Response, uri string) error {
 	return nil
 }
 
+func (r *Request) AddHeader(key string, value string) {
+	r.Headers[key] = value
+}
+
 func (r *Request) GetWithContext(result interface{}, path string, query url.Values, ctx context.Context) error {
 	var queryStr = ""
 	if query != nil {
