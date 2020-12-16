@@ -12,5 +12,6 @@ require (
 	github.com/sirupsen/logrus v1.7.0
 	github.com/streadway/amqp v1.0.0
 	github.com/stretchr/testify v1.6.1
+	go.uber.org/atomic v1.7.0 // indirect
 	gopkg.in/yaml.v2 v2.3.0 // indirect
 )
