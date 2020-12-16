@@ -45,15 +45,15 @@ func New(uri string, prefetchCount int, ctx context.Context) (client pubsub.Clie
 func (c *Client) Connect() error {
 	conn, err := amqp.Dial(c.uri)
 	if err != nil {
-		return errors.Wrapf(err, "Client.Connect::Dial", c.uri)
+		return errors.Wrapf(err, "Client.Connect::Dial: %s", c.uri)
 	}
 	ch, err := conn.Channel()
 	if err != nil {
-		return errors.Wrapf(err, "Client.Connect::Channel", c.uri)
+		return errors.Wrapf(err, "Client.Connect::Channel: %s", c.uri)
 	}
 	err = ch.Confirm(false)
 	if err != nil {
-		return errors.Wrapf(err, "Client.Connect::Confirm", c.uri)
+		return errors.Wrapf(err, "Client.Connect::Confirm: %s", c.uri)
 	}
 	c.conn = conn
 	c.channel = ch
@@ -64,7 +64,7 @@ func (c *Client) Connect() error {
 	c.isConnected.Store(true)
 	err = c.channel.Qos(c.prefetchCount, 0, false)
 	if err != nil {
-		return errors.Wrapf(err, "Client.Connect::Qos", c.uri)
+		return errors.Wrapf(err, "Client.Connect::Qos: %s", c.uri)
 	}
 
 	for _, stream := range c.streams {
@@ -115,7 +115,7 @@ func (c *Client) Push(queue string, data []byte, isWaitStream bool) error {
 			if err == pubsub.ErrDisconnected {
 				continue
 			}
-			return errors.Wrapf(err, "Client.Push", c.uri)
+			return errors.Wrapf(err, "Client.Push: %s", c.uri)
 		}
 		select {
 		case confirm := <-c.notifyConfirm:
@@ -146,12 +146,12 @@ func (c *Client) PushUnsafe(queue string, data []byte) error {
 func (c *Client) Close() error {
 	err := c.channel.Close()
 	if err != nil {
-		return errors.Wrapf(err, "Client.Close::Channel", c.uri)
+		return errors.Wrapf(err, "Client.Close::Channel: %s", c.uri)
 	}
 
 	err = c.conn.Close()
 	if err != nil {
-		return errors.Wrapf(err, "Client.Close::Connect", c.uri)
+		return errors.Wrapf(err, "Client.Close::Connect: %s", c.uri)
 	}
 	return nil
 }

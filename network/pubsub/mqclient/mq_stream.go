@@ -28,7 +28,7 @@ func (s *Stream) Connect(cancelCtx context.Context) {
 	}
 	_, err := s.channel.QueueDeclare((*s.consumer).GetQueue(), true, false, false, false, nil)
 	if err != nil {
-		fmt.Printf("Stream.Connect::QueueDeclare::", (*s.consumer).GetQueue(), err)
+		fmt.Printf("Stream.Connect::QueueDeclare::%s %s", (*s.consumer).GetQueue(), err)
 	}
 	if s.isWriteOnly {
 		return
@@ -44,7 +44,7 @@ func (s *Stream) Connect(cancelCtx context.Context) {
 	)
 	if err != nil {
 		s.isConnected.Store(false)
-		fmt.Printf("Stream.Connect::Consume::", (*s.consumer).GetQueue(), err)
+		fmt.Printf("Stream.Connect::Consume::%s %s", (*s.consumer).GetQueue(), err)
 		return
 	}
 	for {
@@ -87,6 +87,6 @@ func (s *Stream) delivery(msg amqp.Delivery) {
 func ack(queue string, msg amqp.Delivery) {
 	err := msg.Ack(false)
 	if err != nil {
-		fmt.Printf("Stream::ack::", queue, err)
+		fmt.Printf("Stream::ack::%s %s", queue, err)
 	}
 }
