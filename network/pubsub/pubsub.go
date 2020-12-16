@@ -3,6 +3,7 @@ package pubsub
 import (
 	"context"
 	"errors"
+
 	"github.com/streadway/amqp"
 )
 

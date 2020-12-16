@@ -2,12 +2,13 @@ package mqclient
 
 import (
 	"context"
-	"github.com/pkg/errors"
-	"github.com/streadway/amqp"
-	"github.com/trustwallet/golibs/pubsub"
-	"go.uber.org/atomic"
 	"sync"
 	"time"
+
+	"github.com/pkg/errors"
+	"github.com/streadway/amqp"
+	"github.com/trustwallet/golibs/network/pubsub"
+	"go.uber.org/atomic"
 )
 
 var (

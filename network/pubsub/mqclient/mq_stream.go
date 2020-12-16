@@ -3,11 +3,11 @@ package mqclient
 import (
 	"context"
 	"fmt"
-	"github.com/pkg/errors"
-	"github.com/streadway/amqp"
-	"github.com/trustwallet/blockatlas/pubsub"
-	"go.uber.org/atomic"
 	"time"
+
+	"github.com/streadway/amqp"
+	"github.com/trustwallet/golibs/network/pubsub"
+	"go.uber.org/atomic"
 )
 
 type Stream struct {
