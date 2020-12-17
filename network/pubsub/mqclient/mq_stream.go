@@ -12,6 +12,7 @@ import (
 
 type Stream struct {
 	consumer    *pubsub.Consumer
+	pool        int
 	client      pubsub.Client
 	channel     *amqp.Channel
 	isConnected *atomic.Bool
@@ -47,6 +48,10 @@ func (s *Stream) Connect(cancelCtx context.Context) {
 		fmt.Printf("Stream.Connect::Consume::%s %s", (*s.consumer).GetQueue(), err)
 		return
 	}
+	messages := make(chan amqp.Delivery)
+	for w := 1; w <= s.pool; w++ {
+		go s.worker(messages)
+	}
 	for {
 		select {
 		case <-cancelCtx.Done():
@@ -57,7 +62,7 @@ func (s *Stream) Connect(cancelCtx context.Context) {
 				return
 			}
 			if msg.Body != nil {
-				s.delivery(msg)
+				messages <- msg
 			}
 		}
 	}
@@ -78,15 +83,13 @@ func (s *Stream) IsWriteOnly() bool {
 	return s.isWriteOnly
 }
 
-func (s *Stream) delivery(msg amqp.Delivery) {
-	if (*s.consumer).Callback(msg) == nil {
-		ack((*s.consumer).GetQueue(), msg)
-	}
-}
-
-func ack(queue string, msg amqp.Delivery) {
-	err := msg.Ack(false)
-	if err != nil {
-		fmt.Printf("Stream::ack::%s %s", queue, err)
+func (s *Stream) worker(messages <-chan amqp.Delivery) {
+	for msg := range messages {
+		if (*s.consumer).Callback(msg) == nil {
+			err := msg.Ack(false)
+			if err != nil {
+				fmt.Printf("Stream::ack::%s %s", (*s.consumer).GetQueue(), err)
+			}
+		}
 	}
 }
