@@ -18,6 +18,7 @@ var (
 
 type Client struct {
 	uri           string
+	pool          int
 	conn          *amqp.Connection
 	channel       *amqp.Channel
 	prefetchCount int
@@ -30,9 +31,10 @@ type Client struct {
 	locker        sync.Mutex
 }
 
-func New(uri string, prefetchCount int, ctx context.Context) (client pubsub.Client) {
+func New(uri string, pool int, prefetchCount int, ctx context.Context) (client pubsub.Client) {
 	client = &Client{
 		uri:           uri,
+		pool:          pool,
 		ctx:           ctx,
 		alive:         atomic.NewBool(false),
 		isConnected:   atomic.NewBool(false),
@@ -88,6 +90,7 @@ func (c *Client) IsConnected() bool {
 func (c *Client) AddStream(consumer *pubsub.Consumer, isWriteOnly bool) error {
 	var stream pubsub.Stream = &Stream{
 		consumer:    consumer,
+		pool:        c.pool,
 		client:      c,
 		isConnected: atomic.NewBool(false),
 		isWriteOnly: isWriteOnly,

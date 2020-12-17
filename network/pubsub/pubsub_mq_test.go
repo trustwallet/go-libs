@@ -79,7 +79,7 @@ func runMQContainer() error {
 	//time.Sleep(10 * time.Second)
 	if err = pool.Retry(func() error {
 		uri := fmt.Sprintf("amqp://localhost:%s", mqResource.GetPort("5672/tcp"))
-		mqClient = mqclient.New(uri, 10, ctx)
+		mqClient = mqclient.New(uri, 1, 10, ctx)
 		return mqClient.Connect()
 	}); err != nil {
 		stopMQContainer()
