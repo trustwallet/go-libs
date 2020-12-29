@@ -49,12 +49,12 @@ func (mc MessageChannel) GetMessage() amqp.Delivery {
 	return <-mc
 }
 
-func (q Queue) DeclareQueue() error {
+func (q Queue) Declare() error {
 	_, err := amqpChan.QueueDeclare(string(q), true, false, false, false, nil)
 	return err
 }
 
-func (e Exchange) DeclareExchange(kind string) error {
+func (e Exchange) Declare(kind string) error {
 	return amqpChan.ExchangeDeclare(string(e), kind, true, false, false, false, nil)
 }
 
