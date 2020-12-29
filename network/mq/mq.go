@@ -2,8 +2,8 @@ package mq
 
 import (
 	"context"
+
 	log "github.com/sirupsen/logrus"
-	"time"
 
 	"github.com/streadway/amqp"
 )
@@ -14,19 +14,22 @@ var (
 	conn          *amqp.Connection
 )
 
+type Consumer interface {
+	GetQueue() string
+	Callback(msg amqp.Delivery) error
+}
+
 type (
-	Queue              string
-	Consumer           func(amqp.Delivery)
-	MessageChannel     <-chan amqp.Delivery
+	Queue          string
+	MessageChannel <-chan amqp.Delivery
 )
 
-func Init(url string, prefetchChannelCount int) (err error) {
+func Init(url string) (err error) {
 	conn, err = amqp.Dial(url)
 	if err != nil {
 		return err
 	}
 	amqpChan, err = conn.Channel()
-	prefetchCount = prefetchChannelCount
 	return err
 }
 
@@ -43,13 +46,17 @@ func (mc MessageChannel) GetMessage() amqp.Delivery {
 	return <-mc
 }
 
-func (q Queue) Declare() error {
-	_, err := amqpChan.QueueDeclare(string(q), true, false, false, false, nil)
+func DeclareQueue(name string) error {
+	_, err := amqpChan.QueueDeclare(name, true, false, false, false, nil)
 	return err
 }
 
-func (q Queue) Publish(body []byte) error {
-	return amqpChan.Publish("", string(q), false, false, amqp.Publishing{
+func DeclareExchange(name, kind string) error {
+	return amqpChan.ExchangeDeclare(name, kind, true, false, false, false, nil)
+}
+
+func Publish(exchange, queue string, body []byte) error {
+	return amqpChan.Publish(exchange, queue, false, false, amqp.Publishing{
 		DeliveryMode: amqp.Persistent,
 		ContentType:  "text/plain",
 		Body:         body,
@@ -82,7 +89,17 @@ func (q Queue) GetMessageChannel() MessageChannel {
 	return messageChannel
 }
 
-func (q Queue) RunConsumerWithCancel(consumer Consumer, async bool, ctx context.Context) {
+func worker(messages <-chan amqp.Delivery, consumer Consumer) {
+	for msg := range messages {
+		consumer.Callback(msg)
+	}
+}
+
+func (q Queue) RunConsumer(consumer Consumer, workers int, ctx context.Context) {
+	messages := make(chan amqp.Delivery)
+	for w := 1; w <= workers; w++ {
+		go worker(messages, consumer)
+	}
 	messageChannel := q.GetMessageChannel()
 	for {
 		select {
@@ -93,46 +110,7 @@ func (q Queue) RunConsumerWithCancel(consumer Consumer, async bool, ctx context.
 			if message.Body == nil {
 				continue
 			}
-			if async {
-				go consumer(message)
-			} else {
-				consumer(message)
-			}
+			consumer.Callback(message)
 		}
-	}
-}
-func RestoreConnectionWorker(url string, queue Queue, timeout time.Duration) {
-	log.Info("Run MQ RestoreConnectionWorker")
-	for {
-		if conn.IsClosed() {
-			for {
-				log.Warn("MQ is not available now")
-				log.Warn("Trying to connect to MQ...")
-				if err := Init(url, prefetchCount); err != nil {
-					log.Warn("MQ is still unavailable")
-					time.Sleep(timeout)
-					continue
-				}
-				if err := queue.Declare(); err != nil {
-					log.Warn("Can't declare queues:", queue)
-					time.Sleep(timeout)
-					continue
-				} else {
-					log.Info("MQ connection restored")
-					break
-				}
-			}
-		}
-		time.Sleep(timeout)
-	}
-}
-
-func FatalWorker(timeout time.Duration) {
-	log.Info("Run MQ FatalWorker")
-	for {
-		if conn.IsClosed() {
-			log.Fatal("MQ is not available now")
-		}
-		time.Sleep(timeout)
 	}
 }
