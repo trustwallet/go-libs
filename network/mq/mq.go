@@ -18,7 +18,6 @@ var (
 )
 
 type Consumer interface {
-	GetQueue() string
 	Callback(msg amqp.Delivery) error
 }
 
