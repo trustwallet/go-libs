@@ -24,6 +24,7 @@ type Consumer interface {
 
 type (
 	Queue          string
+	Exchange       string
 	MessageChannel <-chan amqp.Delivery
 )
 
@@ -49,16 +50,24 @@ func (mc MessageChannel) GetMessage() amqp.Delivery {
 	return <-mc
 }
 
-func DeclareQueue(name string) error {
-	_, err := amqpChan.QueueDeclare(name, true, false, false, false, nil)
+func (q Queue) DeclareQueue() error {
+	_, err := amqpChan.QueueDeclare(string(q), true, false, false, false, nil)
 	return err
 }
 
-func DeclareExchange(name, kind string) error {
-	return amqpChan.ExchangeDeclare(name, kind, true, false, false, false, nil)
+func (e Exchange) DeclareExchange(kind string) error {
+	return amqpChan.ExchangeDeclare(string(e), kind, true, false, false, false, nil)
 }
 
-func Publish(exchange, queue string, body []byte) error {
+func (q Queue) Publish(body []byte) error {
+	return publish("", string(q), body)
+}
+
+func (e Exchange) Publish(body []byte) error {
+	return publish(string(e), "", body)
+}
+
+func publish(exchange, queue string, body []byte) error {
 	return amqpChan.Publish(exchange, queue, false, false, amqp.Publishing{
 		DeliveryMode: amqp.Persistent,
 		ContentType:  "text/plain",
