@@ -121,7 +121,14 @@ func (q Queue) RunConsumer(consumer Consumer, workers int, ctx context.Context) 
 			if message.Body == nil {
 				continue
 			}
-			consumer.Callback(message)
+			err := consumer.Callback(message)
+			if err != nil {
+				log.Error(err)
+				continue
+			}
+			if err := message.Ack(false); err != nil {
+				log.Error(err)
+			}
 		}
 	}
 }
