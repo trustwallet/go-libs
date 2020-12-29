@@ -2,6 +2,9 @@ package mq
 
 import (
 	"context"
+	"os"
+	"syscall"
+	"time"
 
 	log "github.com/sirupsen/logrus"
 
@@ -112,5 +115,17 @@ func (q Queue) RunConsumer(consumer Consumer, workers int, ctx context.Context) 
 			}
 			consumer.Callback(message)
 		}
+	}
+}
+
+func QuitWorker(timeout time.Duration, quit chan<- os.Signal) {
+	log.Info("Run CancelWorker")
+	for {
+		if conn.IsClosed() {
+			log.Error("MQ is not available now")
+			quit <- syscall.SIGTERM
+			return
+		}
+		time.Sleep(timeout)
 	}
 }
