@@ -57,29 +57,36 @@ func (mc MessageChannel) GetMessage() amqp.Delivery {
 	return <-mc
 }
 
-func (q Queue) Declare() error {
-	_, err := amqpChan.QueueDeclare(string(q), true, false, false, false, nil)
-	return err
-}
-
-func (e Exchange) Declare(kind string) error {
-	return amqpChan.ExchangeDeclare(string(e), kind, true, false, false, false, nil)
-}
-
-func (q Queue) Publish(body []byte) error {
-	return publish("", string(q), body)
-}
-
-func (e Exchange) Publish(body []byte) error {
-	return publish(string(e), "", body)
-}
-
 func publish(exchange, queue string, body []byte) error {
 	return amqpChan.Publish(exchange, queue, false, false, amqp.Publishing{
 		DeliveryMode: amqp.Persistent,
 		ContentType:  "text/plain",
 		Body:         body,
 	})
+}
+
+// Queue
+
+func (q Queue) Declare() error {
+	_, err := amqpChan.QueueDeclare(string(q), true, false, false, false, nil)
+	return err
+}
+
+func (q Queue) Publish(body []byte) error {
+	return publish("", string(q), body)
+}
+
+// Exchange
+func (e Exchange) Declare(kind string) error {
+	return amqpChan.ExchangeDeclare(string(e), kind, true, false, false, false, nil)
+}
+
+func (e Exchange) Bind(queue Queue) error {
+	return amqpChan.QueueBind(string(queue), "", string(e), false, nil)
+}
+
+func (e Exchange) Publish(body []byte) error {
+	return publish(string(e), "", body)
 }
 
 func (q Queue) GetMessageChannel() MessageChannel {
