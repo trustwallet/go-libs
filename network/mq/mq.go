@@ -36,6 +36,14 @@ func Init(url string) (err error) {
 	return err
 }
 
+type ConsumerDefaultCallback struct {
+	Delivery func(amqp.Delivery) error
+}
+
+func (c ConsumerDefaultCallback) Callback(msg amqp.Delivery) error {
+	return c.Delivery(msg)
+}
+
 func Close() error {
 	err := amqpChan.Close()
 	if err != nil {
