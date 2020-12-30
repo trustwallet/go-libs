@@ -50,6 +50,23 @@ func (r *Request) RpcCall(result interface{}, method string, params interface{})
 	return resp.GetObject(result)
 }
 
+func (r *Request) RpcBatchCall(requests RpcRequests) ([]RpcResponse, error) {
+	var resp []RpcResponse
+	err := r.Post(&resp, "", requests.fillDefaultValues())
+	if err != nil {
+		return nil, err
+	}
+	return resp, nil
+}
+
+func (rs RpcRequests) fillDefaultValues() RpcRequests {
+	for _, r := range rs {
+		r.JsonRpc = JsonRpcVersion
+		r.Id = genId()
+	}
+	return rs
+}
+
 func (r *RpcResponse) GetObject(toType interface{}) error {
 	js, err := json.Marshal(r.Result)
 	if err != nil {
