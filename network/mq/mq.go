@@ -81,8 +81,14 @@ func (e Exchange) Declare(kind string) error {
 	return amqpChan.ExchangeDeclare(string(e), kind, true, false, false, false, nil)
 }
 
-func (e Exchange) Bind(queue Queue) error {
-	return amqpChan.QueueBind(string(queue), "", string(e), false, nil)
+func (e Exchange) Bind(queues []Queue) error {
+	for _, queue := range queues {
+		err := amqpChan.QueueBind(string(queue), "", string(e), false, nil)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (e Exchange) Publish(body []byte) error {
