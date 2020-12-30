@@ -1,6 +1,11 @@
 package address
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/trustwallet/golibs/coin"
+)
 
 func TestEIP55Checksum(t *testing.T) {
 	type args struct {
@@ -54,4 +59,67 @@ func TestRemove0x(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestEIP55ChecksumWanchain(t *testing.T) {
+	var (
+		addr1Wan      = "0xae96137e0e05681ed2f5d1af272c3ee512939d0f"
+		addr1WANEIP55 = "0xaE96137e0E05681Ed2f5d1af272c3EE512939d0f"
+		tests         = []struct {
+			name          string
+			unchecksummed string
+			want          string
+			wantErr       bool
+		}{
+			{"test 1", addr1Wan, addr1WANEIP55, false},
+			{"test 2", addr1WANEIP55, addr1WANEIP55, false},
+		}
+	)
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := EIP55ChecksumWanchain(tt.unchecksummed)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("EIP55ChecksumWanchain() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if got != tt.want {
+				t.Errorf("EIP55ChecksumWanchain() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestToEIP55ByCoinID(t *testing.T) {
+	var (
+		addr1                        = "0xea674fdde714fd979de3edf0f56aa9716b898ec8"
+		addr1EIP55                   = "0xEA674fdDe714fd979de3EdF0F56AA9716B898ec8"
+		wanAddrLowercase             = "0xae96137e0e05681ed2f5d1af272c3ee512939d0f"
+		wanAddrEIP55Checksum         = "0xAe96137E0e05681eD2F5D1AF272C3ee512939D0F"
+		wanAddrEIP55ChecksumWanchain = "0xaE96137e0E05681Ed2f5d1af272c3EE512939d0f"
+		tests                        = []struct {
+			name, address, expectedAddress string
+			coinID                         uint
+		}{
+			{"Ethereum", addr1, addr1EIP55, coin.ETH},
+			{"Ethereum Classic", addr1, addr1EIP55, coin.ETC},
+			{"POA", addr1, addr1EIP55, coin.POA},
+			{"Callisto", addr1, addr1EIP55, coin.CLO},
+			{"Tomochain", addr1, addr1EIP55, coin.TOMO},
+			{"Thunder", addr1, addr1EIP55, coin.TT},
+			{"Thunder", addr1, addr1EIP55, coin.TT},
+			{"GoChain", addr1, addr1EIP55, coin.GO},
+			{"Wanchain 1", wanAddrLowercase, wanAddrEIP55ChecksumWanchain, coin.WAN},
+			{"Wanchain 2", wanAddrEIP55Checksum, wanAddrEIP55ChecksumWanchain, coin.WAN},
+			{"Non Ethereum like chain 1", "", "", coin.TRX},
+			{"Non Ethereum like chain 2", addr1, addr1, coin.BNB},
+		}
+	)
+
+	t.Run("Test TestToEIP55ByCoinID", func(t *testing.T) {
+		for _, tt := range tests {
+			actual, _ := ToEIP55ByCoinID(tt.address, tt.coinID)
+			assert.Equal(t, tt.expectedAddress, actual)
+		}
+	})
 }
