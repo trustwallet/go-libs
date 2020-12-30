@@ -152,3 +152,13 @@ func QuitWorker(timeout time.Duration, quit chan<- os.Signal) {
 		time.Sleep(timeout)
 	}
 }
+
+func FatalWorker(timeout time.Duration) {
+	log.Info("Run MQ FatalWorker")
+	for {
+		if conn.IsClosed() {
+			log.Fatal("MQ is not available now")
+		}
+		time.Sleep(timeout)
+	}
+}
