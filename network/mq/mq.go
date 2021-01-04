@@ -145,10 +145,6 @@ func (q Queue) RunConsumer(consumer Consumer, workers int, ctx context.Context) 
 			err := consumer.Callback(message)
 			if err != nil {
 				log.Error(err)
-				if err := message.Nack(false, true); err != nil {
-					log.Error(err)
-				}
-				continue
 			}
 			if err := message.Ack(false); err != nil {
 				log.Error(err)
