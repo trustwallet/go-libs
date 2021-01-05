@@ -111,7 +111,7 @@ func (e Exchange) Publish(body []byte) error {
 
 func (q Queue) GetMessageChannel() MessageChannel {
 	err := amqpChan.Qos(
-		50,
+		1,
 		0,
 		true,
 	)
