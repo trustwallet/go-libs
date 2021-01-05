@@ -124,7 +124,7 @@ func (q Queue) GetMessageChannel() MessageChannel {
 	}
 
 	err = amqpChan.Qos(
-		1,
+		50,
 		0,
 		true,
 	)
