@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	log "github.com/sirupsen/logrus"
@@ -40,4 +41,13 @@ func SetupGracefulShutdown(ctx context.Context, port string, engine *gin.Engine)
 	stop := <-signalForExit
 	log.Info("Stop signal Received", stop)
 	log.Info("Waiting for all jobs to stop")
+}
+
+func SetupGracefulShutdownForTimeout(timeout time.Duration) {
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
+	log.Info("Shutdown timeout: ...", timeout)
+	time.Sleep(timeout)
+	log.Info("Exiting  gracefully")
 }
