@@ -124,8 +124,8 @@ func (q Queue) GetMessageChannel() MessageChannel {
 	}
 
 	err = amqpChan.Qos(
-		prefetchCount,
-		0,
+		50,
+		50,
 		true,
 	)
 	if err != nil {
