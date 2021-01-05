@@ -2,8 +2,11 @@ package mq
 
 import (
 	"context"
-	log "github.com/sirupsen/logrus"
+	"os"
+	"syscall"
 	"time"
+
+	log "github.com/sirupsen/logrus"
 
 	"github.com/streadway/amqp"
 )
@@ -12,22 +15,47 @@ var (
 	prefetchCount int
 	amqpChan      *amqp.Channel
 	conn          *amqp.Connection
+
+	DefaultConsumerOptions = ConsumerOptions{
+		Workers:      1,
+		RetryOnError: false,
+		RetryDelay:   0,
+	}
 )
+
+const ()
+
+type Consumer interface {
+	Callback(msg amqp.Delivery) error
+}
+
+type ConsumerOptions struct {
+	Workers      int
+	RetryOnError bool
+	RetryDelay   time.Duration
+}
 
 type (
-	Queue              string
-	Consumer           func(amqp.Delivery)
-	MessageChannel     <-chan amqp.Delivery
+	Queue          string
+	Exchange       string
+	MessageChannel <-chan amqp.Delivery
 )
 
-func Init(url string, prefetchChannelCount int) (err error) {
+func Init(url string) (err error) {
 	conn, err = amqp.Dial(url)
 	if err != nil {
 		return err
 	}
 	amqpChan, err = conn.Channel()
-	prefetchCount = prefetchChannelCount
 	return err
+}
+
+type ConsumerDefaultCallback struct {
+	Delivery func(amqp.Delivery) error
+}
+
+func (c ConsumerDefaultCallback) Callback(msg amqp.Delivery) error {
+	return c.Delivery(msg)
 }
 
 func Close() error {
@@ -43,17 +71,42 @@ func (mc MessageChannel) GetMessage() amqp.Delivery {
 	return <-mc
 }
 
+func publish(exchange, queue string, body []byte) error {
+	return amqpChan.Publish(exchange, queue, false, false, amqp.Publishing{
+		DeliveryMode: amqp.Persistent,
+		ContentType:  "text/plain",
+		Body:         body,
+	})
+}
+
+// Queue
+
 func (q Queue) Declare() error {
 	_, err := amqpChan.QueueDeclare(string(q), true, false, false, false, nil)
 	return err
 }
 
 func (q Queue) Publish(body []byte) error {
-	return amqpChan.Publish("", string(q), false, false, amqp.Publishing{
-		DeliveryMode: amqp.Persistent,
-		ContentType:  "text/plain",
-		Body:         body,
-	})
+	return publish("", string(q), body)
+}
+
+// Exchange
+func (e Exchange) Declare(kind string) error {
+	return amqpChan.ExchangeDeclare(string(e), kind, true, false, false, false, nil)
+}
+
+func (e Exchange) Bind(queues []Queue) error {
+	for _, queue := range queues {
+		err := amqpChan.QueueBind(string(queue), "", string(e), false, nil)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (e Exchange) Publish(body []byte) error {
+	return publish(string(e), "", body)
 }
 
 func (q Queue) GetMessageChannel() MessageChannel {
@@ -71,7 +124,7 @@ func (q Queue) GetMessageChannel() MessageChannel {
 	}
 
 	err = amqpChan.Qos(
-		prefetchCount,
+		50,
 		0,
 		true,
 	)
@@ -82,7 +135,33 @@ func (q Queue) GetMessageChannel() MessageChannel {
 	return messageChannel
 }
 
-func (q Queue) RunConsumerWithCancel(consumer Consumer, async bool, ctx context.Context) {
+func worker(messages <-chan amqp.Delivery, consumer Consumer) {
+	for msg := range messages {
+		err := consumer.Callback(msg)
+		if err != nil {
+			log.Error(err)
+		}
+		//if options.RetryOnError {
+		//	if err := message.Nack(false, true); err != nil {
+		//		log.Error(err)
+		//	}
+		//	time.Sleep(options.RetryDelay)
+		//} else {
+		//	if err := message.Ack(false); err != nil {
+		//		log.Error(err)
+		//	}
+		//}
+		if err := msg.Ack(false); err != nil {
+			log.Error(err)
+		}
+	}
+}
+
+func (q Queue) RunConsumer(consumer Consumer, options ConsumerOptions, ctx context.Context) {
+	messages := make(chan amqp.Delivery)
+	for w := 1; w <= options.Workers; w++ {
+		go worker(messages, consumer)
+	}
 	messageChannel := q.GetMessageChannel()
 	for {
 		select {
@@ -93,35 +172,18 @@ func (q Queue) RunConsumerWithCancel(consumer Consumer, async bool, ctx context.
 			if message.Body == nil {
 				continue
 			}
-			if async {
-				go consumer(message)
-			} else {
-				consumer(message)
-			}
+			messages <- message
 		}
 	}
 }
-func RestoreConnectionWorker(url string, queue Queue, timeout time.Duration) {
-	log.Info("Run MQ RestoreConnectionWorker")
+
+func QuitWorker(timeout time.Duration, quit chan<- os.Signal) {
+	log.Info("Run CancelWorker")
 	for {
 		if conn.IsClosed() {
-			for {
-				log.Warn("MQ is not available now")
-				log.Warn("Trying to connect to MQ...")
-				if err := Init(url, prefetchCount); err != nil {
-					log.Warn("MQ is still unavailable")
-					time.Sleep(timeout)
-					continue
-				}
-				if err := queue.Declare(); err != nil {
-					log.Warn("Can't declare queues:", queue)
-					time.Sleep(timeout)
-					continue
-				} else {
-					log.Info("MQ connection restored")
-					break
-				}
-			}
+			log.Error("MQ is not available now")
+			quit <- syscall.SIGTERM
+			return
 		}
 		time.Sleep(timeout)
 	}
