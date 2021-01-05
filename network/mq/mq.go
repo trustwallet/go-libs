@@ -110,6 +110,15 @@ func (e Exchange) Publish(body []byte) error {
 }
 
 func (q Queue) GetMessageChannel() MessageChannel {
+	err := amqpChan.Qos(
+		50,
+		0,
+		true,
+	)
+	if err != nil {
+		log.Fatal("No qos limit ", err)
+	}
+
 	messageChannel, err := amqpChan.Consume(
 		string(q),
 		"",
@@ -121,15 +130,6 @@ func (q Queue) GetMessageChannel() MessageChannel {
 	)
 	if err != nil {
 		log.Fatal("MQ issue " + err.Error())
-	}
-
-	err = amqpChan.Qos(
-		50,
-		0,
-		true,
-	)
-	if err != nil {
-		log.Fatal("No qos limit ", err)
 	}
 
 	return messageChannel
