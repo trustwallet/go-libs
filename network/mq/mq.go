@@ -110,15 +110,6 @@ func (e Exchange) Publish(body []byte) error {
 }
 
 func (q Queue) GetMessageChannel() MessageChannel {
-	err := amqpChan.Qos(
-		1,
-		0,
-		true,
-	)
-	if err != nil {
-		log.Fatal("No qos limit ", err)
-	}
-
 	messageChannel, err := amqpChan.Consume(
 		string(q),
 		"",
@@ -132,12 +123,37 @@ func (q Queue) GetMessageChannel() MessageChannel {
 		log.Fatal("MQ issue " + err.Error())
 	}
 
+	err = amqpChan.Qos(
+		1,
+		0,
+		true,
+	)
+	if err != nil {
+		log.Fatal("No qos limit ", err)
+	}
+
 	return messageChannel
 }
 
 func worker(messages <-chan amqp.Delivery, consumer Consumer) {
 	for msg := range messages {
-		consumer.Callback(msg)
+		err := consumer.Callback(msg)
+		if err != nil {
+			log.Error(err)
+		}
+		//if options.RetryOnError {
+		//	if err := message.Nack(false, true); err != nil {
+		//		log.Error(err)
+		//	}
+		//	time.Sleep(options.RetryDelay)
+		//} else {
+		//	if err := message.Ack(false); err != nil {
+		//		log.Error(err)
+		//	}
+		//}
+		if err := msg.Ack(false); err != nil {
+			log.Error(err)
+		}
 	}
 }
 
@@ -156,23 +172,7 @@ func (q Queue) RunConsumer(consumer Consumer, options ConsumerOptions, ctx conte
 			if message.Body == nil {
 				continue
 			}
-			err := consumer.Callback(message)
-			if err != nil {
-				log.Error(err)
-			}
-			//if options.RetryOnError {
-			//	if err := message.Nack(false, true); err != nil {
-			//		log.Error(err)
-			//	}
-			//	time.Sleep(options.RetryDelay)
-			//} else {
-			//	if err := message.Ack(false); err != nil {
-			//		log.Error(err)
-			//	}
-			//}
-			if err := message.Ack(false); err != nil {
-				log.Error(err)
-			}
+			messages <- message
 		}
 	}
 }
