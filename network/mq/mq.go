@@ -160,15 +160,18 @@ func (q Queue) RunConsumer(consumer Consumer, options ConsumerOptions, ctx conte
 			if err != nil {
 				log.Error(err)
 			}
-			if options.RetryOnError {
-				if err := message.Nack(false, true); err != nil {
-					log.Error(err)
-				}
-				time.Sleep(options.RetryDelay)
-			} else {
-				if err := message.Ack(false); err != nil {
-					log.Error(err)
-				}
+			//if options.RetryOnError {
+			//	if err := message.Nack(false, true); err != nil {
+			//		log.Error(err)
+			//	}
+			//	time.Sleep(options.RetryDelay)
+			//} else {
+			//	if err := message.Ack(false); err != nil {
+			//		log.Error(err)
+			//	}
+			//}
+			if err := message.Ack(false); err != nil {
+				log.Error(err)
 			}
 		}
 	}
