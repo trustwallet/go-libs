@@ -118,8 +118,8 @@ func (r *Request) Execute(method string, url string, body io.Reader, result inte
 		return err
 	}
 
-	if res.StatusCode != http.StatusOK {
-		message := fmt.Sprintf("failed response status: %s", strconv.Itoa(res.StatusCode))
+	if res.StatusCode < http.StatusOK && res.StatusCode >= http.StatusBadRequest {
+		message := fmt.Sprintf("failed request status: %s for url: %s", strconv.Itoa(res.StatusCode), res.Request.RequestURI)
 		return errors.New(message)
 	}
 
