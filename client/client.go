@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -119,8 +118,7 @@ func (r *Request) Execute(method string, url string, body io.Reader, result inte
 	}
 
 	if res.StatusCode < http.StatusOK && res.StatusCode >= http.StatusBadRequest {
-		message := fmt.Sprintf("failed request status: %s for url: %s", strconv.Itoa(res.StatusCode), res.Request.RequestURI)
-		return errors.New(message)
+		return fmt.Errorf("failed request status: %s for url: %s", strconv.Itoa(res.StatusCode), res.Request.RequestURI)
 	}
 
 	defer res.Body.Close()
