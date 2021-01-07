@@ -117,7 +117,7 @@ func (r *Request) Execute(method string, url string, body io.Reader, result inte
 		return err
 	}
 
-	if res.StatusCode < http.StatusOK && res.StatusCode >= http.StatusBadRequest {
+	if res.StatusCode < http.StatusOK || res.StatusCode >= http.StatusBadRequest {
 		return fmt.Errorf("failed request status: %s for url: %s", strconv.Itoa(res.StatusCode), res.Request.RequestURI)
 	}
 
