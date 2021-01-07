@@ -4,11 +4,13 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -115,6 +117,12 @@ func (r *Request) Execute(method string, url string, body io.Reader, result inte
 	if err != nil {
 		return err
 	}
+
+	if res.StatusCode != http.StatusOK {
+		message := fmt.Sprintf("failed response status: %s", strconv.Itoa(res.StatusCode))
+		return errors.New(message)
+	}
+
 	defer res.Body.Close()
 	b, err := ioutil.ReadAll(res.Body)
 	if err != nil {
