@@ -1,4 +1,4 @@
-package txtype
+package types
 
 import (
 	"encoding/json"
@@ -10,7 +10,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/trustwallet/golibs/coin"
 	"github.com/trustwallet/golibs/mock"
-	"github.com/trustwallet/golibs/tokentype"
 )
 
 var (
@@ -606,35 +605,35 @@ func TestTokenType(t *testing.T) {
 			Name:       "Tron TRC20",
 			ID:         coin.Tron().ID,
 			TokenID:    "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t",
-			WantedType: string(tokentype.TRC20),
+			WantedType: string(TRC20),
 			WantedOk:   true,
 		},
 		{
 			Name:       "Tron TRC10",
 			ID:         coin.Tron().ID,
 			TokenID:    "1002000",
-			WantedType: string(tokentype.TRC10),
+			WantedType: string(TRC10),
 			WantedOk:   true,
 		},
 		{
 			Name:       "Ethereum ERC20",
 			ID:         coin.Ethereum().ID,
 			TokenID:    "dai",
-			WantedType: string(tokentype.ERC20),
+			WantedType: string(ERC20),
 			WantedOk:   true,
 		},
 		{
 			Name:       "Binance BEP20",
 			ID:         coin.Smartchain().ID,
 			TokenID:    "busd",
-			WantedType: string(tokentype.BEP20),
+			WantedType: string(BEP20),
 			WantedOk:   true,
 		},
 		{
 			Name:       "Binance BEP10",
 			ID:         coin.Binance().ID,
 			TokenID:    "busd",
-			WantedType: string(tokentype.BEP2),
+			WantedType: string(BEP2),
 			WantedOk:   true,
 		},
 		{

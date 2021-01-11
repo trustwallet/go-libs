@@ -1,4 +1,4 @@
-package txtype
+package types
 
 import (
 	"encoding/json"

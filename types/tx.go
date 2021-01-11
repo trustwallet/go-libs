@@ -1,11 +1,9 @@
-package txtype
+package types
 
 import (
 	"sort"
 	"strconv"
 	"strings"
-
-	"github.com/trustwallet/golibs/tokentype"
 
 	mapset "github.com/deckarep/golang-set"
 	"github.com/trustwallet/golibs/asset"
@@ -191,12 +189,12 @@ type (
 	// Token describes the non-native tokens.
 	// Examples: ERC-20, TRC-20, BEP-2
 	Token struct {
-		Name     string         `json:"name"`
-		Symbol   string         `json:"symbol"`
-		Decimals uint           `json:"decimals"`
-		TokenID  string         `json:"token_id"`
-		Coin     uint           `json:"coin"`
-		Type     tokentype.Type `json:"type"`
+		Name     string    `json:"name"`
+		Symbol   string    `json:"symbol"`
+		Decimals uint      `json:"decimals"`
+		TokenID  string    `json:"token_id"`
+		Coin     uint      `json:"coin"`
+		Type     TokenType `json:"type"`
 	}
 
 	Txs []Tx
@@ -437,17 +435,17 @@ func InferValue(tx *Tx, direction Direction, addressSet mapset.Set) Amount {
 func GetTokenType(c uint, tokenID string) (string, bool) {
 	switch c {
 	case coin.Ethereum().ID:
-		return string(tokentype.ERC20), true
+		return string(ERC20), true
 	case coin.Tron().ID:
 		_, err := strconv.Atoi(tokenID)
 		if err != nil {
-			return string(tokentype.TRC20), true
+			return string(TRC20), true
 		}
-		return string(tokentype.TRC10), true
+		return string(TRC10), true
 	case coin.Smartchain().ID:
-		return string(tokentype.BEP20), true
+		return string(BEP20), true
 	case coin.Binance().ID:
-		return string(tokentype.BEP2), true
+		return string(BEP2), true
 	default:
 		return "", false
 	}

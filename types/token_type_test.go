@@ -1,8 +1,9 @@
-package tokentype
+package types
 
 import (
-	"github.com/trustwallet/golibs/coin"
 	"testing"
+
+	"github.com/trustwallet/golibs/coin"
 )
 
 func TestGetEthereumTokenTypeByIndex(t *testing.T) {
@@ -12,7 +13,7 @@ func TestGetEthereumTokenTypeByIndex(t *testing.T) {
 	tests := []struct {
 		name string
 		args args
-		want Type
+		want TokenType
 	}{
 		{
 			"Ethereum ERC20",
