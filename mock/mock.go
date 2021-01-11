@@ -7,7 +7,7 @@ import (
 	"os"
 )
 
-func ParseJsonFromFilePath(file string, intoStruct interface{}) error {
+func JsonModelFromFilePath(file string, intoStruct interface{}) error {
 	jsonFile, err := os.Open(file)
 	if err != nil {
 		return err
@@ -25,7 +25,7 @@ func ParseJsonFromFilePath(file string, intoStruct interface{}) error {
 	return nil
 }
 
-func JsonFromFilePathToString(file string) (string, error) {
+func JsonStringFromFilePath(file string) (string, error) {
 	jsonFile, err := os.Open(file)
 	if err != nil {
 		return "", err
