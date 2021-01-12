@@ -281,9 +281,9 @@
   sampleAddress: 't1YYnByMzdGhQv3W3rnjHMrJs6HH4Y231gy'
 
 - id: 136
-  symbol: XZC
+  symbol: FIRO
   handle: zcoin
-  name: Zcoin
+  name: Firo
   decimals: 8
   blockTime: 300000
   sampleAddress: 'aEd5XFChyXobvEics2ppAqgK3Bgusjxtik'
@@ -392,7 +392,7 @@
   sampleAddress: 'NEAR6Y66fCzeKqWiwxoPox5oGeDN9VhNCu7CEQ9M86iniqoN9vg2X'
 
 - id: 508
-  symbol: ERD
+  symbol: eGLD
   handle: elrond
   name: Elrond
   decimals: 18

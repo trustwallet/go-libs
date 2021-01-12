@@ -75,7 +75,7 @@ func TestCoinFile(t *testing.T) {
 		if want.PreferedSymbol != "" {
 			enum = fmt.Sprintf("%s = %d", want.PreferedSymbol, want.ID)
 		} else {
-			enum = fmt.Sprintf("%s = %d", want.Symbol, want.ID)
+			enum = fmt.Sprintf("%s = %d", strings.ToUpper(want.Symbol), want.ID)
 		}
 		assert.True(t, strings.Contains(code, enum), "Coin enum not found")
 

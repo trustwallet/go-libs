@@ -9,6 +9,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -52,6 +53,10 @@ var DefaultClient = &http.Client{
 
 var DefaultErrorHandler = func(res *http.Response, uri string) error {
 	return nil
+}
+
+func (r *Request) AddHeader(key string, value string) {
+	r.Headers[key] = value
 }
 
 func (r *Request) GetWithContext(result interface{}, path string, query url.Values, ctx context.Context) error {
@@ -111,6 +116,11 @@ func (r *Request) Execute(method string, url string, body io.Reader, result inte
 	if err != nil {
 		return err
 	}
+
+	if res.StatusCode < http.StatusOK || res.StatusCode >= http.StatusBadRequest {
+		return fmt.Errorf("failed request status: %s for url: %s", strconv.Itoa(res.StatusCode), res.Request.RequestURI)
+	}
+
 	defer res.Body.Close()
 	b, err := ioutil.ReadAll(res.Body)
 	if err != nil {
