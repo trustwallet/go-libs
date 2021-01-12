@@ -20,6 +20,7 @@
   name: ICON
   decimals: 18
   sampleAddress: 'hxee691e7bccc4eb11fee922896e9f51490e62b12e'
+  blockTime: 10000
 
 - id: 118
   symbol: ATOM
@@ -50,7 +51,7 @@
   handle: poa
   name: Poa
   decimals: 18
-  blockTime: 30000
+  blockTime: 5000
   sampleAddress: '0x1fddEc96688e0538A316C64dcFd211c491ECf0d8'
 
 - id: 195
@@ -66,6 +67,7 @@
   handle: fio
   name: FIO
   decimals: 9
+  blockTime: 5000
   sampleAddress: 'FIO5J2xdfWygeNdHZNZRzRws8YGbVxjUXtp4eP8KoGkGKoLFQ7CaU'
 
 - id: 242
@@ -129,7 +131,7 @@
   handle: binance
   name: BNB
   decimals: 8
-  blockTime: 4000
+  blockTime: 1000
   minConfirmations: 2
   sampleAddress: 'tbnb1fhr04azuhcj0dulm7ka40y0cqjlafwae9k9gk2'
 
@@ -403,7 +405,7 @@
   handle: bsc
   name: 'Binance Smart Chain'
   decimals: 18
-  blockTime: 3000
+  blockTime: 5000
   sampleAddress: '0x35552c16704d214347f29Fa77f77DA6d75d7C752'
 
 - id: 20000714

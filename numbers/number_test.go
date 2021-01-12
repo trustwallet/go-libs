@@ -26,6 +26,7 @@ func TestToDecimal(t *testing.T) {
 	assert.Equal(t, ToDecimal("212880628", 9), "0.212880628")
 	assert.Equal(t, ToDecimal("4634460765323682", 18), "0.0046344608")
 	assert.Equal(t, ToDecimal("100000000000", 8), "1000")
+	assert.Equal(t, ToDecimal("5000000000", 8), "50")
 }
 
 func TestFromDecimal(t *testing.T) {
