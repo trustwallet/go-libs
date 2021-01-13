@@ -12,29 +12,13 @@ import (
 )
 
 var (
-	prefetchCount int
-	amqpChan      *amqp.Channel
-	conn          *amqp.Connection
-
-	DefaultConsumerOptions = ConsumerOptions{
-		Workers:      1,
-		RetryOnError: false,
-		RetryDelay:   0,
-	}
+	amqpChan *amqp.Channel
+	conn     *amqp.Connection
 )
-
-const ()
 
 type Consumer interface {
 	Callback(msg amqp.Delivery) error
 }
-
-type ConsumerOptions struct {
-	Workers      int
-	RetryOnError bool
-	RetryDelay   time.Duration
-}
-
 type (
 	Queue          string
 	Exchange       string
