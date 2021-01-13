@@ -139,7 +139,7 @@ func worker(messages <-chan amqp.Delivery, consumer Consumer, options ConsumerOp
 	for msg := range messages {
 		err := consumer.Callback(msg)
 		if err != nil && options.RetryOnError {
-			if err := msg.Nack(false, true); err != nil {
+			if err := msg.Nack(true, true); err != nil {
 				log.Error(err)
 			}
 			time.Sleep(options.RetryDelay)
