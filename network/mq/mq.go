@@ -138,18 +138,15 @@ func (q Queue) GetMessageChannel() MessageChannel {
 func worker(messages <-chan amqp.Delivery, consumer Consumer, options ConsumerOptions) {
 	for msg := range messages {
 		err := consumer.Callback(msg)
-		if err != nil {
-			log.Error(err)
-			if options.RetryOnError {
-				if err := msg.Nack(false, true); err != nil {
-					log.Error(err)
-				}
-				time.Sleep(options.RetryDelay)
+		if err != nil && options.RetryOnError {
+			if err := msg.Nack(false, true); err != nil {
+				log.Error(err)
 			}
-			return
-		}
-		if err := msg.Ack(false); err != nil {
-			log.Error(err)
+			time.Sleep(options.RetryDelay)
+		} else {
+			if err := msg.Ack(false); err != nil {
+				log.Error(err)
+			}
 		}
 	}
 }
