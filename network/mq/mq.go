@@ -12,29 +12,13 @@ import (
 )
 
 var (
-	prefetchCount int
-	amqpChan      *amqp.Channel
-	conn          *amqp.Connection
-
-	DefaultConsumerOptions = ConsumerOptions{
-		Workers:      1,
-		RetryOnError: false,
-		RetryDelay:   0,
-	}
+	amqpChan *amqp.Channel
+	conn     *amqp.Connection
 )
-
-const ()
 
 type Consumer interface {
 	Callback(msg amqp.Delivery) error
 }
-
-type ConsumerOptions struct {
-	Workers      int
-	RetryOnError bool
-	RetryDelay   time.Duration
-}
-
 type (
 	Queue          string
 	Exchange       string
@@ -135,24 +119,18 @@ func (q Queue) GetMessageChannel() MessageChannel {
 	return messageChannel
 }
 
-func worker(messages <-chan amqp.Delivery, consumer Consumer) {
+func worker(messages <-chan amqp.Delivery, consumer Consumer, options ConsumerOptions) {
 	for msg := range messages {
 		err := consumer.Callback(msg)
-		if err != nil {
-			log.Error(err)
-		}
-		//if options.RetryOnError {
-		//	if err := message.Nack(false, true); err != nil {
-		//		log.Error(err)
-		//	}
-		//	time.Sleep(options.RetryDelay)
-		//} else {
-		//	if err := message.Ack(false); err != nil {
-		//		log.Error(err)
-		//	}
-		//}
-		if err := msg.Ack(false); err != nil {
-			log.Error(err)
+		if err != nil && options.RetryOnError {
+			if err := msg.Nack(true, true); err != nil {
+				log.Error(err)
+			}
+			time.Sleep(options.RetryDelay)
+		} else {
+			if err := msg.Ack(false); err != nil {
+				log.Error(err)
+			}
 		}
 	}
 }
@@ -160,7 +138,7 @@ func worker(messages <-chan amqp.Delivery, consumer Consumer) {
 func (q Queue) RunConsumer(consumer Consumer, options ConsumerOptions, ctx context.Context) {
 	messages := make(chan amqp.Delivery)
 	for w := 1; w <= options.Workers; w++ {
-		go worker(messages, consumer)
+		go worker(messages, consumer, options)
 	}
 	messageChannel := q.GetMessageChannel()
 	for {
