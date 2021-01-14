@@ -110,7 +110,7 @@ func (q Queue) GetMessageChannel(consumerTag string) MessageChannel {
 	}
 
 	err = amqpChan.Qos(
-		50,
+		1,
 		0,
 		true,
 	)
