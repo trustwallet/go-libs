@@ -128,10 +128,10 @@ func worker(messages <-chan amqp.Delivery, consumer Consumer, options ConsumerOp
 			log.Error(err)
 		}
 		if err != nil && options.RetryOnError {
+			time.Sleep(options.RetryDelay)
 			if err := msg.Reject(true); err != nil {
 				log.Error(err)
 			}
-			time.Sleep(options.RetryDelay)
 		} else {
 			if err := msg.Ack(false); err != nil {
 				log.Error(err)
