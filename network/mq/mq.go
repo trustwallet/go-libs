@@ -106,7 +106,7 @@ func (q Queue) GetMessageChannel(consumerTag string) MessageChannel {
 		nil,
 	)
 	if err != nil {
-		log.Fatal("MQ issue " + err.Error())
+		log.Fatal("MQ issue" + err.Error() + " for queue: " + string(q))
 	}
 
 	err = amqpChan.Qos(
@@ -115,7 +115,7 @@ func (q Queue) GetMessageChannel(consumerTag string) MessageChannel {
 		true,
 	)
 	if err != nil {
-		log.Fatal("No qos limit ", err)
+		log.Error("No qos limit ", err)
 	}
 
 	return messageChannel
