@@ -16,6 +16,19 @@ type (
 		Coin    uint   `json:"coin"`
 		Address string `json:"address"`
 	}
+
+	TransactionNotification struct {
+		Action TransactionType `json:"action"`
+		Result Tx              `json:"result"`
+	}
+)
+
+type Subscriber string
+
+const (
+	Notifications      Subscriber            = "notifications"
+	AddSubscription    SubscriptionOperation = "AddSubscription"
+	DeleteSubscription SubscriptionOperation = "DeleteSubscription"
 )
 
 func (v *Subscription) AddressID() string {
