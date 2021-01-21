@@ -57,7 +57,7 @@ func TestRequest_GetBase(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			r := InitClient(tt.fields.baseUrl)
+			r := InitClient(tt.fields.baseUrl, nil)
 			if got := r.GetBase(tt.path); got != tt.want {
 				t.Errorf("Request.GetBase() = %v, want %v", got, tt.want)
 			}
