@@ -13,8 +13,8 @@ type Client struct {
 	req client.Request
 }
 
-func InitClient(url, apiKey string) Client {
-	request := client.InitJSONClient(url, nil)
+func InitClient(url, apiKey string, errorHandler client.HttpErrorHandler) Client {
+	request := client.InitJSONClient(url, errorHandler)
 	request.AddHeader("apikey", apiKey)
 	return Client{
 		req: request,
