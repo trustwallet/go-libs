@@ -26,7 +26,7 @@ func SetupSentry(dsn string) error {
 	return nil
 }
 
-var SentryErrorHandler = func(res *http.Response, uri string) error {
+var SentryErrorHandler = func(res *http.Response, url string) error {
 	statusCode := res.StatusCode
 	//Improve ways to identify if worth logging the error
 	if statusCode != http.StatusOK && statusCode != http.StatusNotFound {
@@ -34,8 +34,9 @@ var SentryErrorHandler = func(res *http.Response, uri string) error {
 			"tags": raven.Tags{
 				{Key: "status_code", Value: strconv.Itoa(res.StatusCode)},
 				{Key: "host", Value: res.Request.URL.Host},
-				{Key: "url", Value: uri},
+				{Key: "path", Value: res.Request.URL.Path},
 			},
+			"url":         url,
 			"fingerprint": []string{"client_errors"},
 		}).Error("Client Errors")
 	}
