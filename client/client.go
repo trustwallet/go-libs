@@ -134,10 +134,12 @@ func (r *Request) Execute(method string, url string, body io.Reader, result inte
 }
 
 func (r *Request) GetBase(path string) string {
+	baseUrl := strings.TrimRight(r.BaseUrl, "/")
 	if path == "" {
-		return r.BaseUrl
+		return baseUrl
 	}
-	return fmt.Sprintf("%s/%s", r.BaseUrl, path)
+	path = strings.TrimLeft(path, "/")
+	return fmt.Sprintf("%s/%s", baseUrl, path)
 }
 
 func GetBody(body interface{}) (buf io.ReadWriter, err error) {
