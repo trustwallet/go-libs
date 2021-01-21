@@ -26,7 +26,7 @@ func TestCreateMockedAPI(t *testing.T) {
 
 	server := httptest.NewServer(CreateMockedAPI(data))
 	defer server.Close()
-	client := client.InitClient(server.URL)
+	client := client.InitClient(server.URL, nil)
 
 	var resp response
 	err := client.Get(&resp, "1", nil)

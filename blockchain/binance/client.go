@@ -14,7 +14,7 @@ type Client struct {
 }
 
 func InitClient(url, apiKey string) Client {
-	request := client.InitJSONClient(url)
+	request := client.InitJSONClient(url, nil)
 	request.AddHeader("apikey", apiKey)
 	return Client{
 		req: request,
