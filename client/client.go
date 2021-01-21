@@ -15,36 +15,37 @@ import (
 )
 
 type Request struct {
-	BaseUrl      string
-	Headers      map[string]string
-	HttpClient   *http.Client
-	ErrorHandler func(res *http.Response, uri string) error
+	BaseUrl          string
+	Headers          map[string]string
+	HttpClient       *http.Client
+	HttpErrorHandler HttpErrorHandler
 }
+
+type HttpErrorHandler func(res *http.Response, uri string) error
 
 func (r *Request) SetTimeout(seconds time.Duration) {
 	r.HttpClient.Timeout = time.Second * seconds
 }
 
-func InitClient(baseUrl string) Request {
+func InitClient(baseUrl string, errorHandler HttpErrorHandler) Request {
+	if errorHandler == nil {
+		errorHandler = DefaultErrorHandler
+	}
 	return Request{
-		Headers:      make(map[string]string),
-		HttpClient:   DefaultClient,
-		ErrorHandler: DefaultErrorHandler,
-		BaseUrl:      baseUrl,
+		Headers:          make(map[string]string),
+		HttpClient:       DefaultClient,
+		HttpErrorHandler: errorHandler,
+		BaseUrl:          baseUrl,
 	}
 }
 
-func InitJSONClient(baseUrl string) Request {
-	headers := map[string]string{
+func InitJSONClient(baseUrl string, errorHandler HttpErrorHandler) Request {
+	client := InitClient(baseUrl, errorHandler)
+	client.Headers = map[string]string{
 		"Content-Type": "application/json",
 		"Accept":       "application/json",
 	}
-	return Request{
-		Headers:      headers,
-		HttpClient:   DefaultClient,
-		ErrorHandler: DefaultErrorHandler,
-		BaseUrl:      baseUrl,
-	}
+	return client
 }
 
 var DefaultClient = &http.Client{
@@ -112,7 +113,7 @@ func (r *Request) Execute(method string, url string, body io.Reader, result inte
 		return err
 	}
 
-	err = r.ErrorHandler(res, url)
+	err = r.HttpErrorHandler(res, url)
 	if err != nil {
 		return err
 	}
