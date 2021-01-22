@@ -7,3 +7,11 @@ type Asset struct {
 	Type     TokenType `json:"type"`
 	Decimals uint      `json:"decimals"`
 }
+
+func GetAssetsIds(assets []Token) []string {
+	assetIds := make([]string, 0)
+	for _, asset := range assets {
+		assetIds = append(assetIds, asset.AssetId())
+	}
+	return assetIds
+}

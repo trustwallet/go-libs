@@ -183,9 +183,6 @@ type (
 		Value    Amount   `json:"value"`
 	}
 
-	// TokenPage is a page of transactions.
-	TokenPage []Token
-
 	// Token describes the non-native tokens.
 	// Examples: ERC-20, TRC-20, BEP-2
 	Token struct {
