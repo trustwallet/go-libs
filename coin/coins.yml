@@ -424,3 +424,12 @@
   decimals: 18
   blockTime: 3000
   sampleAddress: 't1nbb73vhk5dtmnsgeaetbo76daepqjtrfoccn74i'
+
+- id: 474
+  symbol: ROSE
+  preferedSymbol: ROSE
+  handle: oasis
+  name: Oasis
+  decimals: 9
+  blockTime: 6000
+  sampleAddress: 'oasis1qpxx577luv69znyr7dleue43mz6aq7fh4sm43cxu'
