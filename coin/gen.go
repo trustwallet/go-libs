@@ -30,7 +30,6 @@ type Coin struct {
 	ID               uint
 	Handle           string
 	Symbol           string
-	PreferedSymbol   string
 	Name             string
 	Decimals         uint
 	BlockTime        int
@@ -44,27 +43,16 @@ func (c *Coin) String() string {
 
 const (
 {{- range .Coins }}
-{{- if .PreferedSymbol}}
-	{{ .PreferedSymbol }} = {{ .ID }}
-{{- else}}
-	{{ .Symbol | ToUpper }} = {{ .ID }}
-{{- end}}
+	{{ .Handle | ToUpper }} = {{ .ID }}
 {{- end }}
 )
 
 var Coins = map[uint]Coin{
 {{- range .Coins }}
-{{- if .PreferedSymbol }}
-	{{ .PreferedSymbol }}: {
-{{- else }}
-	{{ .Symbol | ToUpper }}: {
-{{- end }}
+	{{ .Handle | ToUpper }}: {
 		ID:               {{.ID}},
 		Handle:           "{{.Handle}}",
 		Symbol:           "{{.Symbol}}",
-{{- if .PreferedSymbol }}
-		PreferedSymbol:   "{{.PreferedSymbol}}",
-{{- end }}
 		Name:             "{{.Name}}",
 		Decimals:         {{.Decimals}},
 		BlockTime:        {{.BlockTime}},
@@ -75,30 +63,18 @@ var Coins = map[uint]Coin{
 }
 
 {{- range .Coins }}
-func {{ .Handle.Capitalize }}() Coin {
-{{- if .PreferedSymbol }}
-	return Coins[{{ .PreferedSymbol }}]
-{{- else }}
-	return Coins[{{ .Symbol | ToUpper }}]
-{{- end}}
+func {{ .Handle | Capitalize }}() Coin {
+	return Coins[{{ .Handle | ToUpper }}]
 }
-
 {{- end }}
 
 `
 )
 
-type Handle string
-
-func (h Handle) Capitalize() string {
-	return strings.Title(string(h))
-}
-
 type Coin struct {
 	ID               uint   `yaml:"id"`
-	Handle           Handle `yaml:"handle"`
+	Handle           string `yaml:"handle"`
 	Symbol           string `yaml:"symbol"`
-	PreferedSymbol   string `yaml:"preferedSymbol,omitempty"`
 	Name             string `yaml:"name"`
 	Decimals         uint   `yaml:"decimals"`
 	BlockTime        int    `yaml:"blockTime"`
@@ -122,7 +98,8 @@ func main() {
 	defer f.Close()
 
 	funcMap := template.FuncMap{
-		"ToUpper": strings.ToUpper,
+		"Capitalize": strings.Title,
+		"ToUpper":    strings.ToUpper,
 	}
 
 	coinsTemplate := template.Must(template.New("").Funcs(funcMap).Parse(templateFile))

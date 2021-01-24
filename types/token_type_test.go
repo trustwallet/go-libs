@@ -17,22 +17,22 @@ func TestGetEthereumTokenTypeByIndex(t *testing.T) {
 	}{
 		{
 			"Ethereum ERC20",
-			args{coinIndex: coin.ETH},
+			args{coinIndex: coin.ETHEREUM},
 			ERC20,
 		},
 		{
 			"Ethereum Classic ETC20",
-			args{coinIndex: coin.ETC},
+			args{coinIndex: coin.CLASSIC},
 			ETC20,
 		},
 		{
 			"TomoChain TRC21",
-			args{coinIndex: coin.TOMO},
+			args{coinIndex: coin.TOMOCHAIN},
 			TRC21,
 		},
 		{
 			"WanChain WAN20",
-			args{coinIndex: coin.WAN},
+			args{coinIndex: coin.WANCHAIN},
 			WAN20,
 		},
 	}

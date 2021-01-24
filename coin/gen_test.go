@@ -20,7 +20,6 @@ type TestCoin struct {
 	ID               uint   `yaml:"id"`
 	Handle           string `yaml:"handle"`
 	Symbol           string `yaml:"symbol"`
-	PreferedSymbol   string `yaml:"preferedSymbol,omitempty"`
 	Name             string `yaml:"name"`
 	Decimals         uint   `yaml:"decimals"`
 	BlockTime        int    `yaml:"blockTime"`
@@ -71,12 +70,8 @@ func TestCoinFile(t *testing.T) {
 		s := strings.Title(want.Handle)
 		method := fmt.Sprintf("func %s() Coin", s)
 		assert.True(t, strings.Contains(code, method), "Coin method not found")
-		var enum string
-		if want.PreferedSymbol != "" {
-			enum = fmt.Sprintf("%s = %d", want.PreferedSymbol, want.ID)
-		} else {
-			enum = fmt.Sprintf("%s = %d", strings.ToUpper(want.Symbol), want.ID)
-		}
+
+		enum := fmt.Sprintf("%s = %d", strings.ToUpper(want.Handle), want.ID)
 		assert.True(t, strings.Contains(code, enum), "Coin enum not found")
 
 	}
@@ -92,5 +87,18 @@ func TestEthereum(t *testing.T) {
 	assert.Equal(t, "Ethereum", c.Name)
 	assert.Equal(t, uint(18), c.Decimals)
 	assert.Equal(t, 10000, c.BlockTime)
+	assert.Equal(t, int64(0), c.MinConfirmations)
+}
+
+func TestBinance(t *testing.T) {
+
+	c := Smartchain()
+
+	assert.Equal(t, uint(20000714), c.ID)
+	assert.Equal(t, "smartchain", c.Handle)
+	assert.Equal(t, "BNB", c.Symbol)
+	assert.Equal(t, "Smart Chain", c.Name)
+	assert.Equal(t, uint(18), c.Decimals)
+	assert.Equal(t, 3000, c.BlockTime)
 	assert.Equal(t, int64(0), c.MinConfirmations)
 }
