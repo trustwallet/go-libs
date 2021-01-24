@@ -70,6 +70,9 @@ func DecimalExp(dec string, exp int) string {
 // HexToDecimal converts a hexadecimal integer to a base-10 integer
 // "0x1fbad5f2e25570000" => "36582000000000000000"
 func HexToDecimal(hex string) (string, error) {
+	if len(hex) == 0 || hex == "0x" {
+		return "0", nil
+	}
 	var i big.Int
 	if _, ok := i.SetString(hex, 0); !ok {
 		return "", errors.New("invalid hex: " + hex)

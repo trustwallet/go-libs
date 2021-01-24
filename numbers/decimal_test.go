@@ -115,25 +115,40 @@ func TestCutZeroFractional(t *testing.T) {
 }
 
 func TestHexToDecimal(t *testing.T) {
-	type args struct {
-		hex string
-	}
 	tests := []struct {
 		name    string
-		args    args
+		hex     string
 		want    string
 		wantErr bool
 	}{
 		{
-			"Hex to decimal",
-			args{hex: "0x1fbad5f2e25570000"},
-			"36582000000000000000",
-			false,
+			name:    "Empty value",
+			hex:     "",
+			want:    "0",
+			wantErr: false,
+		},
+		{
+			name:    "Empty value 2",
+			hex:     "0x",
+			want:    "0",
+			wantErr: false,
+		},
+		{
+			name:    "Empty value 3",
+			hex:     "0x0",
+			want:    "0",
+			wantErr: false,
+		},
+		{
+			name:    "Hex to decimal",
+			hex:     "0x1fbad5f2e25570000",
+			want:    "36582000000000000000",
+			wantErr: false,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := HexToDecimal(tt.args.hex)
+			got, err := HexToDecimal(tt.hex)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("HexToDecimal() error = %v, wantErr %v", err, tt.wantErr)
 				return
