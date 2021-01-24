@@ -70,9 +70,9 @@ func EIP55ChecksumWanchain(address string) (string, error) {
 
 func ToEIP55ByCoinID(str string, coinID uint) (string, error) {
 	switch coinID {
-	case coin.ETH, coin.POA, coin.ETC, coin.TOMO, coin.CLO, coin.TT, coin.GO:
+	case coin.ETHEREUM, coin.POA, coin.CLASSIC, coin.TOMOCHAIN, coin.CALLISTO, coin.THUNDERTOKEN, coin.GOCHAIN:
 		return EIP55Checksum(str)
-	case coin.WAN:
+	case coin.WANCHAIN:
 		return EIP55ChecksumWanchain(str)
 	default:
 		return str, nil

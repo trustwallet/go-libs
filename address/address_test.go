@@ -101,18 +101,18 @@ func TestToEIP55ByCoinID(t *testing.T) {
 			name, address, expectedAddress string
 			coinID                         uint
 		}{
-			{"Ethereum", addr1, addr1EIP55, coin.ETH},
-			{"Ethereum Classic", addr1, addr1EIP55, coin.ETC},
+			{"Ethereum", addr1, addr1EIP55, coin.ETHEREUM},
+			{"Ethereum Classic", addr1, addr1EIP55, coin.CLASSIC},
 			{"POA", addr1, addr1EIP55, coin.POA},
-			{"Callisto", addr1, addr1EIP55, coin.CLO},
-			{"Tomochain", addr1, addr1EIP55, coin.TOMO},
-			{"Thunder", addr1, addr1EIP55, coin.TT},
-			{"Thunder", addr1, addr1EIP55, coin.TT},
-			{"GoChain", addr1, addr1EIP55, coin.GO},
-			{"Wanchain 1", wanAddrLowercase, wanAddrEIP55ChecksumWanchain, coin.WAN},
-			{"Wanchain 2", wanAddrEIP55Checksum, wanAddrEIP55ChecksumWanchain, coin.WAN},
-			{"Non Ethereum like chain 1", "", "", coin.TRX},
-			{"Non Ethereum like chain 2", addr1, addr1, coin.BNB},
+			{"Callisto", addr1, addr1EIP55, coin.CALLISTO},
+			{"Tomochain", addr1, addr1EIP55, coin.TOMOCHAIN},
+			{"Thunder", addr1, addr1EIP55, coin.THUNDERTOKEN},
+			{"Thunder", addr1, addr1EIP55, coin.THUNDERTOKEN},
+			{"GoChain", addr1, addr1EIP55, coin.GOCHAIN},
+			{"Wanchain 1", wanAddrLowercase, wanAddrEIP55ChecksumWanchain, coin.WANCHAIN},
+			{"Wanchain 2", wanAddrEIP55Checksum, wanAddrEIP55ChecksumWanchain, coin.WANCHAIN},
+			{"Non Ethereum like chain 1", "", "", coin.TRON},
+			{"Non Ethereum like chain 2", addr1, addr1, coin.BINANCE},
 		}
 	)
 
