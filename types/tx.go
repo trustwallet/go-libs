@@ -98,6 +98,8 @@ type (
 		Outputs []TxOutput `json:"outputs,omitempty"`
 		// Transaction Direction
 		Direction Direction `json:"direction,omitempty"`
+		// TokenTransfers
+		TokenTransfers []TokenTransfer `json:"token_transfers,omitempty"`
 		// Meta data object
 		Memo string      `json:"memo"`
 		Meta interface{} `json:"metadata"`
