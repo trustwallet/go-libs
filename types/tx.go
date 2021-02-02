@@ -238,6 +238,16 @@ func (txs Txs) FilterTransactionsByType(types []TransactionType) Txs {
 	return result
 }
 
+func (txs Txs) FilterTransactionsByTokenTransfersInContract() Txs {
+	result := make(Txs, 0)
+	for _, tx := range txs {
+		if tx.Type == TxContractCall && len(tx.TokenTransfers) > 0 {
+			result = append(result, tx)
+		}
+	}
+	return result
+}
+
 func AllowMemo(memo string) bool {
 	// only allows numeric values
 	_, err := strconv.ParseFloat(memo, 64)
