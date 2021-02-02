@@ -1,11 +1,11 @@
 GOBASE := $(shell pwd)
 GOBIN := $(GOBASE)/bin
 
-test: test-networks
+test: test-network
 	go test -v ./...
 
-test-networks:
-	cd ./networks; \
+test-network:
+	cd ./network; \
 	go test -v ./...; \
 
 generate-coins:
