@@ -80,15 +80,15 @@ func TestRequest_GetURL(t *testing.T) {
 		},
 		{
 			name:    "Test query2",
-			baseUrl: "https://s2.ripple.com:51234",
-			path:    "ledgers/12345",
+			baseUrl: "https://data.ripple.com/v2",
+			path:    "ledgers/61330266",
 			query: url.Values{
 				"transactions": {"true"},
 				"binary":       {"false"},
 				"expand":       {"true"},
 				"limit":        {"100"},
 			},
-			want: "https://s2.ripple.com:51234/ledgers/12345?binary=false&expand=true&limit=100&transactions=true",
+			want: "https://data.ripple.com/v2/ledgers/61330266?binary=false&expand=true&limit=100&transactions=true",
 		},
 	}
 	for _, tt := range tests {
