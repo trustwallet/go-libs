@@ -61,20 +61,12 @@ func (r *Request) AddHeader(key string, value string) {
 }
 
 func (r *Request) GetWithContext(result interface{}, path string, query url.Values, ctx context.Context) error {
-	var queryStr = ""
-	if query != nil {
-		queryStr = query.Encode()
-	}
-	uri := strings.Join([]string{r.GetBase(path), queryStr}, "?")
+	uri := r.GetURL(path, query)
 	return r.Execute("GET", uri, nil, result, ctx)
 }
 
 func (r *Request) Get(result interface{}, path string, query url.Values) error {
-	var queryStr = ""
-	if query != nil {
-		queryStr = query.Encode()
-	}
-	uri := strings.Join([]string{r.GetBase(path), queryStr}, "?")
+	uri := r.GetURL(path, query)
 	return r.Execute("GET", uri, nil, result, context.Background())
 }
 
@@ -141,6 +133,15 @@ func (r *Request) GetBase(path string) string {
 	}
 	path = strings.TrimLeft(path, "/")
 	return fmt.Sprintf("%s/%s", baseUrl, path)
+}
+
+func (r *Request) GetURL(path string, query url.Values) string {
+	baseUrl := r.GetBase(path)
+	if query == nil {
+		return baseUrl
+	}
+	queryStr := query.Encode()
+	return fmt.Sprintf("%s?%s", baseUrl, queryStr)
 }
 
 func GetBody(body interface{}) (buf io.ReadWriter, err error) {
