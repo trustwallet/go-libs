@@ -13,8 +13,7 @@ func TestRequest_GetBase(t *testing.T) {
 		want    string
 	}{
 		{
-			name: "Test base url ends with /, path starts with /",
-
+			name:    "Test base url ends with /, path starts with /",
 			baseUrl: "https://api.example.com/",
 			path:    "/v1/account/0x32Be343B94f860124dC4fEe278FDCBD38C102D88",
 			want:    "https://api.example.com/v1/account/0x32Be343B94f860124dC4fEe278FDCBD38C102D88",
@@ -22,33 +21,26 @@ func TestRequest_GetBase(t *testing.T) {
 		{
 			name:    "Test only base url ends with /",
 			baseUrl: "https://api.example.com/",
-
-			path: "v1/account/0x32Be343B94f860124dC4fEe278FDCBD38C102D88",
-			want: "https://api.example.com/v1/account/0x32Be343B94f860124dC4fEe278FDCBD38C102D88",
+			path:    "v1/account/0x32Be343B94f860124dC4fEe278FDCBD38C102D88",
+			want:    "https://api.example.com/v1/account/0x32Be343B94f860124dC4fEe278FDCBD38C102D88",
 		},
 		{
-			name: "Test only path starts with /",
-
+			name:    "Test only path starts with /",
 			baseUrl: "https://api.example.com",
-
-			path: "/v1/account/0x32Be343B94f860124dC4fEe278FDCBD38C102D88",
-			want: "https://api.example.com/v1/account/0x32Be343B94f860124dC4fEe278FDCBD38C102D88",
+			path:    "/v1/account/0x32Be343B94f860124dC4fEe278FDCBD38C102D88",
+			want:    "https://api.example.com/v1/account/0x32Be343B94f860124dC4fEe278FDCBD38C102D88",
 		},
 		{
-			name: "Test none /",
-
+			name:    "Test none /",
 			baseUrl: "https://api.example.com",
-
-			path: "v1/account/0x32Be343B94f860124dC4fEe278FDCBD38C102D88",
-			want: "https://api.example.com/v1/account/0x32Be343B94f860124dC4fEe278FDCBD38C102D88",
+			path:    "v1/account/0x32Be343B94f860124dC4fEe278FDCBD38C102D88",
+			want:    "https://api.example.com/v1/account/0x32Be343B94f860124dC4fEe278FDCBD38C102D88",
 		},
 		{
-			name: "Test empty path",
-
+			name:    "Test empty path",
 			baseUrl: "https://api.example.com/",
-
-			path: "",
-			want: "https://api.example.com",
+			path:    "",
+			want:    "https://api.example.com",
 		},
 	}
 	for _, tt := range tests {
