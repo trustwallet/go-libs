@@ -439,7 +439,7 @@ func TestTx_GetTransactionDirection(t *testing.T) {
 		Block:    9742705,
 		Status:   "completed",
 		Sequence: 149,
-		Type:     "token_transfer",
+		Type:     TxNativeTokenTransfer,
 		Meta:     txMeta,
 	}
 
@@ -467,7 +467,7 @@ func TestTxs_FilterUniqueID(t *testing.T) {
 		Block:    9742705,
 		Status:   "completed",
 		Sequence: 149,
-		Type:     "token_transfer",
+		Type:     TxNativeTokenTransfer,
 	}
 	tx2 := Tx{
 		ID:       "0xbcd1a43e796de4035e5e2991d8db332958e36031d54cb1d3a08d2cb790e338c4",
@@ -479,7 +479,7 @@ func TestTxs_FilterUniqueID(t *testing.T) {
 		Block:    9742705,
 		Status:   "completed",
 		Sequence: 149,
-		Type:     "token_transfer",
+		Type:     TxNativeTokenTransfer,
 	}
 
 	txs := make([]Tx, 0)
@@ -504,7 +504,7 @@ func TestTxs_SortByDate(t *testing.T) {
 		Block:    9742705,
 		Status:   "completed",
 		Sequence: 149,
-		Type:     "token_transfer",
+		Type:     TxNativeTokenTransfer,
 	}
 	tx2 := Tx{
 		ID:       "0xbcd1a43e796de4035e5e2991d8db332958e36031d54cb1d3a08d2cb790e338c5",
@@ -516,7 +516,7 @@ func TestTxs_SortByDate(t *testing.T) {
 		Block:    9742705,
 		Status:   "completed",
 		Sequence: 149,
-		Type:     "token_transfer",
+		Type:     TxNativeTokenTransfer,
 	}
 	tx3 := Tx{
 		ID:       "0xbcd1a43e796de4035e5e2991d8db332958e36031d54cb1d3a08d2cb790e338c6",
@@ -528,7 +528,7 @@ func TestTxs_SortByDate(t *testing.T) {
 		Block:    9742705,
 		Status:   "completed",
 		Sequence: 149,
-		Type:     "token_transfer",
+		Type:     TxNativeTokenTransfer,
 	}
 
 	txs := make([]Tx, 0)
@@ -758,13 +758,13 @@ func TestTxs_FilterTransactionsByType(t *testing.T) {
 			Txs{
 				Tx{Type: TxTransfer},
 				Tx{Type: TxContractCall},
-				Tx{Type: TxTokenTransfer},
+				Tx{Type: TxNativeTokenTransfer},
 			},
 			args{
-				[]TransactionType{TxTokenTransfer},
+				[]TransactionType{TxNativeTokenTransfer},
 			},
 			Txs{
-				Tx{Type: TxTokenTransfer},
+				Tx{Type: TxNativeTokenTransfer},
 			},
 		},
 	}
