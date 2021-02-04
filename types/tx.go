@@ -21,7 +21,8 @@ const (
 	DirectionSelf     Direction = "yourself"
 
 	TxTransfer              TransactionType = "transfer"
-	TxTokenTransfer         TransactionType = "native_token_transfer"
+	TxNativeTokenTransfer   TransactionType = "native_token_transfer"
+	TxTokenTransfer         TransactionType = "token_transfer"
 	TxCollectibleTransfer   TransactionType = "collectible_transfer"
 	TxTokenSwap             TransactionType = "token_swap"
 	TxContractCall          TransactionType = "contract_call"
