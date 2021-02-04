@@ -21,8 +21,7 @@ const (
 	DirectionSelf     Direction = "yourself"
 
 	TxTransfer              TransactionType = "transfer"
-	TxNativeTokenTransfer   TransactionType = "native_token_transfer"
-	TxTokenTransfer         TransactionType = "token_transfer"
+	TxTokenTransfer         TransactionType = "native_token_transfer"
 	TxCollectibleTransfer   TransactionType = "collectible_transfer"
 	TxTokenSwap             TransactionType = "token_swap"
 	TxContractCall          TransactionType = "contract_call"
@@ -117,20 +116,7 @@ type (
 		Decimals uint   `json:"decimals"`
 	}
 
-	// NativeTokenTransfer describes the transfer of native tokens.
-	// Example: Stellar Tokens, TRC10
-	NativeTokenTransfer struct {
-		Name     string `json:"name"`
-		Symbol   string `json:"symbol"`
-		TokenID  string `json:"token_id"`
-		Decimals uint   `json:"decimals"`
-		Value    Amount `json:"value"`
-		From     string `json:"from"`
-		To       string `json:"to"`
-	}
-
 	// TokenTransfer describes the transfer of non-native tokens.
-	// Examples: ERC-20, TRC20
 	TokenTransfer struct {
 		Name     string `json:"name"`
 		Symbol   string `json:"symbol"`
@@ -256,14 +242,6 @@ func (txs TxPage) FilterTransactionsByToken(token string) TxPage {
 			if strings.EqualFold(tx.Meta.(*TokenTransfer).TokenID, token) {
 				result = append(result, tx)
 			}
-		case NativeTokenTransfer:
-			if strings.EqualFold(tx.Meta.(NativeTokenTransfer).TokenID, token) {
-				result = append(result, tx)
-			}
-		case *NativeTokenTransfer:
-			if strings.EqualFold(tx.Meta.(*NativeTokenTransfer).TokenID, token) {
-				result = append(result, tx)
-			}
 		case AnyAction:
 			if strings.EqualFold(tx.Meta.(AnyAction).TokenID, token) {
 				result = append(result, tx)
@@ -303,10 +281,6 @@ func (t *Tx) GetAddresses() []string {
 	switch t.Meta.(type) {
 	case Transfer, *Transfer, CollectibleTransfer, *CollectibleTransfer, ContractCall, *ContractCall, AnyAction, *AnyAction, MultiCurrencyTransfer, *MultiCurrencyTransfer:
 		return append(addresses, t.From, t.To)
-	case NativeTokenTransfer:
-		return append(addresses, t.Meta.(NativeTokenTransfer).From, t.Meta.(NativeTokenTransfer).To)
-	case *NativeTokenTransfer:
-		return append(addresses, t.Meta.(*NativeTokenTransfer).From, t.Meta.(*NativeTokenTransfer).To)
 	case TokenTransfer:
 		return append(addresses, t.Meta.(TokenTransfer).From, t.Meta.(TokenTransfer).To)
 	case *TokenTransfer:
@@ -331,10 +305,8 @@ func (t *Tx) TokenID() (string, bool) {
 	switch t.Meta.(type) {
 	case Transfer, *Transfer, CollectibleTransfer, *CollectibleTransfer, ContractCall, *ContractCall, MultiCurrencyTransfer, *MultiCurrencyTransfer:
 		return "", false
-	case NativeTokenTransfer:
-		tokenID = t.Meta.(NativeTokenTransfer).TokenID
-	case *NativeTokenTransfer:
-		tokenID = t.Meta.(*NativeTokenTransfer).TokenID
+	case *TokenTransfer:
+		tokenID = t.Meta.(*TokenTransfer).TokenID
 	case TokenTransfer:
 		tokenID = t.Meta.(TokenTransfer).TokenID
 	case AnyAction:
@@ -358,11 +330,7 @@ func (t *Tx) GetTransactionDirection(address string) Direction {
 	switch meta := t.Meta.(type) {
 	case *TokenTransfer:
 		return determineTransactionDirection(address, meta.From, meta.To)
-	case *NativeTokenTransfer:
-		return determineTransactionDirection(address, meta.From, meta.To)
 	case TokenTransfer:
-		return determineTransactionDirection(address, meta.From, meta.To)
-	case NativeTokenTransfer:
 		return determineTransactionDirection(address, meta.From, meta.To)
 	default:
 		return determineTransactionDirection(address, t.From, t.To)

@@ -40,7 +40,7 @@ var (
 		Block:  7928667,
 		Status: StatusCompleted,
 		Memo:   "test",
-		Meta: NativeTokenTransfer{
+		Meta: TokenTransfer{
 			TokenID:  "YLC-D8B",
 			Symbol:   "YLC",
 			Value:    "210572645",
@@ -208,7 +208,7 @@ func Test_getDirection(t *testing.T) {
 		{"Test NativeTokenTransfer Direction Self",
 			args{
 				Tx{
-					Meta: &NativeTokenTransfer{
+					Meta: &TokenTransfer{
 						From: "0x5574Cd97432cEd0D7Caf58ac3c4fEDB2061C98fB",
 						To:   "0x5574Cd97432cEd0D7Caf58ac3c4fEDB2061C98fB",
 					},
@@ -218,7 +218,7 @@ func Test_getDirection(t *testing.T) {
 		{"Test NativeTokenTransfer Direction Outgoing",
 			args{
 				Tx{
-					Meta: &NativeTokenTransfer{
+					Meta: &TokenTransfer{
 						From: "0x5574Cd97432cEd0D7Caf58ac3c4fEDB2061C98fB",
 						To:   "0x74c8199372c584DAB8b14c519bc8BC8C622F37b7",
 					},
@@ -228,7 +228,7 @@ func Test_getDirection(t *testing.T) {
 		{"Test NativeTokenTransfer Direction Incoming",
 			args{
 				Tx{
-					Meta: &NativeTokenTransfer{
+					Meta: &TokenTransfer{
 						From: "0x74c8199372c584DAB8b14c519bc8BC8C622F37b7",
 						To:   "0x5574Cd97432cEd0D7Caf58ac3c4fEDB2061C98fB",
 					},
@@ -553,7 +553,7 @@ func TestTx_TokenID(t *testing.T) {
 		Coin: 60,
 		From: "A",
 		To:   "B",
-		Meta: NativeTokenTransfer{
+		Meta: TokenTransfer{
 			TokenID: "ABC",
 			From:    "A",
 			To:      "C",
@@ -758,14 +758,12 @@ func TestTxs_FilterTransactionsByType(t *testing.T) {
 			Txs{
 				Tx{Type: TxTransfer},
 				Tx{Type: TxContractCall},
-				Tx{Type: TxNativeTokenTransfer},
 				Tx{Type: TxTokenTransfer},
 			},
 			args{
-				[]TransactionType{TxNativeTokenTransfer, TxTokenTransfer},
+				[]TransactionType{TxTokenTransfer},
 			},
 			Txs{
-				Tx{Type: TxNativeTokenTransfer},
 				Tx{Type: TxTokenTransfer},
 			},
 		},
