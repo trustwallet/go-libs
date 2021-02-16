@@ -2,7 +2,7 @@ package client
 
 import (
 	"encoding/json"
-	"errors"
+	"fmt"
 )
 
 var (
@@ -45,7 +45,7 @@ func (r *Request) RpcCall(result interface{}, method string, params interface{})
 		return err
 	}
 	if resp.Error != nil {
-		return errors.New("RPC Call error")
+		return resp.Error
 	}
 	return resp.GetObject(result)
 }
@@ -59,12 +59,8 @@ func (r *Request) RpcBatchCall(requests RpcRequests) ([]RpcResponse, error) {
 	return resp, nil
 }
 
-func (rs RpcRequests) fillDefaultValues() RpcRequests {
-	for _, r := range rs {
-		r.JsonRpc = JsonRpcVersion
-		r.Id = genId()
-	}
-	return rs
+func (e *RpcError) Error() string {
+	return fmt.Sprintf("%s (%d)", e.Message, e.Code)
 }
 
 func (r *RpcResponse) GetObject(toType interface{}) error {
@@ -78,6 +74,14 @@ func (r *RpcResponse) GetObject(toType interface{}) error {
 		return err
 	}
 	return nil
+}
+
+func (rs RpcRequests) fillDefaultValues() RpcRequests {
+	for _, r := range rs {
+		r.JsonRpc = JsonRpcVersion
+		r.Id = genId()
+	}
+	return rs
 }
 
 func genId() int64 {
