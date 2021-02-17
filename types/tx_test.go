@@ -659,7 +659,7 @@ var (
 )
 
 func Test_filterTransactionsByToken(t *testing.T) {
-	var p TxPage
+	var p Txs
 	assert.Nil(t, json.Unmarshal([]byte(beforeTransactionsToken), &p))
 	result := p.FilterTransactionsByToken("BUSD-BD1")
 	rawResult, err := json.Marshal(result)
@@ -701,20 +701,20 @@ func Test_AllowMemo(t *testing.T) {
 	}
 }
 
-func TestTxPage_FilterTransactionsByMemo(t *testing.T) {
+func TestTxs_FilterTransactionsByMemo(t *testing.T) {
 	tests := []struct {
 		name string
-		txs  TxPage
-		want TxPage
+		txs  Txs
+		want Txs
 	}{
 		{
 			name: "Allow memo",
-			txs: TxPage{
+			txs: Txs{
 				{
 					Memo: "123",
 				},
 			},
-			want: TxPage{
+			want: Txs{
 				{
 					Memo: "123",
 				},
@@ -722,12 +722,12 @@ func TestTxPage_FilterTransactionsByMemo(t *testing.T) {
 		},
 		{
 			name: "Disallow memo",
-			txs: TxPage{
+			txs: Txs{
 				{
 					Memo: "test",
 				},
 			},
-			want: TxPage{
+			want: Txs{
 				{
 					Memo: "",
 				},
