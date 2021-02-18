@@ -201,10 +201,14 @@ type (
 	Txs []Tx
 )
 
-func EmptyTxPage() TxPage {
+var (
+	EmptyTxPage = TxPage{Total: 0, Docs: Txs{}, Status: true}
+)
+
+func NewTxPage(txs Txs) TxPage {
 	return TxPage{
-		Total:  0,
-		Docs:   Txs{},
+		Total:  len(txs),
+		Docs:   txs,
 		Status: true,
 	}
 }
