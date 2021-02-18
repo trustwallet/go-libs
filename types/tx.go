@@ -201,6 +201,14 @@ type (
 	Txs []Tx
 )
 
+func EmptyTxPage() TxPage {
+	return TxPage{
+		Total:  0,
+		Docs:   Txs{},
+		Status: true,
+	}
+}
+
 func (t Token) AssetId() string {
 	return asset.BuildID(t.Coin, t.TokenID)
 }
