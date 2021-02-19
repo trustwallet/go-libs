@@ -120,14 +120,6 @@ func (txs Txs) Len() int           { return len(txs) }
 func (txs Txs) Less(i, j int) bool { return txs[i].Date > txs[j].Date }
 func (txs Txs) Swap(i, j int)      { txs[i], txs[j] = txs[j], txs[i] }
 
-// make sure not return null
-func (r *TxPage) MarshalJSON() ([]byte, error) {
-	if r.Docs == nil {
-		r.Docs = make(Txs, 0)
-	}
-	return json.Marshal(r)
-}
-
 // MarshalJSON returns a wrapped list of collections in JSON
 func (r CollectionPage) MarshalJSON() ([]byte, error) {
 	var page struct {

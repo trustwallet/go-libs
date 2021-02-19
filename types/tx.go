@@ -206,6 +206,9 @@ var (
 )
 
 func NewTxPage(txs Txs) TxPage {
+	if txs == nil {
+		txs = Txs{}
+	}
 	return TxPage{
 		Total:  len(txs),
 		Docs:   txs,
