@@ -61,9 +61,11 @@ type (
 		Txs    []Tx  `json:"txs"`
 	}
 
-	// TxPage is a page of transactions
-	TxPage []Tx
-
+	TxPage struct {
+		Total  int  `json:"total"`
+		Docs   []Tx `json:"docs"`
+		Status bool `json:"status"`
+	}
 	// Amount is a positive decimal integer string.
 	// It is written in the smallest possible unit (e.g. Wei, Satoshis)
 	Amount string
@@ -199,6 +201,21 @@ type (
 	Txs []Tx
 )
 
+var (
+	EmptyTxPage = TxPage{Total: 0, Docs: Txs{}, Status: true}
+)
+
+func NewTxPage(txs Txs) TxPage {
+	if txs == nil {
+		txs = Txs{}
+	}
+	return TxPage{
+		Total:  len(txs),
+		Docs:   txs,
+		Status: true,
+	}
+}
+
 func (t Token) AssetId() string {
 	return asset.BuildID(t.Coin, t.TokenID)
 }
@@ -215,8 +232,8 @@ func (txs Txs) FilterUniqueID() Txs {
 	return list
 }
 
-func (txs TxPage) FilterTransactionsByMemo() TxPage {
-	result := make(TxPage, 0)
+func (txs Txs) FilterTransactionsByMemo() Txs {
+	result := make(Txs, 0)
 	for _, tx := range txs {
 		if !AllowMemo(tx.Memo) {
 			tx.Memo = ""
@@ -244,8 +261,8 @@ func AllowMemo(memo string) bool {
 	return err == nil
 }
 
-func (txs TxPage) FilterTransactionsByToken(token string) TxPage {
-	result := make(TxPage, 0)
+func (txs Txs) FilterTransactionsByToken(token string) Txs {
+	result := make(Txs, 0)
 	for _, tx := range txs {
 		switch tx.Meta.(type) {
 		case TokenTransfer:

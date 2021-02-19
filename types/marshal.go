@@ -116,25 +116,9 @@ func (a *Amount) MarshalJSON() ([]byte, error) {
 }
 
 // Sort sorts the response by date, descending
-func (txs TxPage) Len() int           { return len(txs) }
-func (txs TxPage) Less(i, j int) bool { return txs[i].Date > txs[j].Date }
-func (txs TxPage) Swap(i, j int)      { txs[i], txs[j] = txs[j], txs[i] }
-
-// MarshalJSON returns a wrapped list of transactions in JSON
-func (r *TxPage) MarshalJSON() ([]byte, error) {
-	var page struct {
-		Total  int  `json:"total"`
-		Docs   []Tx `json:"docs"`
-		Status bool `json:"status"`
-	}
-	page.Docs = *r
-	if page.Docs == nil {
-		page.Docs = make([]Tx, 0)
-	}
-	page.Total = len(page.Docs)
-	page.Status = true
-	return json.Marshal(page)
-}
+func (txs Txs) Len() int           { return len(txs) }
+func (txs Txs) Less(i, j int) bool { return txs[i].Date > txs[j].Date }
+func (txs Txs) Swap(i, j int)      { txs[i], txs[j] = txs[j], txs[i] }
 
 // MarshalJSON returns a wrapped list of collections in JSON
 func (r CollectionPage) MarshalJSON() ([]byte, error) {
