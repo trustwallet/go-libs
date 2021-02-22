@@ -9,7 +9,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
-	"strconv"
 	"strings"
 	"time"
 )
@@ -19,6 +18,16 @@ type Request struct {
 	Headers          map[string]string
 	HttpClient       *http.Client
 	HttpErrorHandler HttpErrorHandler
+}
+
+type HttpError struct {
+	StatusCode int
+	URL        url.URL
+	Body       []byte
+}
+
+func (e *HttpError) Error() string {
+	return fmt.Sprintf("Failed request status %d for url: (%s)", e.StatusCode, e.URL.RequestURI())
 }
 
 type HttpErrorHandler func(res *http.Response, uri string) error
@@ -111,7 +120,13 @@ func (r *Request) Execute(method string, url string, body io.Reader, result inte
 	}
 
 	if res.StatusCode < http.StatusOK || res.StatusCode >= http.StatusBadRequest {
-		return fmt.Errorf("failed request status: %s for url: %s", strconv.Itoa(res.StatusCode), res.Request.RequestURI)
+		defer res.Body.Close()
+		body, _ := ioutil.ReadAll(res.Body)
+		return &HttpError{
+			StatusCode: res.StatusCode,
+			URL:        *res.Request.URL,
+			Body:       body,
+		}
 	}
 
 	defer res.Body.Close()
