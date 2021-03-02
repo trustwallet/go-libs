@@ -7,15 +7,15 @@ import (
 )
 
 func GetImageURL(endpoint, asset string) string {
-	c, tokenId, err := ParseID(asset)
+	coinId, tokenId, err := ParseID(asset)
 	if err != nil {
 		return ""
 	}
-	if cc, ok := coin.Coins[c]; ok {
+	if c, ok := coin.Coins[coinId]; ok {
 		if len(tokenId) > 0 {
-			return fmt.Sprintf("%s/blockchains/%s/assets/%s/logo.png", endpoint, cc.Handle, tokenId)
+			return fmt.Sprintf("%s/blockchains/%s/assets/%s/logo.png", endpoint, c.Handle, tokenId)
 		}
-		return fmt.Sprintf("%s/blockchains/%s/info/logo.png", endpoint, cc.Handle)
+		return fmt.Sprintf("%s/blockchains/%s/info/logo.png", endpoint, c.Handle)
 	}
 	return ""
 }
