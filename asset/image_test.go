@@ -28,6 +28,14 @@ func TestGetImageURL(t *testing.T) {
 			},
 			"https://assets.com/blockchains/ethereum/assets/123/logo.png",
 		},
+		{
+			"Test invalid coin",
+			args{
+				endpoint: "https://assets.com",
+				asset:    "c123",
+			},
+			"",
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
