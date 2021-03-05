@@ -29,6 +29,7 @@ type (
 		Coin            uint   `json:"coin"`
 		Name            string `json:"name"`
 		Version         string `json:"nft_version"`
+		TransferFee     string `json:"transfer_fee,omitempty"`
 	}
 
 	CollectiblePage []Collectible
