@@ -1,5 +1,14 @@
 package types
 
+var (
+	ExtensionMimetypes = map[string]string{
+		"png":  "image/png",
+		"jpg":  "image/jpg",
+		"jpeg": "image/jpg",
+		"gif":  "image/gif",
+	}
+)
+
 type (
 	Collection struct {
 		Id           string `json:"id"`
@@ -20,7 +29,7 @@ type (
 		Amount string `json:"amount"`
 	}
 
-	CollectibleMediaURL struct {
+	CollectibleMedia struct {
 		Mimetype string `json:"mimetype"`
 		URL      string `json:"url"`
 	}
@@ -40,8 +49,8 @@ type (
 		Name              string                  `json:"name"`
 		Version           string                  `json:"nft_version"`
 		TransferFee       *CollectibleTransferFee `json:"transfer_fee,omitempty"`
-		OriginalSourceURL CollectibleMediaURL     `json:"original_source_url"`
-		PreviewImageURL   CollectibleMediaURL     `json:"preview_image_url"`
+		PreviewImageURL   *CollectibleMedia       `json:"preview_image_url,omitempty"`
+		OriginalSourceURL CollectibleMedia        `json:"original_source_url"`
 	}
 
 	CollectiblePage []Collectible
