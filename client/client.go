@@ -36,6 +36,15 @@ func (r *Request) SetTimeout(seconds time.Duration) {
 	r.HttpClient.Timeout = time.Second * seconds
 }
 
+func (r *Request) SetProxy(proxyUrl string) error {
+	url, err := url.Parse(proxyUrl)
+	if err != nil {
+		return err
+	}
+	r.HttpClient.Transport = &http.Transport{Proxy: http.ProxyURL(url)}
+	return nil
+}
+
 func InitClient(baseUrl string, errorHandler HttpErrorHandler) Request {
 	if errorHandler == nil {
 		errorHandler = DefaultErrorHandler
