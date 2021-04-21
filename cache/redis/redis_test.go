@@ -105,7 +105,7 @@ func redisInit(t *testing.T) (*Redis, error) {
 	assert.NotNil(t, mr)
 	assert.Nil(t, err)
 
-	c, err := Init(fmt.Sprintf("redis://%s", mr.Addr()), time.Minute)
+	c, err := Init(fmt.Sprintf("redis://%s", mr.Addr()))
 	assert.Nil(t, err)
 	assert.NotNil(t, c)
 
