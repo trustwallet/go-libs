@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -37,6 +38,9 @@ func (r *Request) SetTimeout(seconds time.Duration) {
 }
 
 func (r *Request) SetProxy(proxyUrl string) error {
+	if len(proxyUrl) == 0 {
+		return errors.New("empty proxy url")
+	}
 	url, err := url.Parse(proxyUrl)
 	if err != nil {
 		return err
