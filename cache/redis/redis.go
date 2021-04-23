@@ -63,7 +63,12 @@ func (r *Redis) MGet(ctx context.Context, key ...string) ([][]byte, error) {
 }
 
 func (r *Redis) Set(ctx context.Context, key string, value interface{}, expiration time.Duration) error {
-	cmd := r.client.Set(ctx, key, value, expiration)
+	data, err := json.Marshal(value)
+	if err != nil {
+		return err
+	}
+
+	cmd := r.client.Set(ctx, key, data, expiration)
 	if cmd.Err() != nil {
 		return cmd.Err()
 	}
