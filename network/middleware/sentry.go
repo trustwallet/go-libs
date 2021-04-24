@@ -18,6 +18,7 @@ func SetupSentry(dsn string) error {
 	if err != nil {
 		return err
 	}
+	hook.Timeout = 0
 	hook.StacktraceConfiguration.Enable = true
 	hook.StacktraceConfiguration.IncludeErrorBreadcrumb = true
 	hook.StacktraceConfiguration.Context = 10
