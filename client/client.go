@@ -4,9 +4,11 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"net/url"
 	"strings"
@@ -32,24 +34,32 @@ func (e *HttpError) Error() string {
 
 type HttpErrorHandler func(res *http.Response, uri string) error
 
-func (r *Request) SetTimeout(seconds time.Duration) {
-	r.HttpClient.Timeout = time.Second * seconds
-}
+type Option func(request *Request) error
 
-func InitClient(baseUrl string, errorHandler HttpErrorHandler) Request {
+func InitClient(baseUrl string, errorHandler HttpErrorHandler, options ...Option) Request {
 	if errorHandler == nil {
 		errorHandler = DefaultErrorHandler
 	}
-	return Request{
+
+	client := Request{
 		Headers:          make(map[string]string),
 		HttpClient:       DefaultClient,
 		HttpErrorHandler: errorHandler,
 		BaseUrl:          baseUrl,
 	}
+
+	for _, option := range options {
+		err := option(&client)
+		if err != nil {
+			log.Fatal("Could not initialize http client", err)
+		}
+	}
+
+	return client
 }
 
-func InitJSONClient(baseUrl string, errorHandler HttpErrorHandler) Request {
-	client := InitClient(baseUrl, errorHandler)
+func InitJSONClient(baseUrl string, errorHandler HttpErrorHandler, options ...Option) Request {
+	client := InitClient(baseUrl, errorHandler, options...)
 	client.Headers = map[string]string{
 		"Content-Type": "application/json",
 		"Accept":       "application/json",
@@ -62,6 +72,45 @@ var DefaultClient = &http.Client{
 }
 
 var DefaultErrorHandler = func(res *http.Response, uri string) error {
+	return nil
+}
+
+func TimeoutOption(seconds time.Duration) Option {
+	return func(request *Request) error {
+		request.SetTimeout(seconds)
+
+		return nil
+	}
+}
+
+func ProxyOption(proxyURL string) Option {
+	return func(request *Request) error {
+		if len(proxyURL) == 0 {
+			return nil
+		}
+
+		err := request.SetProxy(proxyURL)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	}
+}
+
+func (r *Request) SetTimeout(seconds time.Duration) {
+	r.HttpClient.Timeout = time.Second * seconds
+}
+
+func (r *Request) SetProxy(proxyUrl string) error {
+	if len(proxyUrl) == 0 {
+		return errors.New("empty proxy url")
+	}
+	url, err := url.Parse(proxyUrl)
+	if err != nil {
+		return err
+	}
+	r.HttpClient.Transport = &http.Transport{Proxy: http.ProxyURL(url)}
 	return nil
 }
 
