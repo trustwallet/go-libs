@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"net/url"
 	"strings"
@@ -33,6 +34,66 @@ func (e *HttpError) Error() string {
 
 type HttpErrorHandler func(res *http.Response, uri string) error
 
+type Option func(request *Request) error
+
+func InitClient(baseUrl string, errorHandler HttpErrorHandler, options ...Option) Request {
+	if errorHandler == nil {
+		errorHandler = DefaultErrorHandler
+	}
+
+	client := Request{
+		Headers:          make(map[string]string),
+		HttpClient:       DefaultClient,
+		HttpErrorHandler: errorHandler,
+		BaseUrl:          baseUrl,
+	}
+
+	for _, option := range options {
+		err := option(&client)
+		if err != nil {
+			log.Fatal("Could not initialize http client", err)
+		}
+	}
+
+	return client
+}
+
+func InitJSONClient(baseUrl string, errorHandler HttpErrorHandler, options ...Option) Request {
+	client := InitClient(baseUrl, errorHandler, options...)
+	client.Headers = map[string]string{
+		"Content-Type": "application/json",
+		"Accept":       "application/json",
+	}
+	return client
+}
+
+var DefaultClient = &http.Client{
+	Timeout: time.Second * 15,
+}
+
+var DefaultErrorHandler = func(res *http.Response, uri string) error {
+	return nil
+}
+
+func Timeout(seconds time.Duration) Option {
+	return func(request *Request) error {
+		request.SetTimeout(seconds)
+
+		return nil
+	}
+}
+
+func ProxyOpt(proxyURL string) Option {
+	return func(request *Request) error {
+		err := request.SetProxy(proxyURL)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	}
+}
+
 func (r *Request) SetTimeout(seconds time.Duration) {
 	r.HttpClient.Timeout = time.Second * seconds
 }
@@ -46,35 +107,6 @@ func (r *Request) SetProxy(proxyUrl string) error {
 		return err
 	}
 	r.HttpClient.Transport = &http.Transport{Proxy: http.ProxyURL(url)}
-	return nil
-}
-
-func InitClient(baseUrl string, errorHandler HttpErrorHandler) Request {
-	if errorHandler == nil {
-		errorHandler = DefaultErrorHandler
-	}
-	return Request{
-		Headers:          make(map[string]string),
-		HttpClient:       DefaultClient,
-		HttpErrorHandler: errorHandler,
-		BaseUrl:          baseUrl,
-	}
-}
-
-func InitJSONClient(baseUrl string, errorHandler HttpErrorHandler) Request {
-	client := InitClient(baseUrl, errorHandler)
-	client.Headers = map[string]string{
-		"Content-Type": "application/json",
-		"Accept":       "application/json",
-	}
-	return client
-}
-
-var DefaultClient = &http.Client{
-	Timeout: time.Second * 15,
-}
-
-var DefaultErrorHandler = func(res *http.Response, uri string) error {
 	return nil
 }
 
