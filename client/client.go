@@ -85,6 +85,10 @@ func Timeout(seconds time.Duration) Option {
 
 func ProxyOpt(proxyURL string) Option {
 	return func(request *Request) error {
+		if len(proxyURL) == 0 {
+			return nil
+		}
+
 		err := request.SetProxy(proxyURL)
 		if err != nil {
 			return err
