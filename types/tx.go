@@ -28,6 +28,8 @@ const (
 	TxContractCall          TransactionType = "contract_call"
 	TxAnyAction             TransactionType = "any_action"
 	TxMultiCurrencyTransfer TransactionType = "multi_currency_transfer"
+	TxDelegation            TransactionType = "delegation"
+	TxUndelegation          TransactionType = "undelegation"
 
 	KeyPlaceOrder        KeyType = "place_order"
 	KeyCancelOrder       KeyType = "cancel_order"
@@ -103,8 +105,8 @@ type (
 		// TokenTransfers
 		TokenTransfers []TokenTransfer `json:"token_transfers,omitempty"`
 		// Meta data object
-		Memo string      `json:"memo"`
 		Meta interface{} `json:"metadata"`
+		Memo string      `json:"memo"`
 	}
 
 	TxOutput struct {
@@ -141,6 +143,20 @@ type (
 		Value    Amount `json:"value"`
 		From     string `json:"from"`
 		To       string `json:"to"`
+	}
+
+	// Delegation describes the blocking of a stacked currency
+	Delegation struct {
+		Value    Amount `json:"value"`
+		Symbol   string `json:"symbol"`
+		Decimals uint   `json:"decimals"`
+	}
+
+	// Undelegation describes the unblocking of stacked currency
+	Undelegation struct {
+		Value    Amount `json:"value"`
+		Symbol   string `json:"symbol"`
+		Decimals uint   `json:"decimals"`
 	}
 
 	// CollectibleTransfer describes the transfer of a
@@ -381,6 +397,10 @@ func (t *Tx) GetTransactionDirection(address string) Direction {
 		return determineTransactionDirection(address, meta.From, meta.To)
 	case NativeTokenTransfer:
 		return determineTransactionDirection(address, meta.From, meta.To)
+	case Delegation:
+		return DirectionOutgoing
+	case Undelegation:
+		return DirectionIncoming
 	default:
 		return determineTransactionDirection(address, t.From, t.To)
 	}
