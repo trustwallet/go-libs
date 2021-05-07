@@ -171,6 +171,7 @@ type (
 
 	Memo interface {
 		Clean()
+		GetMemo() string
 	}
 )
 
@@ -221,6 +222,10 @@ func (t *Transfer) Clean() {
 	t.Memo = cleanMemo(t.Memo)
 }
 
+func (t *Transfer) GetMemo() string {
+	return t.Memo
+}
+
 func (t *Transfer) Addresses() (addresses []string) {
 	for _, input := range t.Inputs {
 		addresses = append(addresses, input.Address)
@@ -236,17 +241,29 @@ func (t *Transfer) Addresses() (addresses []string) {
 func (d *Delegation) Clean() {
 	d.Memo = cleanMemo(d.Memo)
 }
+func (d *Delegation) GetMemo() string {
+	return d.Memo
+}
 
 func (r *Redelegation) Clean() {
 	r.Memo = cleanMemo(r.Memo)
+}
+func (r *Redelegation) GetMemo() string {
+	return r.Memo
 }
 
 func (cr *ClaimRewards) Clean() {
 	cr.Memo = cleanMemo(cr.Memo)
 }
+func (cr *ClaimRewards) GetMemo() string {
+	return cr.Memo
+}
 
 func (cr *AnyAction) Clean() {
 	cr.Memo = cleanMemo(cr.Memo)
+}
+func (cr *AnyAction) GetMemo() string {
+	return cr.Memo
 }
 
 func cleanMemo(memo string) string {
@@ -286,12 +303,7 @@ func (t *Tx) GetDirection(address string) Direction {
 		return InferDirection(transfer, addressSet)
 	}
 
-	switch t.Metadata.(type) {
-	case *Delegation:
-		return DirectionOutgoing
-	default:
-		return determineTransactionDirection(address, t.From, t.To)
-	}
+	return determineTransactionDirection(address, t.From, t.To)
 }
 
 func determineTransactionDirection(address, from, to string) Direction {
