@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"regexp"
 	"strings"
 	"testing"
 
@@ -53,7 +54,9 @@ func TestCoinFile(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	code := string(b)
+
+	r := regexp.MustCompile("[\\ |\\t]+")
+	code := string(r.ReplaceAll(b, []byte(" "))) // replace multi spaces and tabs with one space
 
 	for _, want := range coinList {
 		got, ok := Coins[want.ID]
