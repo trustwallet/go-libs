@@ -422,3 +422,75 @@
   decimals: 9
   blockTime: 6000
   sampleAddress: 'oasis1qpxx577luv69znyr7dleue43mz6aq7fh4sm43cxu'
+
+- id: 22
+  symbol: MONA
+  handle: monacoin
+  name: Monacoin
+  decimals: 8
+  blockTime: 90000
+  sampleAddress: 'PSEbmFMLvjUg6vKoZBj3zPk1KVbVca5Uun'
+
+- id: 156
+  symbol: BTG
+  handle: bitcoingold
+  name: Bitcoin Gold
+  decimals: 8
+  blockTime: 600000
+  sampleAddress: 'GR9ixMSWCPSo7yEPvNuobEWAdMKzY35LzQ'
+
+- id: 194
+  symbol: EOS
+  handle: eos
+  name: EOS
+  decimals: 4
+  blockTime: 500
+
+- id: 330
+  symbol: LUNA
+  handle: terra
+  name: Terra
+  decimals: 6
+  sampleAddress: 'terra1fex9f78reuwhfsnc8sun6mz8rl9zwqh03fhwf3'
+
+- id: 494
+  symbol: BAND
+  handle: band
+  name: BandChain
+  decimals: 6
+  blockTime: 2000
+  sampleAddress: 'band12nmsm9khdsv0tywge43q3zwj8kkj3hvup9rltp'
+
+- id: 888
+  symbol: NEO
+  handle: neo
+  name: NEO
+  decimals: 8
+  sampleAddress: 'AcxuqWhTureEQGeJgbmtSWNAtssjMLU7pb'
+
+- id: 1815
+  symbol: ADA
+  handle: cardano
+  name: Cardano
+  decimals: 6
+  sampleAddress: 'addr1s3xuxwfetyfe7q9u3rfn6je9stlvcgmj8rezd87qjjegdtxm3y3f2mgtn87mrny9r77gm09h6ecslh3gmarrvrp9n4yzmdnecfxyu59jz29g8j'
+
+- id: 8964
+  symbol: NULS
+  handle: nuls
+  name: NULS
+  decimals: 8
+
+- id: 966
+  symbol: MATIC
+  handle: polygon
+  name: Polygon
+  decimals: 18
+  sampleAddress: '0x720E1fa107A1Df39Db4E78A3633121ac36Bec132'
+
+- id: 931
+  symbol: RUNE
+  handle: thorchain
+  name: THORChain
+  decimals: 18
+  sampleAddress: 'bnb1czhptncu9uhhlrlrk9q0rmy459gae2ua79mapn'
