@@ -125,7 +125,7 @@ type (
 	// NativeTokenTransfer describes the transfer of native tokens.
 	// Example: Stellar Tokens, TRC10
 	NativeTokenTransfer struct {
-		AssetID  string `json:"asset_id"`
+		AssetID  string `json:"asset_id,omitempty"`
 		Name     string `json:"name"`
 		Symbol   string `json:"symbol"`
 		TokenID  string `json:"token_id"`
@@ -138,7 +138,7 @@ type (
 	// TokenTransfer describes the transfer of non-native tokens.
 	// Examples: ERC-20, TRC20
 	TokenTransfer struct {
-		AssetID  string `json:"asset_id"`
+		AssetID  string `json:"asset_id,omitempty"`
 		Name     string `json:"name"`
 		Symbol   string `json:"symbol"`
 		TokenID  string `json:"token_id"`
