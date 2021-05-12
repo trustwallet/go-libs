@@ -33,6 +33,8 @@ func (t *Tx) UnmarshalJSON(data []byte) error {
 		t.Metadata = new(Delegation)
 	case TxRedelegation:
 		t.Metadata = new(Redelegation)
+	case TxStakeClaimRewards:
+		t.Metadata = new(ClaimRewards)
 	default:
 		return errors.New("unsupported tx type")
 	}
@@ -61,6 +63,8 @@ func (t *Tx) MarshalJSON() ([]byte, error) {
 		t.Type = TxUndelegation
 	case *Redelegation:
 		t.Type = TxRedelegation
+	case *ClaimRewards:
+		t.Type = TxStakeClaimRewards
 	default:
 		return nil, errors.New("unsupported tx metadata")
 	}
