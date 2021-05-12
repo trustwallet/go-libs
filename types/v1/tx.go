@@ -165,7 +165,7 @@ type (
 	ContractCall struct {
 		Asset string `json:"asset"`
 		Input string `json:"input"`
-		Value string `json:"value"`
+		Value Amount `json:"value"`
 	}
 
 	// AnyAction describes all other types
@@ -309,6 +309,10 @@ func (t *ClaimRewards) GetAsset() string {
 	return t.Asset
 }
 
+func (сс *ContractCall) GetAsset() string {
+	return сс.Asset
+}
+
 func (cr *AnyAction) Clean() {
 	cr.Memo = cleanMemo(cr.Memo)
 }
@@ -335,7 +339,7 @@ func cleanMemo(memo string) string {
 func (t *Tx) GetAddresses() []string {
 	addresses := make([]string, 0)
 	switch t.Metadata.(type) {
-	case *Transfer, *Delegation, *ContractCall, *AnyAction:
+	case *Transfer, *Delegation, *ContractCall, *AnyAction, *ClaimRewards:
 		return append(addresses, t.From, t.To)
 	case *Redelegation:
 		metadata := t.Metadata.(*Redelegation)
@@ -346,7 +350,7 @@ func (t *Tx) GetAddresses() []string {
 }
 
 func (t *Tx) GetSubscriptionAddresses() ([]string, error) {
-	coin, err := asset.FindCoinID([]string{t.Metadata.(Asset).GetAsset()})
+	coin, _, err := asset.ParseID(t.Metadata.(Asset).GetAsset())
 	if err != nil {
 		return nil, err
 	}
