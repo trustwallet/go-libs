@@ -120,7 +120,7 @@ func Test_findCoinID(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		got, err := findCoinID(tt.words)
+		got, err := FindCoinID(tt.words)
 		assert.Equal(t, tt.expected, got)
 		assert.Equal(t, tt.expectedErr, err)
 	}
@@ -139,7 +139,7 @@ func Test_findTokenID(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		got := findTokenID(tt.words)
+		got := FindTokenID(tt.words)
 		assert.Equal(t, tt.expected, got)
 	}
 }

@@ -1,10 +1,12 @@
 package types
 
 import (
+	"fmt"
 	"sort"
 	"strconv"
 
 	mapset "github.com/deckarep/golang-set"
+	"github.com/trustwallet/golibs/asset"
 )
 
 const (
@@ -106,7 +108,7 @@ type (
 	// Every transaction consumes some Fee
 	Fee struct {
 		Asset string `json:"asset"`
-		Value string `json:"value"`
+		Value Amount `json:"value"`
 	}
 
 	// UTXO transactions consist of a set of inputs and a set of outputs
@@ -133,6 +135,14 @@ type (
 		Memo      string `json:"memo,omitempty"`
 	}
 
+	// Undelegation describes the releasing of a stacked asset
+	Undelegation struct {
+		Asset     string `json:"asset"`
+		Value     Amount `json:"value"`
+		Validator string `json:"validator"`
+		Memo      string `json:"memo,omitempty"`
+	}
+
 	// In staking there is a possibility to change a validator
 	// For that tx of Redelegation type is created
 	Redelegation struct {
@@ -146,16 +156,16 @@ type (
 	// When staking is completed user get rewards which are transferred
 	// via ClaimRewards transaction
 	ClaimRewards struct {
-		AssetID string `json:"asset"`
-		Value   Amount `json:"value"`
-		Memo    string `json:"memo,omitempty"`
+		Asset string `json:"asset"`
+		Value Amount `json:"value"`
+		Memo  string `json:"memo,omitempty"`
 	}
 
 	// ContractCall describes a
 	ContractCall struct {
-		AssetID string `json:"asset"`
-		Input   string `json:"input"`
-		Value   string `json:"value"`
+		Asset string `json:"asset"`
+		Input string `json:"input"`
+		Value string `json:"value"`
 	}
 
 	// AnyAction describes all other types
@@ -172,6 +182,10 @@ type (
 	Memo interface {
 		Clean()
 		GetMemo() string
+	}
+
+	Asset interface {
+		GetAsset() string
 	}
 )
 
@@ -218,12 +232,29 @@ func (txs Txs) SortByDate() Txs {
 	return txs
 }
 
+func (txs Txs) FilterTransactionsByType(types []TransactionType) Txs {
+	result := make(Txs, 0)
+	for _, tx := range txs {
+		for _, t := range types {
+			if tx.Type == t {
+				result = append(result, tx)
+			}
+		}
+	}
+
+	return result
+}
+
 func (t *Transfer) Clean() {
 	t.Memo = cleanMemo(t.Memo)
 }
 
 func (t *Transfer) GetMemo() string {
 	return t.Memo
+}
+
+func (t *Transfer) GetAsset() string {
+	return t.Asset
 }
 
 func (t *Transfer) Addresses() (addresses []string) {
@@ -244,12 +275,28 @@ func (d *Delegation) Clean() {
 func (d *Delegation) GetMemo() string {
 	return d.Memo
 }
+func (t *Delegation) GetAsset() string {
+	return t.Asset
+}
+
+func (d *Undelegation) Clean() {
+	d.Memo = cleanMemo(d.Memo)
+}
+func (d *Undelegation) GetMemo() string {
+	return d.Memo
+}
+func (t *Undelegation) GetAsset() string {
+	return t.Asset
+}
 
 func (r *Redelegation) Clean() {
 	r.Memo = cleanMemo(r.Memo)
 }
 func (r *Redelegation) GetMemo() string {
 	return r.Memo
+}
+func (t *Redelegation) GetAsset() string {
+	return t.Asset
 }
 
 func (cr *ClaimRewards) Clean() {
@@ -258,12 +305,18 @@ func (cr *ClaimRewards) Clean() {
 func (cr *ClaimRewards) GetMemo() string {
 	return cr.Memo
 }
+func (t *ClaimRewards) GetAsset() string {
+	return t.Asset
+}
 
 func (cr *AnyAction) Clean() {
 	cr.Memo = cleanMemo(cr.Memo)
 }
 func (cr *AnyAction) GetMemo() string {
 	return cr.Memo
+}
+func (t *AnyAction) GetAsset() string {
+	return t.Asset
 }
 
 func cleanMemo(memo string) string {
@@ -290,6 +343,21 @@ func (t *Tx) GetAddresses() []string {
 	default:
 		return addresses
 	}
+}
+
+func (t *Tx) GetSubscriptionAddresses() ([]string, error) {
+	coin, err := asset.FindCoinID([]string{t.Metadata.(Asset).GetAsset()})
+	if err != nil {
+		return nil, err
+	}
+
+	addresses := t.GetAddresses()
+	result := make([]string, len(addresses))
+	for i, a := range addresses {
+		result[i] = fmt.Sprintf("%d_%s", coin, a)
+	}
+
+	return result, nil
 }
 
 func (t *Tx) GetDirection(address string) Direction {
