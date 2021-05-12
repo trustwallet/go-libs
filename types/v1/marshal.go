@@ -29,8 +29,10 @@ func (t *Tx) UnmarshalJSON(data []byte) error {
 		t.Metadata = new(ContractCall)
 	case TxAnyAction:
 		t.Metadata = new(AnyAction)
-	case TxDelegation, TxUndelegation:
+	case TxDelegation:
 		t.Metadata = new(Delegation)
+	case TxUndelegation:
+		t.Metadata = new(Undelegation)
 	case TxRedelegation:
 		t.Metadata = new(Redelegation)
 	case TxStakeClaimRewards:
