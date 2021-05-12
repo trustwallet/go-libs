@@ -275,18 +275,18 @@ func (d *Delegation) Clean() {
 func (d *Delegation) GetMemo() string {
 	return d.Memo
 }
-func (t *Delegation) GetAsset() string {
-	return t.Asset
+func (d *Delegation) GetAsset() string {
+	return d.Asset
 }
 
-func (d *Undelegation) Clean() {
-	d.Memo = cleanMemo(d.Memo)
+func (u *Undelegation) Clean() {
+	u.Memo = cleanMemo(u.Memo)
 }
-func (d *Undelegation) GetMemo() string {
-	return d.Memo
+func (u *Undelegation) GetMemo() string {
+	return u.Memo
 }
-func (t *Undelegation) GetAsset() string {
-	return t.Asset
+func (u *Undelegation) GetAsset() string {
+	return u.Asset
 }
 
 func (r *Redelegation) Clean() {
@@ -295,8 +295,8 @@ func (r *Redelegation) Clean() {
 func (r *Redelegation) GetMemo() string {
 	return r.Memo
 }
-func (t *Redelegation) GetAsset() string {
-	return t.Asset
+func (r *Redelegation) GetAsset() string {
+	return r.Asset
 }
 
 func (cr *ClaimRewards) Clean() {
@@ -305,22 +305,22 @@ func (cr *ClaimRewards) Clean() {
 func (cr *ClaimRewards) GetMemo() string {
 	return cr.Memo
 }
-func (t *ClaimRewards) GetAsset() string {
-	return t.Asset
+func (cr *ClaimRewards) GetAsset() string {
+	return cr.Asset
 }
 
-func (сс *ContractCall) GetAsset() string {
-	return сс.Asset
+func (cc *ContractCall) GetAsset() string {
+	return cc.Asset
 }
 
-func (cr *AnyAction) Clean() {
-	cr.Memo = cleanMemo(cr.Memo)
+func (aa *AnyAction) Clean() {
+	aa.Memo = cleanMemo(aa.Memo)
 }
-func (cr *AnyAction) GetMemo() string {
-	return cr.Memo
+func (aa *AnyAction) GetMemo() string {
+	return aa.Memo
 }
-func (t *AnyAction) GetAsset() string {
-	return t.Asset
+func (aa *AnyAction) GetAsset() string {
+	return aa.Asset
 }
 
 func cleanMemo(memo string) string {

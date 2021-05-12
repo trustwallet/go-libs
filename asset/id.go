@@ -47,6 +47,10 @@ func BuildID(coin uint, token string) string {
 
 func FindCoinID(words []string) (uint, error) {
 	for _, w := range words {
+		if len(w) == 0 {
+			return 0, errors.New("empty coin")
+		}
+
 		if w[0] == coinPrefix {
 			rawCoin := removeFirstChar(w)
 			coin, err := strconv.Atoi(rawCoin)
