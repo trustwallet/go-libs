@@ -62,7 +62,7 @@ func (t *Tx) UnmarshalJSON(data []byte) error {
 }
 
 // MarshalJSON creates a JSON object from a transaction.
-// Sets the Type field to the currect value based on the Meta type.
+// Sets the Type field to the correct value based on the Meta type.
 func (t *Tx) MarshalJSON() ([]byte, error) {
 	// Set type from metadata content
 	switch t.Meta.(type) {

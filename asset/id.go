@@ -9,8 +9,8 @@ import (
 type CoinType string
 
 const (
-	Coin          CoinType = "coin"
-	Token         CoinType = "token"
+	Coin  CoinType = "coin"
+	Token CoinType = "token"
 
 	coinPrefix  = 'c'
 	tokenPrefix = 't'
@@ -23,12 +23,12 @@ func ParseID(id string) (uint, string, error) {
 		return 0, "", errors.New("bad ID")
 	}
 
-	coin, err := findCoinID(rawResult)
+	coin, err := FindCoinID(rawResult)
 	if err != nil {
 		return 0, "", errors.New("bad ID")
 	}
 
-	token := findTokenID(rawResult)
+	token := FindTokenID(rawResult)
 
 	if token != "" {
 		return coin, token, nil
@@ -45,7 +45,7 @@ func BuildID(coin uint, token string) string {
 	return string(coinPrefix) + c
 }
 
-func findCoinID(words []string) (uint, error) {
+func FindCoinID(words []string) (uint, error) {
 	for _, w := range words {
 		if w[0] == coinPrefix {
 			rawCoin := removeFirstChar(w)
@@ -59,7 +59,7 @@ func findCoinID(words []string) (uint, error) {
 	return 0, errors.New("no coin")
 }
 
-func findTokenID(words []string) string {
+func FindTokenID(words []string) string {
 	for _, w := range words {
 		if w[0] == tokenPrefix {
 			token := removeFirstChar(w)
