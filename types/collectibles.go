@@ -32,7 +32,7 @@ type (
 	}
 
 	CollectibleMedia struct {
-		Mimetype string `json:"mimetype"`
+		Mimetype string `json:"mimetype,omitempty"`
 		URL      string `json:"url"`
 	}
 
