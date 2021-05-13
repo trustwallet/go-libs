@@ -11,15 +11,17 @@ var (
 
 type (
 	Collection struct {
-		Id           string `json:"id"`
-		Name         string `json:"name"`
-		ImageUrl     string `json:"image_url"`
-		Description  string `json:"description"`
-		ExternalLink string `json:"external_link"`
-		Total        int    `json:"total"`
-		Address      string `json:"address"`
-		Coin         uint   `json:"coin"`
-		Type         string `json:"-"`
+		Id                string            `json:"id"`
+		Name              string            `json:"name"`
+		ImageUrl          string            `json:"image_url"`
+		Description       string            `json:"description"`
+		ExternalLink      string            `json:"external_link"`
+		Total             int               `json:"total"`
+		Address           string            `json:"address"`
+		Coin              uint              `json:"coin"`
+		Type              string            `json:"-"`
+		PreviewImageURL   *CollectibleMedia `json:"preview_image_url,omitempty"`
+		OriginalSourceURL CollectibleMedia  `json:"original_source_url"`
 	}
 
 	CollectionPage []Collection
