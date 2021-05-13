@@ -90,8 +90,23 @@ func (e Exchange) Bind(queues []Queue) error {
 	return nil
 }
 
+func (e Exchange) BindWithKey(queues []Queue, key string) error {
+	for _, queue := range queues {
+		err := amqpChan.QueueBind(string(queue), key, string(e), false, nil)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 func (e Exchange) Publish(body []byte) error {
 	return publish(string(e), "", body)
+}
+
+func (e Exchange) PublishWithKey(body []byte, key string) error {
+	return publish(string(e), key, body)
 }
 
 func (q Queue) GetMessageChannel(prefetchCount int) MessageChannel {
