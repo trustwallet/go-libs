@@ -99,7 +99,7 @@ type (
 		// Transaction Direction
 		Direction Direction `json:"direction,omitempty"`
 
-		Fee Fee `json:"tx_fee"`
+		Fee Fee `json:"fee"`
 
 		// Metadata data object
 		Metadata interface{} `json:"metadata"`
