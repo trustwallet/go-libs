@@ -178,12 +178,9 @@ func TestTx_GetAddresses(t *testing.T) {
 		{
 			name: "redelegation",
 			tx: Tx{
-				From: "from",
-				To:   "to",
-				Metadata: &Redelegation{
-					FromValidator: "from_validator",
-					ToValidator:   "to_validator",
-				},
+				From:     "from_validator",
+				To:       "to_validator",
+				Metadata: &Redelegation{},
 			},
 			expected: []string{"from_validator", "to_validator"},
 		},
