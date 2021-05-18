@@ -14,7 +14,7 @@ func TestTxs_CleanMemos(t *testing.T) {
 	}{
 		{
 			name:         "transfer_ok",
-			tx:           Tx{Metadata: &Transfer{Memo: "1"}},
+			tx:           Tx{Memo: "1"},
 			expectedMemo: "1",
 		},
 		{
@@ -24,12 +24,12 @@ func TestTxs_CleanMemos(t *testing.T) {
 		},
 		{
 			name:         "transfer_non_number",
-			tx:           Tx{Metadata: &Transfer{Memo: "non_number"}},
+			tx:           Tx{Memo: "non_number"},
 			expectedMemo: "",
 		},
 		{
 			name:         "delegation_ok",
-			tx:           Tx{Metadata: &Delegation{Memo: "1"}},
+			tx:           Tx{Memo: "1"},
 			expectedMemo: "1",
 		},
 		{
@@ -39,12 +39,12 @@ func TestTxs_CleanMemos(t *testing.T) {
 		},
 		{
 			name:         "delegation_non_number",
-			tx:           Tx{Metadata: &Delegation{Memo: "non_number"}},
+			tx:           Tx{Memo: "non_number"},
 			expectedMemo: "",
 		},
 		{
 			name:         "redelegation_ok",
-			tx:           Tx{Metadata: &Redelegation{Memo: "1"}},
+			tx:           Tx{Memo: "1"},
 			expectedMemo: "1",
 		},
 		{
@@ -54,12 +54,12 @@ func TestTxs_CleanMemos(t *testing.T) {
 		},
 		{
 			name:         "redelegation_non_number",
-			tx:           Tx{Metadata: &Redelegation{Memo: "non_number"}},
+			tx:           Tx{Memo: "non_number"},
 			expectedMemo: "",
 		},
 		{
 			name:         "claim_rewards_ok",
-			tx:           Tx{Metadata: &ClaimRewards{Memo: "1"}},
+			tx:           Tx{Memo: "1"},
 			expectedMemo: "1",
 		},
 		{
@@ -69,12 +69,12 @@ func TestTxs_CleanMemos(t *testing.T) {
 		},
 		{
 			name:         "claim_rewards_non_number",
-			tx:           Tx{Metadata: &ClaimRewards{Memo: "non_number"}},
+			tx:           Tx{Memo: "non_number"},
 			expectedMemo: "",
 		},
 		{
 			name:         "any_action_ok",
-			tx:           Tx{Metadata: &AnyAction{Memo: "1"}},
+			tx:           Tx{Memo: "1"},
 			expectedMemo: "1",
 		},
 		{
@@ -84,7 +84,7 @@ func TestTxs_CleanMemos(t *testing.T) {
 		},
 		{
 			name:         "any_action_non_number",
-			tx:           Tx{Metadata: &AnyAction{Memo: "non_number"}},
+			tx:           Tx{Memo: "non_number"},
 			expectedMemo: "",
 		},
 	}
@@ -230,16 +230,14 @@ func TestTx_GetDirection(t *testing.T) {
 		{
 			name: "utxo_outgoing",
 			tx: Tx{
-				Metadata: &Transfer{
-					Inputs: []TxOutput{
-						{
-							Address: "sender",
-						},
+				Inputs: []TxOutput{
+					{
+						Address: "sender",
 					},
-					Outputs: []TxOutput{
-						{
-							Address: "receiver",
-						},
+				},
+				Outputs: []TxOutput{
+					{
+						Address: "receiver",
 					},
 				},
 			},
@@ -249,16 +247,14 @@ func TestTx_GetDirection(t *testing.T) {
 		{
 			name: "utxo_incoming",
 			tx: Tx{
-				Metadata: &Transfer{
-					Inputs: []TxOutput{
-						{
-							Address: "sender",
-						},
+				Inputs: []TxOutput{
+					{
+						Address: "sender",
 					},
-					Outputs: []TxOutput{
-						{
-							Address: "receiver",
-						},
+				},
+				Outputs: []TxOutput{
+					{
+						Address: "receiver",
 					},
 				},
 			},
@@ -268,16 +264,14 @@ func TestTx_GetDirection(t *testing.T) {
 		{
 			name: "utxo_self",
 			tx: Tx{
-				Metadata: &Transfer{
-					Inputs: []TxOutput{
-						{
-							Address: "sender",
-						},
+				Inputs: []TxOutput{
+					{
+						Address: "sender",
 					},
-					Outputs: []TxOutput{
-						{
-							Address: "sender",
-						},
+				},
+				Outputs: []TxOutput{
+					{
+						Address: "sender",
 					},
 				},
 			},

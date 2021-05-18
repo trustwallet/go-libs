@@ -99,6 +99,11 @@ type (
 		// Transaction Direction
 		Direction Direction `json:"direction,omitempty"`
 
+		Inputs  []TxOutput `json:"inputs,omitempty"`
+		Outputs []TxOutput `json:"outputs,omitempty"`
+
+		Memo string `json:"memo,omitempty"`
+
 		Fee Fee `json:"fee"`
 
 		// Metadata data object
@@ -120,37 +125,27 @@ type (
 
 	// Transfer describes the transfer of currency
 	Transfer struct {
-		Value   Amount     `json:"value"`
-		Asset   string     `json:"asset"`
-		Memo    string     `json:"memo,omitempty"`
-		Inputs  []TxOutput `json:"inputs,omitempty"`
-		Outputs []TxOutput `json:"outputs,omitempty"`
+		Value Amount `json:"value"`
+		Asset string `json:"asset"`
 	}
 
 	// Delegation describes the blocking of a stacked asset
 	Delegation struct {
-		Asset     string `json:"asset"`
-		Value     Amount `json:"value"`
-		Validator string `json:"validator"`
-		Memo      string `json:"memo,omitempty"`
+		Asset string `json:"asset"`
+		Value Amount `json:"value"`
 	}
 
 	// Undelegation describes the releasing of a stacked asset
 	Undelegation struct {
-		Asset     string `json:"asset"`
-		Value     Amount `json:"value"`
-		Validator string `json:"validator"`
-		Memo      string `json:"memo,omitempty"`
+		Asset string `json:"asset"`
+		Value Amount `json:"value"`
 	}
 
 	// In staking there is a possibility to change a validator
 	// For that tx of Redelegation type is created
 	Redelegation struct {
-		Asset         string `json:"asset"`
-		Value         Amount `json:"value"`
-		FromValidator string `json:"from_validator"`
-		ToValidator   string `json:"to_validator"`
-		Memo          string `json:"memo,omitempty"`
+		Asset string `json:"asset"`
+		Value Amount `json:"value"`
 	}
 
 	// When staking is completed user get rewards which are transferred
@@ -158,7 +153,6 @@ type (
 	ClaimRewards struct {
 		Asset string `json:"asset"`
 		Value Amount `json:"value"`
-		Memo  string `json:"memo,omitempty"`
 	}
 
 	// ContractCall describes a
@@ -174,7 +168,6 @@ type (
 		Key   KeyType  `json:"key"`
 		Value Amount   `json:"value"`
 		Asset string   `json:"asset"`
-		Memo  string   `json:"memo,omitempty"`
 	}
 
 	Txs []Tx
@@ -245,66 +238,22 @@ func (txs Txs) FilterTransactionsByType(types []TransactionType) Txs {
 	return result
 }
 
-func (t *Transfer) Clean() {
-	t.Memo = cleanMemo(t.Memo)
-}
-
-func (t *Transfer) GetMemo() string {
-	return t.Memo
-}
-
 func (t *Transfer) GetAsset() string {
 	return t.Asset
 }
 
-func (t *Transfer) Addresses() (addresses []string) {
-	for _, input := range t.Inputs {
-		addresses = append(addresses, input.Address)
-	}
-
-	for _, output := range t.Outputs {
-		addresses = append(addresses, output.Address)
-	}
-
-	return addresses
-}
-
-func (d *Delegation) Clean() {
-	d.Memo = cleanMemo(d.Memo)
-}
-func (d *Delegation) GetMemo() string {
-	return d.Memo
-}
 func (d *Delegation) GetAsset() string {
 	return d.Asset
 }
 
-func (u *Undelegation) Clean() {
-	u.Memo = cleanMemo(u.Memo)
-}
-func (u *Undelegation) GetMemo() string {
-	return u.Memo
-}
 func (u *Undelegation) GetAsset() string {
 	return u.Asset
 }
 
-func (r *Redelegation) Clean() {
-	r.Memo = cleanMemo(r.Memo)
-}
-func (r *Redelegation) GetMemo() string {
-	return r.Memo
-}
 func (r *Redelegation) GetAsset() string {
 	return r.Asset
 }
 
-func (cr *ClaimRewards) Clean() {
-	cr.Memo = cleanMemo(cr.Memo)
-}
-func (cr *ClaimRewards) GetMemo() string {
-	return cr.Memo
-}
 func (cr *ClaimRewards) GetAsset() string {
 	return cr.Asset
 }
@@ -313,12 +262,6 @@ func (cc *ContractCall) GetAsset() string {
 	return cc.Asset
 }
 
-func (aa *AnyAction) Clean() {
-	aa.Memo = cleanMemo(aa.Memo)
-}
-func (aa *AnyAction) GetMemo() string {
-	return aa.Memo
-}
 func (aa *AnyAction) GetAsset() string {
 	return aa.Asset
 }
@@ -339,11 +282,8 @@ func cleanMemo(memo string) string {
 func (t *Tx) GetAddresses() []string {
 	addresses := make([]string, 0)
 	switch t.Metadata.(type) {
-	case *Transfer, *Delegation, *ContractCall, *AnyAction, *ClaimRewards:
+	case *Transfer, *Delegation, *Undelegation, *ContractCall, *AnyAction, *ClaimRewards, *Redelegation:
 		return append(addresses, t.From, t.To)
-	case *Redelegation:
-		metadata := t.Metadata.(*Redelegation)
-		return append(addresses, metadata.FromValidator, metadata.ToValidator)
 	default:
 		return addresses
 	}
@@ -369,10 +309,9 @@ func (t *Tx) GetDirection(address string) Direction {
 		return t.Direction
 	}
 
-	transfer, ok := t.Metadata.(*Transfer)
-	if ok && len(transfer.Inputs) > 0 && len(transfer.Outputs) > 0 {
+	if len(t.Inputs) > 0 && len(t.Outputs) > 0 {
 		addressSet := mapset.NewSet(address)
-		return InferDirection(transfer, addressSet)
+		return InferDirection(t, addressSet)
 	}
 
 	return determineTransactionDirection(address, t.From, t.To)
@@ -388,13 +327,13 @@ func determineTransactionDirection(address, from, to string) Direction {
 	return DirectionOutgoing
 }
 
-func InferDirection(transfer *Transfer, addressSet mapset.Set) Direction {
+func InferDirection(tx *Tx, addressSet mapset.Set) Direction {
 	inputSet := mapset.NewSet()
-	for _, address := range transfer.Inputs {
+	for _, address := range tx.Inputs {
 		inputSet.Add(address.Address)
 	}
 	outputSet := mapset.NewSet()
-	for _, address := range transfer.Outputs {
+	for _, address := range tx.Outputs {
 		outputSet.Add(address.Address)
 	}
 	intersect := addressSet.Intersect(inputSet)
