@@ -79,3 +79,8 @@ func (t *Tx) MarshalJSON() ([]byte, error) {
 	// Wrap the Tx type to avoid infinite recursion
 	return json.Marshal(wrappedTx(*t))
 }
+
+// Sort sorts the response by date, descending
+func (txs Txs) Len() int           { return len(txs) }
+func (txs Txs) Less(i, j int) bool { return txs[i].Date > txs[j].Date }
+func (txs Txs) Swap(i, j int)      { txs[i], txs[j] = txs[j], txs[i] }

@@ -406,3 +406,15 @@ func InferDirection(transfer *Transfer, addressSet mapset.Set) Direction {
 	}
 	return DirectionOutgoing
 }
+
+func IsTxTypeAmong(txType TransactionType, types []TransactionType) bool {
+	result := false
+	for _, t := range types {
+		if txType == t {
+			result = true
+			break
+		}
+	}
+
+	return result
+}
