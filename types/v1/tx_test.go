@@ -84,10 +84,7 @@ func TestTxs_CleanMemos(t *testing.T) {
 			txs := Txs{tc.tx}
 			txs.CleanMemos()
 
-			memo, ok := txs[0].Metadata.(Memo)
-			if ok {
-				assert.Equal(t, tc.expectedMemo, memo.GetMemo())
-			}
+			assert.Equal(t, tc.expectedMemo, txs[0].Memo)
 		})
 	}
 }

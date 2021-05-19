@@ -122,11 +122,6 @@ type (
 
 	Txs []Tx
 
-	Memo interface {
-		Clean()
-		GetMemo() string
-	}
-
 	Asset interface {
 		GetAsset() string
 	}
@@ -160,11 +155,8 @@ func (txs Txs) FilterUniqueID() Txs {
 }
 
 func (txs Txs) CleanMemos() {
-	for _, tx := range txs {
-		memo, ok := tx.Metadata.(Memo)
-		if ok {
-			memo.Clean()
-		}
+	for i := range txs {
+		txs[i].Memo = cleanMemo(txs[i].Memo)
 	}
 }
 
