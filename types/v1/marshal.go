@@ -3,6 +3,7 @@ package types
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 )
 
 // Tx, but with default JSON marshalling methods
@@ -28,7 +29,7 @@ func (t *Tx) UnmarshalJSON(data []byte) error {
 	case TxContractCall:
 		t.Metadata = new(ContractCall)
 	default:
-		return errors.New("unsupported tx type")
+		return fmt.Errorf("unsupported tx type: %s, hash: %s, metadata: %+v", t.Type, t.ID, t.Metadata)
 	}
 
 	err := json.Unmarshal(raw, t.Metadata)
@@ -40,6 +41,9 @@ func (t *Tx) UnmarshalJSON(data []byte) error {
 
 // MarshalJSON creates a JSON object from a transaction.
 func (t *Tx) MarshalJSON() ([]byte, error) {
+	if len(t.Type) == 0 {
+		return nil, fmt.Errorf("tx type is not provided: %v", t)
+	}
 	// validate metadata type
 	switch t.Metadata.(type) {
 	case *Transfer, *ContractCall:
