@@ -11,7 +11,7 @@ type wrappedTx Tx
 
 // UnmarshalJSON creates a transaction along with metadata from a JSON object.
 // Fails if the meta object can't be read.
-func (t Tx) UnmarshalJSON(data []byte) error {
+func (t *Tx) UnmarshalJSON(data []byte) error {
 	// Wrap the Tx type to avoid infinite recursion
 	var wrapped wrappedTx
 
@@ -21,9 +21,7 @@ func (t Tx) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
-	// dirty hack to use value receiver instead of pointer
-	txPtr := &t
-	*txPtr = Tx(wrapped)
+	*t = Tx(wrapped)
 
 	switch t.Type {
 	case TxTransfer, TxStakeDelegate, TxStakeUndelegate, TxStakeRedelegate, TxStakeClaimRewards:
