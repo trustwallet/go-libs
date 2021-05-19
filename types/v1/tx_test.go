@@ -34,7 +34,7 @@ func TestTxs_CleanMemos(t *testing.T) {
 		},
 		{
 			name:         "delegation_empty_string",
-			tx:           Tx{Metadata: &Delegation{}},
+			tx:           Tx{Metadata: &Transfer{}},
 			expectedMemo: "",
 		},
 		{
@@ -49,7 +49,7 @@ func TestTxs_CleanMemos(t *testing.T) {
 		},
 		{
 			name:         "redelegation_empty_string",
-			tx:           Tx{Metadata: &Redelegation{}},
+			tx:           Tx{Metadata: &Transfer{}},
 			expectedMemo: "",
 		},
 		{
@@ -64,7 +64,7 @@ func TestTxs_CleanMemos(t *testing.T) {
 		},
 		{
 			name:         "claim_rewards_empty_string",
-			tx:           Tx{Metadata: &ClaimRewards{}},
+			tx:           Tx{Metadata: &Transfer{}},
 			expectedMemo: "",
 		},
 		{
@@ -76,16 +76,6 @@ func TestTxs_CleanMemos(t *testing.T) {
 			name:         "any_action_ok",
 			tx:           Tx{Memo: "1"},
 			expectedMemo: "1",
-		},
-		{
-			name:         "any_action_empty_string",
-			tx:           Tx{Metadata: &AnyAction{}},
-			expectedMemo: "",
-		},
-		{
-			name:         "any_action_non_number",
-			tx:           Tx{Memo: "non_number"},
-			expectedMemo: "",
 		},
 	}
 
@@ -153,7 +143,7 @@ func TestTx_GetAddresses(t *testing.T) {
 			tx: Tx{
 				From:     "from",
 				To:       "to",
-				Metadata: &Delegation{},
+				Metadata: &Transfer{},
 			},
 			expected: []string{"from", "to"},
 		},
@@ -180,7 +170,7 @@ func TestTx_GetAddresses(t *testing.T) {
 			tx: Tx{
 				From:     "from_validator",
 				To:       "to_validator",
-				Metadata: &Redelegation{},
+				Metadata: &Transfer{},
 			},
 			expected: []string{"from_validator", "to_validator"},
 		},
