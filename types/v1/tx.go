@@ -20,25 +20,9 @@ const (
 	TxTransfer          TransactionType = "transfer"
 	TxContractCall      TransactionType = "contract_call"
 	TxStakeClaimRewards TransactionType = "stake_claim_rewards"
-	TxDelegation        TransactionType = "delegation"
-	TxUndelegation      TransactionType = "undelegation"
-	TxRedelegation      TransactionType = "redelegation"
-	TxAnyAction         TransactionType = "any_action"
-
-	KeyPlaceOrder        KeyType = "place_order"
-	KeyCancelOrder       KeyType = "cancel_order"
-	KeyIssueToken        KeyType = "issue_token"
-	KeyBurnToken         KeyType = "burn_token"
-	KeyMintToken         KeyType = "mint_token"
-	KeyApproveToken      KeyType = "approve_token"
-	KeyStakeDelegate     KeyType = "stake_delegate"
-	KeyStakeClaimRewards KeyType = "stake_claim_rewards"
-
-	KeyTitlePlaceOrder   KeyTitle = "Place Order"
-	KeyTitleCancelOrder  KeyTitle = "Cancel Order"
-	KeyTitleDelegation   KeyTitle = "Delegation"
-	KeyTitleUndelegation KeyTitle = "Undelegation"
-	KeyTitleClaimRewards KeyTitle = "Claim Rewards"
+	TxStakeDelegate     TransactionType = "stake_delegate"
+	TxStakeUndelegate   TransactionType = "stake_undelegate"
+	TxStakeRedelegate   TransactionType = "stake_redelegate"
 )
 
 // Transaction fields
@@ -129,32 +113,6 @@ type (
 		Asset string `json:"asset"`
 	}
 
-	// Delegation describes the blocking of a stacked asset
-	Delegation struct {
-		Asset string `json:"asset"`
-		Value Amount `json:"value"`
-	}
-
-	// Undelegation describes the releasing of a stacked asset
-	Undelegation struct {
-		Asset string `json:"asset"`
-		Value Amount `json:"value"`
-	}
-
-	// In staking there is a possibility to change a validator
-	// For that tx of Redelegation type is created
-	Redelegation struct {
-		Asset string `json:"asset"`
-		Value Amount `json:"value"`
-	}
-
-	// When staking is completed user get rewards which are transferred
-	// via ClaimRewards transaction
-	ClaimRewards struct {
-		Asset string `json:"asset"`
-		Value Amount `json:"value"`
-	}
-
 	// ContractCall describes a
 	ContractCall struct {
 		Asset string `json:"asset"`
@@ -162,20 +120,7 @@ type (
 		Value Amount `json:"value"`
 	}
 
-	// AnyAction describes all other types
-	AnyAction struct {
-		Title KeyTitle `json:"title"`
-		Key   KeyType  `json:"key"`
-		Value Amount   `json:"value"`
-		Asset string   `json:"asset"`
-	}
-
 	Txs []Tx
-
-	Memo interface {
-		Clean()
-		GetMemo() string
-	}
 
 	Asset interface {
 		GetAsset() string
@@ -210,11 +155,8 @@ func (txs Txs) FilterUniqueID() Txs {
 }
 
 func (txs Txs) CleanMemos() {
-	for _, tx := range txs {
-		memo, ok := tx.Metadata.(Memo)
-		if ok {
-			memo.Clean()
-		}
+	for i := range txs {
+		txs[i].Memo = cleanMemo(txs[i].Memo)
 	}
 }
 
@@ -242,28 +184,8 @@ func (t *Transfer) GetAsset() string {
 	return t.Asset
 }
 
-func (d *Delegation) GetAsset() string {
-	return d.Asset
-}
-
-func (u *Undelegation) GetAsset() string {
-	return u.Asset
-}
-
-func (r *Redelegation) GetAsset() string {
-	return r.Asset
-}
-
-func (cr *ClaimRewards) GetAsset() string {
-	return cr.Asset
-}
-
 func (cc *ContractCall) GetAsset() string {
 	return cc.Asset
-}
-
-func (aa *AnyAction) GetAsset() string {
-	return aa.Asset
 }
 
 func cleanMemo(memo string) string {
@@ -282,7 +204,7 @@ func cleanMemo(memo string) string {
 func (t *Tx) GetAddresses() []string {
 	addresses := make([]string, 0)
 	switch t.Metadata.(type) {
-	case *Transfer, *Delegation, *Undelegation, *ContractCall, *AnyAction, *ClaimRewards, *Redelegation:
+	case *Transfer, *ContractCall:
 		return append(addresses, t.From, t.To)
 	default:
 		return addresses

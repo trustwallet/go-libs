@@ -23,20 +23,10 @@ func (t *Tx) UnmarshalJSON(data []byte) error {
 	*t = Tx(wrapped)
 
 	switch t.Type {
-	case TxTransfer:
+	case TxTransfer, TxStakeDelegate, TxStakeUndelegate, TxStakeRedelegate, TxStakeClaimRewards:
 		t.Metadata = new(Transfer)
 	case TxContractCall:
 		t.Metadata = new(ContractCall)
-	case TxAnyAction:
-		t.Metadata = new(AnyAction)
-	case TxDelegation:
-		t.Metadata = new(Delegation)
-	case TxUndelegation:
-		t.Metadata = new(Undelegation)
-	case TxRedelegation:
-		t.Metadata = new(Redelegation)
-	case TxStakeClaimRewards:
-		t.Metadata = new(ClaimRewards)
 	default:
 		return errors.New("unsupported tx type")
 	}
@@ -49,24 +39,11 @@ func (t *Tx) UnmarshalJSON(data []byte) error {
 }
 
 // MarshalJSON creates a JSON object from a transaction.
-// Sets the Type field to the correct value based on the Metadata type.
 func (t *Tx) MarshalJSON() ([]byte, error) {
-	// Set type from metadata content
+	// validate metadata type
 	switch t.Metadata.(type) {
-	case *Transfer:
-		t.Type = TxTransfer
-	case *ContractCall:
-		t.Type = TxContractCall
-	case *AnyAction:
-		t.Type = TxAnyAction
-	case *Delegation:
-		t.Type = TxDelegation
-	case *Undelegation:
-		t.Type = TxUndelegation
-	case *Redelegation:
-		t.Type = TxRedelegation
-	case *ClaimRewards:
-		t.Type = TxStakeClaimRewards
+	case *Transfer, *ContractCall:
+		break
 	default:
 		return nil, errors.New("unsupported tx metadata")
 	}
