@@ -25,6 +25,10 @@ const (
 	TxStakeRedelegate   TransactionType = "stake_redelegate"
 )
 
+var SupportedTypes = []TransactionType{
+	TxTransfer, TxContractCall, TxStakeClaimRewards, TxStakeDelegate, TxStakeUndelegate, TxStakeRedelegate,
+}
+
 // Transaction fields
 type (
 	Direction       string

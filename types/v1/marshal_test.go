@@ -9,39 +9,72 @@ import (
 
 func TestMarshalling(t *testing.T) {
 	tests := []struct {
-		Name     string
-		Type     TransactionType
-		Metadata interface{}
+		Name         string
+		Type         TransactionType
+		Metadata     interface{}
+		marshalErr   assert.ErrorAssertionFunc
+		unmarshalErr assert.ErrorAssertionFunc
 	}{
 		{
-			Name:     "transfer",
-			Type:     TxTransfer,
-			Metadata: &Transfer{},
+			Name:         "transfer",
+			Type:         TxTransfer,
+			Metadata:     &Transfer{},
+			marshalErr:   assert.NoError,
+			unmarshalErr: assert.NoError,
 		},
 		{
-			Name:     "contract_call",
-			Type:     TxContractCall,
-			Metadata: &Transfer{},
+			Name:         "contract_call",
+			Type:         TxContractCall,
+			Metadata:     &Transfer{},
+			marshalErr:   assert.NoError,
+			unmarshalErr: assert.NoError,
 		},
 		{
-			Name:     "claim_rewards",
-			Type:     TxStakeClaimRewards,
-			Metadata: &Transfer{},
+			Name:         "claim_rewards",
+			Type:         TxStakeClaimRewards,
+			Metadata:     &Transfer{},
+			marshalErr:   assert.NoError,
+			unmarshalErr: assert.NoError,
 		},
 		{
-			Name:     "delegate",
-			Type:     TxStakeDelegate,
-			Metadata: &Transfer{},
+			Name:         "delegate",
+			Type:         TxStakeDelegate,
+			Metadata:     &Transfer{},
+			marshalErr:   assert.NoError,
+			unmarshalErr: assert.NoError,
 		},
 		{
-			Name:     "undelegate",
-			Type:     TxStakeUndelegate,
-			Metadata: &Transfer{},
+			Name:         "undelegate",
+			Type:         TxStakeUndelegate,
+			Metadata:     &Transfer{},
+			marshalErr:   assert.NoError,
+			unmarshalErr: assert.NoError,
 		},
 		{
-			Name:     "redelegate",
-			Type:     TxStakeRedelegate,
-			Metadata: &Transfer{},
+			Name:         "redelegate",
+			Type:         TxStakeRedelegate,
+			Metadata:     &Transfer{},
+			marshalErr:   assert.NoError,
+			unmarshalErr: assert.NoError,
+		},
+		{
+			Name:         "redelegate",
+			Type:         TxStakeRedelegate,
+			Metadata:     &Transfer{},
+			marshalErr:   assert.NoError,
+			unmarshalErr: assert.NoError,
+		},
+		{
+			Name:         "without_type",
+			Metadata:     &Transfer{},
+			marshalErr:   assert.Error,
+			unmarshalErr: assert.Error,
+		},
+		{
+			Name:         "unsupported_type",
+			Metadata:     &Transfer{},
+			marshalErr:   assert.Error,
+			unmarshalErr: assert.Error,
 		},
 	}
 
@@ -53,11 +86,11 @@ func TestMarshalling(t *testing.T) {
 			}
 
 			data, err := json.Marshal(tx)
-			assert.NoError(t, err)
+			tc.marshalErr(t, err)
 
 			var receiver Tx
 			err = json.Unmarshal(data, &receiver)
-			assert.NoError(t, err)
+			tc.unmarshalErr(t, err)
 		})
 	}
 }

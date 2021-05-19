@@ -11,7 +11,7 @@ type wrappedTx Tx
 
 // UnmarshalJSON creates a transaction along with metadata from a JSON object.
 // Fails if the meta object can't be read.
-func (t *Tx) UnmarshalJSON(data []byte) error {
+func (t Tx) UnmarshalJSON(data []byte) error {
 	// Wrap the Tx type to avoid infinite recursion
 	var wrapped wrappedTx
 
@@ -21,7 +21,9 @@ func (t *Tx) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
-	*t = Tx(wrapped)
+	// dirty hack to use value receiver instead of pointer
+	txPtr := &t
+	*txPtr = Tx(wrapped)
 
 	switch t.Type {
 	case TxTransfer, TxStakeDelegate, TxStakeUndelegate, TxStakeRedelegate, TxStakeClaimRewards:
@@ -40,10 +42,18 @@ func (t *Tx) UnmarshalJSON(data []byte) error {
 }
 
 // MarshalJSON creates a JSON object from a transaction.
-func (t *Tx) MarshalJSON() ([]byte, error) {
-	if len(t.Type) == 0 {
-		return nil, fmt.Errorf("tx type is not provided: %v", t)
+func (t Tx) MarshalJSON() ([]byte, error) {
+	isTypeOk := false
+	for _, txType := range SupportedTypes {
+		if t.Type == txType {
+			isTypeOk = true
+			break
+		}
 	}
+	if !isTypeOk {
+		return nil, fmt.Errorf("tx type is not supported: %v", t)
+	}
+
 	// validate metadata type
 	switch t.Metadata.(type) {
 	case *Transfer, *ContractCall:
@@ -58,7 +68,7 @@ func (t *Tx) MarshalJSON() ([]byte, error) {
 	}
 
 	// Wrap the Tx type to avoid infinite recursion
-	return json.Marshal(wrappedTx(*t))
+	return json.Marshal(wrappedTx(t))
 }
 
 // Sort sorts the response by date, descending
