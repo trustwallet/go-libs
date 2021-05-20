@@ -131,7 +131,7 @@ type (
 	Txs []Tx
 
 	AssetHolder interface {
-		GetAsset() string
+		GetAsset() Asset
 	}
 )
 
@@ -220,7 +220,7 @@ func (t *Tx) GetAddresses() []string {
 }
 
 func (t *Tx) GetSubscriptionAddresses() ([]string, error) {
-	coin, _, err := asset.ParseID(t.Metadata.(AssetHolder).GetAsset())
+	coin, _, err := asset.ParseID(string(t.Metadata.(AssetHolder).GetAsset()))
 	if err != nil {
 		return nil, err
 	}
