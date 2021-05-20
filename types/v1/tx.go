@@ -51,9 +51,8 @@ type (
 	}
 
 	TxPage struct {
-		Total  int  `json:"total"`
-		Docs   []Tx `json:"docs"`
-		Status bool `json:"status"`
+		Total int  `json:"total"`
+		Docs  []Tx `json:"docs"`
 	}
 
 	// Tx describes an on-chain transaction generically
@@ -136,7 +135,7 @@ type (
 )
 
 var (
-	EmptyTxPage = TxPage{Total: 0, Docs: Txs{}, Status: true}
+	EmptyTxPage = TxPage{Total: 0, Docs: Txs{}}
 )
 
 func NewTxPage(txs Txs) TxPage {
@@ -144,9 +143,8 @@ func NewTxPage(txs Txs) TxPage {
 		txs = Txs{}
 	}
 	return TxPage{
-		Total:  len(txs),
-		Docs:   txs,
-		Status: true,
+		Total: len(txs),
+		Docs:  txs,
 	}
 }
 
