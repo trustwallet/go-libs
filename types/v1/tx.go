@@ -132,6 +132,10 @@ type (
 	AssetHolder interface {
 		GetAsset() Asset
 	}
+
+	ValueHolder interface {
+		SetValue(value Amount)
+	}
 )
 
 var (
@@ -190,8 +194,16 @@ func (t *Transfer) GetAsset() Asset {
 	return t.Asset
 }
 
+func (t *Transfer) SetValue(value Amount) {
+	t.Value = value
+}
+
 func (cc *ContractCall) GetAsset() Asset {
 	return cc.Asset
+}
+
+func (cc *ContractCall) SetValue(value Amount) {
+	cc.Value = value
 }
 
 func cleanMemo(memo string) string {
