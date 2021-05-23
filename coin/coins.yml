@@ -494,3 +494,11 @@
   name: THORChain
   decimals: 18
   sampleAddress: 'bnb1czhptncu9uhhlrlrk9q0rmy459gae2ua79mapn'
+
+- id: 394
+  symbol: CRO
+  handle: cryptoorg
+  name: CRO
+  decimals: 8
+  blockTime: 5000
+  sampleAddress: 'cro1yjjlx5qsrj5rxn5xtd5rkm6dcqzlchxkrvsmg6'
