@@ -254,10 +254,14 @@ func (t *Tx) GetDirection(address string) Direction {
 		return InferDirection(t, addressSet)
 	}
 
-	return determineTransactionDirection(address, t.From, t.To)
+	return t.determineTransactionDirection(address, t.From, t.To)
 }
 
-func determineTransactionDirection(address, from, to string) Direction {
+func (t *Tx) determineTransactionDirection(address, from, to string) Direction {
+	if t.Type == TxStakeUndelegate || t.Type == TxStakeClaimRewards {
+		return DirectionIncoming
+	}
+
 	if address == to {
 		if from == to {
 			return DirectionSelf
