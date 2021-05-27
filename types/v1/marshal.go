@@ -40,10 +40,18 @@ func (t *Tx) UnmarshalJSON(data []byte) error {
 }
 
 // MarshalJSON creates a JSON object from a transaction.
-func (t *Tx) MarshalJSON() ([]byte, error) {
-	if len(t.Type) == 0 {
-		return nil, fmt.Errorf("tx type is not provided: %v", t)
+func (t Tx) MarshalJSON() ([]byte, error) {
+	isTypeOk := false
+	for _, txType := range SupportedTypes {
+		if t.Type == txType {
+			isTypeOk = true
+			break
+		}
 	}
+	if !isTypeOk {
+		return nil, fmt.Errorf("tx type is not supported: %v", t)
+	}
+
 	// validate metadata type
 	switch t.Metadata.(type) {
 	case *Transfer, *ContractCall:
@@ -58,10 +66,10 @@ func (t *Tx) MarshalJSON() ([]byte, error) {
 	}
 
 	// Wrap the Tx type to avoid infinite recursion
-	return json.Marshal(wrappedTx(*t))
+	return json.Marshal(wrappedTx(t))
 }
 
 // Sort sorts the response by date, descending
 func (txs Txs) Len() int           { return len(txs) }
-func (txs Txs) Less(i, j int) bool { return txs[i].Date > txs[j].Date }
+func (txs Txs) Less(i, j int) bool { return txs[i].CreatedAt > txs[j].CreatedAt }
 func (txs Txs) Swap(i, j int)      { txs[i], txs[j] = txs[j], txs[i] }

@@ -289,6 +289,64 @@ func TestTx_GetDirection(t *testing.T) {
 			address:  "sender",
 			expected: DirectionSelf,
 		},
+		{
+			name: "stake_delegate",
+			tx: Tx{
+				From: "sender",
+				To:   "sender",
+			},
+			address:  "sender",
+			expected: DirectionSelf,
+		},
+		{
+			name: "self",
+			tx: Tx{
+				From: "sender",
+				To:   "sender",
+			},
+			address:  "sender",
+			expected: DirectionSelf,
+		},
+		{
+			name: "stake_undelegate",
+			tx: Tx{
+				From: "delegator",
+				To:   "owner",
+				Type: TxStakeUndelegate,
+			},
+			address:  "owner",
+			expected: DirectionIncoming,
+		},
+		{
+			name: "stake_redelegate",
+			tx: Tx{
+				From: "delegator1",
+				To:   "delegator2",
+				Type: TxStakeRedelegate,
+			},
+			address:  "owner",
+			expected: DirectionOutgoing,
+		},
+		{
+			name: "stake_delegate",
+			tx: Tx{
+				From: "owner",
+				To:   "delegator",
+				Type: TxStakeDelegate,
+			},
+			address:  "owner",
+			expected: DirectionOutgoing,
+		},
+		{
+			name: "stake_claim_rewards",
+			tx: Tx{
+				From: "delegator",
+				To:   "sender",
+				Type: TxStakeClaimRewards,
+			},
+			address:  "sender",
+			expected: DirectionIncoming,
+		},
 	}
 
 	for _, tc := range tests {

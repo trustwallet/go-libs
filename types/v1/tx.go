@@ -25,8 +25,13 @@ const (
 	TxStakeRedelegate   TransactionType = "stake_redelegate"
 )
 
+var SupportedTypes = []TransactionType{
+	TxTransfer, TxContractCall, TxStakeClaimRewards, TxStakeDelegate, TxStakeUndelegate, TxStakeRedelegate,
+}
+
 // Transaction fields
 type (
+	Asset           string
 	Direction       string
 	Status          string
 	TransactionType string
@@ -46,9 +51,8 @@ type (
 	}
 
 	TxPage struct {
-		Total  int  `json:"total"`
-		Docs   []Tx `json:"docs"`
-		Status bool `json:"status"`
+		Total int  `json:"total"`
+		Docs  []Tx `json:"docs"`
 	}
 
 	// Tx describes an on-chain transaction generically
@@ -63,7 +67,7 @@ type (
 		To string `json:"to"`
 
 		// Unix timestamp of the block the transaction was included in
-		Date int64 `json:"date"`
+		BlockCreatedAt int64 `json:"block_created_at"`
 
 		// Height of the block the transaction was included in
 		Block uint64 `json:"block"`
@@ -92,11 +96,14 @@ type (
 
 		// Metadata data object
 		Metadata interface{} `json:"metadata"`
+
+		// Create At indicates transactions creation time in database, Unix
+		CreatedAt int64 `json:"created_at"`
 	}
 
 	// Every transaction consumes some Fee
 	Fee struct {
-		Asset string `json:"asset"`
+		Asset Asset  `json:"asset"`
 		Value Amount `json:"value"`
 	}
 
@@ -109,26 +116,26 @@ type (
 
 	// Transfer describes the transfer of currency
 	Transfer struct {
+		Asset Asset  `json:"asset"`
 		Value Amount `json:"value"`
-		Asset string `json:"asset"`
 	}
 
 	// ContractCall describes a
 	ContractCall struct {
-		Asset string `json:"asset"`
-		Input string `json:"input"`
+		Asset Asset  `json:"asset"`
 		Value Amount `json:"value"`
+		Input string `json:"input"`
 	}
 
 	Txs []Tx
 
-	Asset interface {
-		GetAsset() string
+	AssetHolder interface {
+		GetAsset() Asset
 	}
 )
 
 var (
-	EmptyTxPage = TxPage{Total: 0, Docs: Txs{}, Status: true}
+	EmptyTxPage = TxPage{Total: 0, Docs: Txs{}}
 )
 
 func NewTxPage(txs Txs) TxPage {
@@ -136,9 +143,8 @@ func NewTxPage(txs Txs) TxPage {
 		txs = Txs{}
 	}
 	return TxPage{
-		Total:  len(txs),
-		Docs:   txs,
-		Status: true,
+		Total: len(txs),
+		Docs:  txs,
 	}
 }
 
@@ -160,9 +166,9 @@ func (txs Txs) CleanMemos() {
 	}
 }
 
-func (txs Txs) SortByDate() Txs {
+func (txs Txs) SortByBlockCreationTime() Txs {
 	sort.Slice(txs, func(i, j int) bool {
-		return txs[i].Date > txs[j].Date
+		return txs[i].BlockCreatedAt > txs[j].BlockCreatedAt
 	})
 	return txs
 }
@@ -180,11 +186,11 @@ func (txs Txs) FilterTransactionsByType(types []TransactionType) Txs {
 	return result
 }
 
-func (t *Transfer) GetAsset() string {
+func (t *Transfer) GetAsset() Asset {
 	return t.Asset
 }
 
-func (cc *ContractCall) GetAsset() string {
+func (cc *ContractCall) GetAsset() Asset {
 	return cc.Asset
 }
 
@@ -212,7 +218,7 @@ func (t *Tx) GetAddresses() []string {
 }
 
 func (t *Tx) GetSubscriptionAddresses() ([]string, error) {
-	coin, _, err := asset.ParseID(t.Metadata.(Asset).GetAsset())
+	coin, _, err := asset.ParseID(string(t.Metadata.(AssetHolder).GetAsset()))
 	if err != nil {
 		return nil, err
 	}
@@ -236,10 +242,14 @@ func (t *Tx) GetDirection(address string) Direction {
 		return InferDirection(t, addressSet)
 	}
 
-	return determineTransactionDirection(address, t.From, t.To)
+	return t.determineTransactionDirection(address, t.From, t.To)
 }
 
-func determineTransactionDirection(address, from, to string) Direction {
+func (t *Tx) determineTransactionDirection(address, from, to string) Direction {
+	if t.Type == TxStakeUndelegate || t.Type == TxStakeClaimRewards {
+		return DirectionIncoming
+	}
+
 	if address == to {
 		if from == to {
 			return DirectionSelf
