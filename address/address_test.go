@@ -24,6 +24,7 @@ func TestEIP55Checksum(t *testing.T) {
 		{"test checksum 3", args{"0x0000000000000000003731342d4f4e452d354639"}, "0x0000000000000000003731342d4f4E452d354639", false},
 		{"test checksum 4", args{"0000000000000000003731342d4f4e452d354639"}, "0x0000000000000000003731342d4f4E452d354639", false},
 		{"test checksum Ethereum address", args{"0x84a0d77c693adabe0ebc48f88b3ffff010577051"}, "0x84A0d77c693aDAbE0ebc48F88b3fFFF010577051", false},
+		{"test invalid address format", args{"https://bscscan.com/token/0x959229D94c9060552daea25AC17193bcA65D7884"}, "", true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
