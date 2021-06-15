@@ -17,8 +17,6 @@ func TestEIP55Checksum(t *testing.T) {
 		want    string
 		wantErr bool
 	}{
-		{"test checksum 1", args{"checktest"}, "0xChecKTeSt", false},
-		{"test checksum 2", args{"trustwallet"}, "0xtrUstWaLlET", false},
 		{"test checksum number", args{"16345785d8a0000"}, "0x16345785d8A0000", false},
 		{"test checksum hex", args{"fffdefefed"}, "0xFfFDEfeFeD", false},
 		{"test checksum 3", args{"0x0000000000000000003731342d4f4e452d354639"}, "0x0000000000000000003731342d4f4E452d354639", false},
