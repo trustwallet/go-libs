@@ -1,15 +1,12 @@
 package address
 
 import (
-	"fmt"
-	"regexp"
+	"encoding/hex"
 	"strings"
 
 	"github.com/trustwallet/golibs/coin"
 	"golang.org/x/crypto/sha3"
 )
-
-var hexRegexp = regexp.MustCompile("^[0-9a-f]+$") // all symbols between the start and the end of the string are in a range from 0 to f
 
 // Decode decodes a hex string with 0x prefix.
 func Remove0x(input string) string {
@@ -23,13 +20,13 @@ func Remove0x(input string) string {
 func EIP55Checksum(unchecksummed string) (string, error) {
 	v := []byte(Remove0x(strings.ToLower(unchecksummed)))
 
-	isHex := hexRegexp.Match(v)
-	if !isHex {
-		return "", fmt.Errorf("invalid hex string \"%s\"", string(v))
+	_, err := hex.DecodeString(string(v))
+	if err != nil {
+		return "", err
 	}
 
 	sha := sha3.NewLegacyKeccak256()
-	_, err := sha.Write(v)
+	_, err = sha.Write(v)
 	if err != nil {
 		return "", err
 	}
