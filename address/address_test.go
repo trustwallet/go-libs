@@ -17,13 +17,12 @@ func TestEIP55Checksum(t *testing.T) {
 		want    string
 		wantErr bool
 	}{
-		{"test checksum 1", args{"checktest"}, "0xChecKTeSt", false},
-		{"test checksum 2", args{"trustwallet"}, "0xtrUstWaLlET", false},
-		{"test checksum number", args{"16345785d8a0000"}, "0x16345785d8A0000", false},
+		{"test checksum number", args{"16345785d8a00000"}, "0x16345785D8A00000", false},
 		{"test checksum hex", args{"fffdefefed"}, "0xFfFDEfeFeD", false},
 		{"test checksum 3", args{"0x0000000000000000003731342d4f4e452d354639"}, "0x0000000000000000003731342d4f4E452d354639", false},
 		{"test checksum 4", args{"0000000000000000003731342d4f4e452d354639"}, "0x0000000000000000003731342d4f4E452d354639", false},
 		{"test checksum Ethereum address", args{"0x84a0d77c693adabe0ebc48f88b3ffff010577051"}, "0x84A0d77c693aDAbE0ebc48F88b3fFFF010577051", false},
+		{"test invalid address format", args{"https://bscscan.com/token/0x959229D94c9060552daea25AC17193bcA65D7884"}, "", true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -61,42 +60,13 @@ func TestRemove0x(t *testing.T) {
 	}
 }
 
-func TestEIP55ChecksumWanchain(t *testing.T) {
-	var (
-		addr1Wan      = "0xae96137e0e05681ed2f5d1af272c3ee512939d0f"
-		addr1WANEIP55 = "0xaE96137e0E05681Ed2f5d1af272c3EE512939d0f"
-		tests         = []struct {
-			name          string
-			unchecksummed string
-			want          string
-			wantErr       bool
-		}{
-			{"test 1", addr1Wan, addr1WANEIP55, false},
-			{"test 2", addr1WANEIP55, addr1WANEIP55, false},
-		}
-	)
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got, err := EIP55ChecksumWanchain(tt.unchecksummed)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("EIP55ChecksumWanchain() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if got != tt.want {
-				t.Errorf("EIP55ChecksumWanchain() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
 func TestToEIP55ByCoinID(t *testing.T) {
 	var (
 		addr1                        = "0xea674fdde714fd979de3edf0f56aa9716b898ec8"
 		addr1EIP55                   = "0xEA674fdDe714fd979de3EdF0F56AA9716B898ec8"
 		wanAddrLowercase             = "0xae96137e0e05681ed2f5d1af272c3ee512939d0f"
 		wanAddrEIP55Checksum         = "0xAe96137E0e05681eD2F5D1AF272C3ee512939D0F"
-		wanAddrEIP55ChecksumWanchain = "0xaE96137e0E05681Ed2f5d1af272c3EE512939d0f"
+		wanAddrEIP55ChecksumWanchain = "0xAe96137E0e05681eD2F5D1AF272C3ee512939D0F"
 		tests                        = []struct {
 			name, address, expectedAddress string
 			coinID                         uint
