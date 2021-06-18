@@ -492,5 +492,5 @@
   symbol: RUNE
   handle: thorchain
   name: THORChain
-  decimals: 18
+  decimals: 8
   sampleAddress: 'bnb1czhptncu9uhhlrlrk9q0rmy459gae2ua79mapn'
