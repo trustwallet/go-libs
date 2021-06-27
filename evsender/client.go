@@ -19,8 +19,8 @@ type Event struct {
 }
 
 type Payload struct {
-	CreatedAt uint        `json:"created_at"`
-	Payload   interface{} `json:"payload"`
+	CreatedAt uint              `json:"created_at"`
+	Payload   map[string]string `json:"payload"`
 }
 
 var senderClient *Client
