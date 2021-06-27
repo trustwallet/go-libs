@@ -6,10 +6,10 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-var events []interface{}
+var events []Event
 var eventsMux = sync.RWMutex{}
 
-func Log(event interface{}) {
+func Log(event Event) {
 	eventsMux.Lock()
 	defer func() {
 		eventsMux.Unlock()
@@ -22,7 +22,7 @@ func Log(event interface{}) {
 	}
 }
 
-func sendEvents(events []interface{}) {
+func sendEvents(events []Event) {
 	if senderClient == nil {
 		return
 	}
