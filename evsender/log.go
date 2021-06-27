@@ -6,7 +6,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-var events []Event
+var events map[string][]Event
 var eventsMux = sync.RWMutex{}
 
 func Log(event Event) {
@@ -14,7 +14,7 @@ func Log(event Event) {
 	defer func() {
 		eventsMux.Unlock()
 	}()
-	events = append(events, event)
+	events[event.Name] = append(events[event.Name], event)
 
 	if len(events) >= batchLimit {
 		go sendEvents(events)
@@ -22,7 +22,7 @@ func Log(event Event) {
 	}
 }
 
-func sendEvents(events []Event) {
+func sendEvents(events map[string][]Event) {
 	if senderClient == nil {
 		return
 	}

@@ -26,7 +26,7 @@ func Init(url string, limit int) {
 	batchLimit = limit
 }
 
-func (c Client) SendBatch(events []Event) (status Status, err error) {
+func (c Client) SendBatch(events interface{}) (status Status, err error) {
 	err = senderClient.Post(&status, "", events)
 	return
 }
