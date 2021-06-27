@@ -2,6 +2,7 @@ package evsender
 
 import (
 	"sync"
+	"time"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -14,6 +15,9 @@ func Log(event Event) {
 	defer func() {
 		eventsMux.Unlock()
 	}()
+	if event.CreatedAt == 0 {
+		event.CreatedAt = time.Now().Unix()
+	}
 	events[event.Name] = append(events[event.Name], event)
 
 	if len(events) >= batchLimit {
