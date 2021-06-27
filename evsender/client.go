@@ -14,8 +14,13 @@ type Status struct {
 }
 
 type Event struct {
-	Name    string      `json:"name"`
-	Payload interface{} `json:"payload"`
+	Name    string  `json:"name"`
+	Payload Payload `json:"payload"`
+}
+
+type Payload struct {
+	CreatedAt uint        `json:"created_at"`
+	Payload   interface{} `json:"payload"`
 }
 
 var senderClient *Client
