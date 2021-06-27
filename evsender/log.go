@@ -7,7 +7,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-var events map[string][]Event
+var events = make(map[string][]Event)
 var eventsMux = sync.RWMutex{}
 
 func Log(event Event) {
@@ -22,7 +22,7 @@ func Log(event Event) {
 
 	if len(events) >= batchLimit {
 		go sendEvents(events)
-		events = nil
+		events = make(map[string][]Event)
 	}
 }
 
