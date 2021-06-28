@@ -1,4 +1,4 @@
-package evsender
+package event
 
 import (
 	"github.com/trustwallet/golibs/client"
