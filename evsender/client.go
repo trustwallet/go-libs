@@ -14,9 +14,9 @@ type Status struct {
 }
 
 type Event struct {
-	Name      string                 `json:"name"`
-	CreatedAt int64                  `json:"created_at"`
-	Params    map[string]interface{} `json:"params"`
+	Name      string            `json:"name"`
+	CreatedAt int64             `json:"created_at"`
+	Params    map[string]string `json:"params"`
 }
 
 var senderClient *Client
