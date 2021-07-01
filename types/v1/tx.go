@@ -211,6 +211,18 @@ func (t *Tx) GetAddresses() []string {
 	addresses := make([]string, 0)
 	switch t.Metadata.(type) {
 	case *Transfer, *ContractCall:
+		if len(t.Inputs) > 0 || len(t.Outputs) > 0 {
+			for _, input := range t.Inputs {
+				addresses = append(addresses, input.Address)
+			}
+
+			for _, output := range t.Outputs {
+				addresses = append(addresses, output.Address)
+			}
+
+			return addresses
+		}
+
 		return append(addresses, t.From, t.To)
 	default:
 		return addresses
