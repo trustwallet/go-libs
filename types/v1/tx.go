@@ -212,12 +212,17 @@ func (t *Tx) GetAddresses() []string {
 	switch t.Metadata.(type) {
 	case *Transfer, *ContractCall:
 		if len(t.Inputs) > 0 || len(t.Outputs) > 0 {
+			uniqueAddresses := make(map[string]struct{})
 			for _, input := range t.Inputs {
-				addresses = append(addresses, input.Address)
+				uniqueAddresses[input.Address] = struct{}{}
 			}
 
 			for _, output := range t.Outputs {
-				addresses = append(addresses, output.Address)
+				uniqueAddresses[output.Address] = struct{}{}
+			}
+
+			for address := range uniqueAddresses {
+				addresses = append(addresses, address)
 			}
 
 			return addresses

@@ -179,6 +179,17 @@ func TestTx_GetAddresses(t *testing.T) {
 			},
 			expected: []string{},
 		},
+		{
+			name: "utxo",
+			tx: Tx{
+				From:     "from_utxo",
+				To:       "from_utxo",
+				Inputs:   []TxOutput{{Address: "from_utxo"}},
+				Outputs:  []TxOutput{{Address: "from_utxo"}, {Address: "to_utxo"}},
+				Metadata: &Transfer{},
+			},
+			expected: []string{"from_utxo", "to_utxo"},
+		},
 	}
 
 	for _, tc := range tests {
