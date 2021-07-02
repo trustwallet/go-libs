@@ -276,6 +276,52 @@ func (t *Tx) determineTransactionDirection(address, from, to string) Direction {
 	return DirectionOutgoing
 }
 
+func (t *Tx) IsUTXO() bool {
+	return t.Type == TxTransfer && len(t.Outputs) > 0
+}
+
+func (t *Tx) GetUTXOValueFor(address string) (Amount, error) {
+	isTransferOut := false
+
+	var totalInputValue uint64
+	var addressInputValue uint64
+	for _, input := range t.Inputs {
+		value, err := strconv.ParseUint(string(input.Value), 10, 64)
+		if err != nil {
+			return "0", fmt.Errorf("input value for address %s: %v", input.Address, err)
+		}
+
+		totalInputValue += value
+
+		if input.Address == address {
+			addressInputValue = value
+			isTransferOut = true
+		}
+	}
+
+	var addressOutputValue uint64
+	var totalOutputValue uint64
+	for _, output := range t.Outputs {
+		value, err := strconv.ParseUint(string(output.Value), 10, 64)
+		if err != nil {
+			return "0", fmt.Errorf("output value for address %s: %v", output.Address, err)
+		}
+		totalOutputValue += value
+		if output.Address == address {
+			addressOutputValue = value
+		}
+	}
+
+	var result uint64
+	if isTransferOut {
+		result = addressInputValue - (totalInputValue-totalOutputValue)/uint64(len(t.Inputs)) - addressOutputValue
+	} else {
+		result = addressOutputValue
+	}
+
+	return Amount(fmt.Sprintf("%d", result)), nil
+}
+
 func InferDirection(tx *Tx, addressSet mapset.Set) Direction {
 	inputSet := mapset.NewSet()
 	for _, address := range tx.Inputs {

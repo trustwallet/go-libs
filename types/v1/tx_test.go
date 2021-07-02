@@ -368,3 +368,73 @@ func TestTx_GetDirection(t *testing.T) {
 	}
 
 }
+
+func TestUTXOValueByAddress(t *testing.T) {
+	tests := []struct {
+		name                 string
+		tx                   Tx
+		address              string
+		expected             Amount
+		expectedErrAssertion assert.ErrorAssertionFunc
+	}{
+		{
+			name: "transfer_self",
+			tx: Tx{
+				Inputs: []TxOutput{{
+					Address: "addr",
+					Value:   "1000",
+				}},
+				Outputs: []TxOutput{{
+					Address: "addr",
+					Value:   "1000",
+				}},
+			},
+			address:              "addr",
+			expected:             "0",
+			expectedErrAssertion: assert.NoError,
+		},
+		{
+			name: "transfer_in",
+			tx: Tx{
+				Outputs: []TxOutput{{
+					Address: "addr",
+					Value:   "1000",
+				}},
+			},
+			address:              "addr",
+			expected:             "1000",
+			expectedErrAssertion: assert.NoError,
+		},
+		{
+			name: "transfer_out_with_utxo",
+			tx: Tx{
+				Inputs: []TxOutput{{
+					Address: "addr",
+					Value:   "1000",
+				}},
+				Outputs: []TxOutput{
+					{
+						Address: "addr",
+						Value:   "100",
+					},
+					{
+						Address: "addr1",
+						Value:   "800",
+					},
+				},
+			},
+			address:              "addr",
+			expected:             "800",
+			expectedErrAssertion: assert.NoError,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			result, err := tc.tx.GetUTXOValueFor(tc.address)
+			tc.expectedErrAssertion(t, err)
+
+			assert.Equal(t, tc.expected, result)
+		})
+	}
+}
