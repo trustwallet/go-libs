@@ -132,6 +132,10 @@ type (
 	AssetHolder interface {
 		GetAsset() Asset
 	}
+
+	Validator interface {
+		Validate() error
+	}
 )
 
 var (
@@ -190,8 +194,32 @@ func (t *Transfer) GetAsset() Asset {
 	return t.Asset
 }
 
+func (t *Transfer) Validate() error {
+	if t.Value == "" {
+		return fmt.Errorf("emtpy transfer value")
+	}
+
+	if t.Asset == "" {
+		return fmt.Errorf("empty transfer asset")
+	}
+
+	return nil
+}
+
 func (cc *ContractCall) GetAsset() Asset {
 	return cc.Asset
+}
+
+func (cc *ContractCall) Validate() error {
+	if cc.Value == "" {
+		return fmt.Errorf("empty contract call value")
+	}
+
+	if cc.Asset == "" {
+		return fmt.Errorf("empty contract call asset")
+	}
+
+	return nil
 }
 
 func cleanMemo(memo string) string {
