@@ -199,6 +199,10 @@ func (t *Transfer) Validate() error {
 		return fmt.Errorf("emtpy transfer value")
 	}
 
+	if t.Asset == "" {
+		return fmt.Errorf("empty transfer asset")
+	}
+
 	return nil
 }
 
@@ -209,6 +213,10 @@ func (cc *ContractCall) GetAsset() Asset {
 func (cc *ContractCall) Validate() error {
 	if cc.Value == "" {
 		return fmt.Errorf("empty contract call value")
+	}
+
+	if cc.Asset == "" {
+		return fmt.Errorf("empty contract call asset")
 	}
 
 	return nil
