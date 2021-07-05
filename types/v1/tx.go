@@ -298,7 +298,10 @@ func (t *Tx) GetDirection(address string) Direction {
 
 func (t *Tx) determineTransactionDirection(address, from, to string) Direction {
 	if t.Type == TxStakeUndelegate || t.Type == TxStakeClaimRewards {
-		return DirectionIncoming
+		if address == from {
+			return DirectionIncoming
+		}
+		return DirectionOutgoing
 	}
 
 	if address == to {
