@@ -341,7 +341,7 @@ func TestTx_GetDirection(t *testing.T) {
 				To:   "owner",
 				Type: TxStakeUndelegate,
 			},
-			address:  "delegator",
+			address:  "owner",
 			expected: DirectionIncoming,
 		},
 		{
@@ -371,7 +371,7 @@ func TestTx_GetDirection(t *testing.T) {
 				To:   "sender",
 				Type: TxStakeClaimRewards,
 			},
-			address:  "delegator",
+			address:  "sender",
 			expected: DirectionIncoming,
 		},
 	}
