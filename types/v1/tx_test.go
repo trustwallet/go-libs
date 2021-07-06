@@ -129,6 +129,7 @@ func TestTx_GetAddresses(t *testing.T) {
 		{
 			name: "transfer",
 			tx: Tx{
+				Type:     TxTransfer,
 				From:     "from",
 				To:       "to",
 				Metadata: &Transfer{},
@@ -138,15 +139,27 @@ func TestTx_GetAddresses(t *testing.T) {
 		{
 			name: "delegation",
 			tx: Tx{
+				Type:     TxStakeDelegate,
 				From:     "from",
 				To:       "to",
 				Metadata: &Transfer{},
 			},
-			expected: []string{"from", "to"},
+			expected: []string{"from"},
+		},
+		{
+			name: "undelegation",
+			tx: Tx{
+				Type:     TxStakeUndelegate,
+				From:     "from",
+				To:       "to",
+				Metadata: &Transfer{},
+			},
+			expected: []string{"to"},
 		},
 		{
 			name: "contract_call",
 			tx: Tx{
+				Type:     TxContractCall,
 				From:     "from",
 				To:       "to",
 				Metadata: &ContractCall{},
@@ -156,6 +169,7 @@ func TestTx_GetAddresses(t *testing.T) {
 		{
 			name: "any_action",
 			tx: Tx{
+				Type:     TxTransfer,
 				From:     "from",
 				To:       "to",
 				Metadata: &Transfer{},
@@ -165,11 +179,12 @@ func TestTx_GetAddresses(t *testing.T) {
 		{
 			name: "redelegation",
 			tx: Tx{
-				From:     "from_validator",
+				Type:     TxStakeRedelegate,
+				From:     "from",
 				To:       "to_validator",
 				Metadata: &Transfer{},
 			},
-			expected: []string{"from_validator", "to_validator"},
+			expected: []string{"from"},
 		},
 		{
 			name: "undefined",
@@ -182,6 +197,7 @@ func TestTx_GetAddresses(t *testing.T) {
 		{
 			name: "utxo",
 			tx: Tx{
+				Type:     TxTransfer,
 				From:     "from_utxo",
 				To:       "from_utxo",
 				Inputs:   []TxOutput{{Address: "from_utxo"}},

@@ -237,8 +237,8 @@ func cleanMemo(memo string) string {
 
 func (t *Tx) GetAddresses() []string {
 	addresses := make([]string, 0)
-	switch t.Metadata.(type) {
-	case *Transfer, *ContractCall:
+	switch t.Type {
+	case TxTransfer:
 		if len(t.Inputs) > 0 || len(t.Outputs) > 0 {
 			uniqueAddresses := make(map[string]struct{})
 			for _, input := range t.Inputs {
@@ -257,6 +257,12 @@ func (t *Tx) GetAddresses() []string {
 		}
 
 		return append(addresses, t.From, t.To)
+	case TxContractCall:
+		return append(addresses, t.From, t.To)
+	case TxStakeDelegate, TxStakeRedelegate:
+		return append(addresses, t.From)
+	case TxStakeUndelegate, TxStakeClaimRewards:
+		return append(addresses, t.To)
 	default:
 		return addresses
 	}
