@@ -154,7 +154,17 @@ func TestTx_GetAddresses(t *testing.T) {
 				To:       "to",
 				Metadata: &Transfer{},
 			},
-			expected: []string{"to"},
+			expected: []string{"from"},
+		},
+		{
+			name: "claim_rewards",
+			tx: Tx{
+				Type:     TxStakeClaimRewards,
+				From:     "from",
+				To:       "to",
+				Metadata: &Transfer{},
+			},
+			expected: []string{"from"},
 		},
 		{
 			name: "contract_call",
