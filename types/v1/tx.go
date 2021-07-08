@@ -259,10 +259,8 @@ func (t *Tx) GetAddresses() []string {
 		return append(addresses, t.From, t.To)
 	case TxContractCall:
 		return append(addresses, t.From, t.To)
-	case TxStakeDelegate, TxStakeRedelegate:
+	case TxStakeDelegate, TxStakeRedelegate, TxStakeUndelegate, TxStakeClaimRewards:
 		return append(addresses, t.From)
-	case TxStakeUndelegate, TxStakeClaimRewards:
-		return append(addresses, t.To)
 	default:
 		return addresses
 	}
