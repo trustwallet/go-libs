@@ -314,6 +314,7 @@ func (t *Tx) IsUTXO() bool {
 
 func (t *Tx) GetUTXOValueFor(address string) (Amount, error) {
 	isTransferOut := false
+	isSelf := true
 
 	var totalInputValue uint64
 	var addressInputValue uint64
@@ -328,6 +329,8 @@ func (t *Tx) GetUTXOValueFor(address string) (Amount, error) {
 		if input.Address == address {
 			addressInputValue = value
 			isTransferOut = true
+		} else {
+			isSelf = false
 		}
 	}
 
@@ -340,12 +343,14 @@ func (t *Tx) GetUTXOValueFor(address string) (Amount, error) {
 		}
 		totalOutputValue += value
 		if output.Address == address {
-			addressOutputValue = value
+			addressOutputValue += value
+		} else {
+			isSelf = false
 		}
 	}
 
 	var result uint64
-	if isTransferOut {
+	if isTransferOut && !isSelf {
 		result = addressInputValue - (totalInputValue-totalOutputValue)/uint64(len(t.Inputs)) - addressOutputValue
 	} else {
 		result = addressOutputValue

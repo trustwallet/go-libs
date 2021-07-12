@@ -410,13 +410,19 @@ func TestUTXOValueByAddress(t *testing.T) {
 					Address: "addr",
 					Value:   "1000",
 				}},
-				Outputs: []TxOutput{{
-					Address: "addr",
-					Value:   "1000",
-				}},
+				Outputs: []TxOutput{
+					{
+						Address: "addr",
+						Value:   "900",
+					},
+					{
+						Address: "addr",
+						Value:   "100",
+					},
+				},
 			},
 			address:              "addr",
-			expected:             "0",
+			expected:             "1000",
 			expectedErrAssertion: assert.NoError,
 		},
 		{
