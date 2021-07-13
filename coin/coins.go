@@ -576,7 +576,7 @@ var Coins = map[uint]Coin{
 		Handle:           "near",
 		Symbol:           "NEAR",
 		Name:             "NEAR",
-		Decimals:         18,
+		Decimals:         24,
 		BlockTime:        2000,
 		MinConfirmations: 0,
 		SampleAddr:       "NEAR6Y66fCzeKqWiwxoPox5oGeDN9VhNCu7CEQ9M86iniqoN9vg2X",
