@@ -195,3 +195,29 @@ func FatalWorker(timeout time.Duration) {
 		time.Sleep(timeout)
 	}
 }
+
+func RetryWorker(timeout time.Duration, retriesAmount int, url string) {
+	log.Info("Run MQ RetryWorker")
+	for {
+		if conn.IsClosed() {
+			log.Warn("MQ connection lost")
+			for i := 0; i < retriesAmount; i++ {
+				log.Info("Connecting to MQ... Attempt ", i+1)
+				err := Init(url)
+				if err == nil {
+					break
+				}
+				log.Error("Failed to establish MQ connection: ", err)
+
+				if retriesAmount-i == 1 {
+					log.Fatal("MQ is not available now")
+				}
+
+				time.Sleep(timeout)
+			}
+
+			log.Info("MQ connection established")
+		}
+		time.Sleep(timeout)
+	}
+}
