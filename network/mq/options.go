@@ -19,3 +19,9 @@ func InitDefaultConsumerOptions(workers int) ConsumerOptions {
 		RetryDelay:    time.Second * 1,
 	}
 }
+
+func PoolOptionRetriesNumber(number int) PoolOption {
+	return func(p *Pool) {
+		p.retriesNumber = number
+	}
+}
