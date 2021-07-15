@@ -16,12 +16,10 @@ type queue struct {
 	consumerOpts ConsumerOptions
 }
 
-func InitQueue(name string, amqpChan *amqp.Channel, consumer Consumer, consumerOptions ConsumerOptions) *queue {
+func InitQueue(name string, amqpChan *amqp.Channel) *queue {
 	return &queue{
-		name:         name,
-		amqpChan:     amqpChan,
-		consumer:     consumer,
-		consumerOpts: consumerOptions,
+		name:     name,
+		amqpChan: amqpChan,
 	}
 }
 
@@ -29,7 +27,9 @@ type Queue interface {
 	Declare() error
 	Publish(body []byte) error
 	Name() string
-	RunConsumer(ctx context.Context)
+	WithConsumer(consumer Consumer, consumerOptions ConsumerOptions) Queue
+	Consume(ctx context.Context)
+	Reconnect(amqpChan *amqp.Channel)
 }
 
 func (q *queue) Name() string {
@@ -45,20 +45,31 @@ func (q *queue) Publish(body []byte) error {
 	return publish(q.amqpChan, "", q.name, body)
 }
 
-func (q *queue) RunConsumer(ctx context.Context) {
-	messages := q.messageChannel()
-	for w := 1; w <= q.consumerOpts.Workers; w++ {
-		go q.consume(ctx, w, messages)
-	}
-
-	log.Infof("Started %d MQ consumer workers", q.consumerOpts.Workers)
+func (q *queue) Reconnect(amqpChan *amqp.Channel) {
+	q.amqpChan = amqpChan
 }
 
-func (q *queue) consume(ctx context.Context, num int, messages <-chan amqp.Delivery) {
+func (q *queue) WithConsumer(consumer Consumer, consumerOptions ConsumerOptions) Queue {
+	q.consumer = consumer
+	q.consumerOpts = consumerOptions
+
+	return q
+}
+
+func (q *queue) Consume(ctx context.Context) {
+	messages := q.messageChannel()
+	for w := 1; w <= q.consumerOpts.Workers; w++ {
+		go q.consume(ctx, messages)
+	}
+
+	log.Infof("Started %d MQ consumer workers for queue %s", q.consumerOpts.Workers, q.name)
+}
+
+func (q *queue) consume(ctx context.Context, messages <-chan amqp.Delivery) {
 	for {
 		select {
 		case <-ctx.Done():
-			log.Infof("Consumer worker %d stopped consuming", num)
+			log.Infof("Stopped consuming queue %s", q.name)
 			return
 		case msg := <-messages:
 			if msg.Body == nil {

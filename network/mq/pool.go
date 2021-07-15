@@ -2,9 +2,7 @@ package mq
 
 import (
 	"context"
-	"os"
 	"sync"
-	"syscall"
 	"time"
 
 	log "github.com/sirupsen/logrus"
@@ -12,6 +10,7 @@ import (
 )
 
 type Pool struct {
+	connURL  string
 	conn     *amqp.Connection
 	amqpChan *amqp.Channel
 
@@ -25,16 +24,13 @@ type Pool struct {
 type PoolOption func(p *Pool)
 
 func InitPool(url string, options ...PoolOption) *Pool {
-	conn, err := amqp.Dial(url)
+	conn, amqpChan, err := connect(url)
 	if err != nil {
-		log.Fatal(err)
-	}
-	amqpChan, err := conn.Channel()
-	if err != nil {
-		log.Fatal(err)
+		log.Fatal("Failed to connect to AMQP: ", err)
 	}
 
 	pool := &Pool{
+		connURL:  url,
 		amqpChan: amqpChan,
 		conn:     conn,
 
@@ -61,67 +57,49 @@ func (p *Pool) Close() error {
 		log.Print(err)
 	}
 
-	return conn.Close()
+	return p.conn.Close()
 }
 
 func (p *Pool) Consume(ctx context.Context) {
 	for _, q := range p.queues {
-		q.RunConsumer(ctx)
+		q.Consume(ctx)
 	}
 
 	for {
-		if conn.IsClosed() {
-			log.Fatal("MQ connection closed")
+		if p.conn.IsClosed() {
+			log.Warn("MQ connection lost")
+
+			if p.retriesNumber == 0 {
+				log.Fatal("MQ connection closed")
+			}
+
+			for i := 0; i < p.retriesNumber; i++ {
+				log.Info("Connecting to MQ... Attempt ", i+1)
+				conn, amqpChan, err := connect(p.connURL)
+				if err == nil {
+					p.reconnect(conn, amqpChan)
+					break
+				}
+				log.Error("Failed to establish MQ connection: ", err)
+
+				if p.retriesNumber-i == 1 {
+					log.Fatal("MQ is not available now")
+				}
+
+				time.Sleep(p.timeout)
+			}
+
 		}
 
 		time.Sleep(p.timeout)
 	}
 }
 
-func QuitWorker(timeout time.Duration, quit chan<- os.Signal) {
-	log.Info("Run CancelWorker")
-	for {
-		if conn.IsClosed() {
-			log.Error("MQ is not available now")
-			quit <- syscall.SIGTERM
-			return
-		}
-		time.Sleep(timeout)
-	}
-}
+func (p *Pool) reconnect(conn *amqp.Connection, amqpChan *amqp.Channel) {
+	p.conn = conn
+	p.amqpChan = amqpChan
 
-func FatalWorker(timeout time.Duration) {
-	log.Info("Run MQ FatalWorker")
-	for {
-		if conn.IsClosed() {
-			log.Fatal("MQ is not available now")
-		}
-		time.Sleep(timeout)
-	}
-}
-
-func RetryWorker(timeout time.Duration, retriesAmount int, url string) {
-	log.Info("Run MQ RetryWorker")
-	for {
-		if conn.IsClosed() {
-			log.Warn("MQ connection lost")
-			for i := 0; i < retriesAmount; i++ {
-				log.Info("Connecting to MQ... Attempt ", i+1)
-				//err := Init(url)
-				//if err == nil {
-				//	break
-				//}
-				//log.Error("Failed to establish MQ connection: ", err)
-
-				if retriesAmount-i == 1 {
-					log.Fatal("MQ is not available now")
-				}
-
-				time.Sleep(timeout)
-			}
-
-			log.Info("MQ connection established")
-		}
-		time.Sleep(timeout)
+	for _, q := range p.queues {
+		q.Reconnect(amqpChan)
 	}
 }
