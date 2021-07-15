@@ -40,6 +40,15 @@ func Connect(url string) {
 	}
 }
 
+func Close() error {
+	err := AMQPChan.Close()
+	if err != nil {
+		log.Print(err)
+	}
+
+	return Conn.Close()
+}
+
 func connect(url string) (*amqp.Connection, *amqp.Channel, error) {
 	conn, err := amqp.Dial(url)
 	if err != nil {
