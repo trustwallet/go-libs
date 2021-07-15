@@ -329,8 +329,6 @@ func (t *Tx) GetUTXOValueFor(address string) (Amount, error) {
 		if input.Address == address {
 			addressInputValue = value
 			isTransferOut = true
-		} else {
-			isSelf = false
 		}
 	}
 
@@ -351,7 +349,11 @@ func (t *Tx) GetUTXOValueFor(address string) (Amount, error) {
 
 	var result uint64
 	if isTransferOut && !isSelf {
-		result = addressInputValue - (totalInputValue-totalOutputValue)/uint64(len(t.Inputs)) - addressOutputValue
+		if addressInputValue < addressOutputValue {
+			result = 0 // address received more than sent although it's an outgoing tx
+		} else {
+			result = addressInputValue - (totalInputValue-totalOutputValue)/uint64(len(t.Inputs)) - addressOutputValue
+		}
 	} else {
 		result = addressOutputValue
 	}
