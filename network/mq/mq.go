@@ -14,6 +14,12 @@ var (
 	AMQPChan *amqp.Channel
 )
 
+type (
+	QueueName    string
+	ExchangeName string
+	ExchangeKey  string
+)
+
 type Consumer interface {
 	Callback(msg amqp.Delivery) error
 }
@@ -47,8 +53,8 @@ func connect(url string) (*amqp.Connection, *amqp.Channel, error) {
 	return conn, amqpChan, nil
 }
 
-func publish(amqpChan *amqp.Channel, exchange, queue string, body []byte) error {
-	return amqpChan.Publish(exchange, queue, false, false, amqp.Publishing{
+func publish(amqpChan *amqp.Channel, exchange ExchangeName, key ExchangeKey, body []byte) error {
+	return amqpChan.Publish(string(exchange), string(key), false, false, amqp.Publishing{
 		DeliveryMode: amqp.Persistent,
 		ContentType:  "text/plain",
 		Body:         body,

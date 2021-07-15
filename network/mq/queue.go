@@ -9,14 +9,14 @@ import (
 )
 
 type queue struct {
-	name     string
+	name     QueueName
 	amqpChan *amqp.Channel
 
 	consumer     Consumer
 	consumerOpts ConsumerOptions
 }
 
-func InitQueue(name string, amqpChan *amqp.Channel) *queue {
+func InitQueue(name QueueName, amqpChan *amqp.Channel) Queue {
 	return &queue{
 		name:     name,
 		amqpChan: amqpChan,
@@ -26,27 +26,28 @@ func InitQueue(name string, amqpChan *amqp.Channel) *queue {
 type Queue interface {
 	Declare() error
 	Publish(body []byte) error
-	Name() string
+	Name() QueueName
 	WithConsumer(consumer Consumer, consumerOptions ConsumerOptions) Queue
 	Consume(ctx context.Context)
-	Reconnect(amqpChan *amqp.Channel)
+	Reconnect(ctx context.Context, amqpChan *amqp.Channel)
 }
 
-func (q *queue) Name() string {
+func (q *queue) Name() QueueName {
 	return q.name
 }
 
 func (q *queue) Declare() error {
-	_, err := q.amqpChan.QueueDeclare(q.name, true, false, false, false, nil)
+	_, err := q.amqpChan.QueueDeclare(string(q.name), true, false, false, false, nil)
 	return err
 }
 
 func (q *queue) Publish(body []byte) error {
-	return publish(q.amqpChan, "", q.name, body)
+	return publish(q.amqpChan, "", ExchangeKey(q.name), body)
 }
 
-func (q *queue) Reconnect(amqpChan *amqp.Channel) {
+func (q *queue) Reconnect(ctx context.Context, amqpChan *amqp.Channel) {
 	q.amqpChan = amqpChan
+	q.Consume(ctx)
 }
 
 func (q *queue) WithConsumer(consumer Consumer, consumerOptions ConsumerOptions) Queue {
@@ -96,7 +97,7 @@ func (q *queue) consume(ctx context.Context, messages <-chan amqp.Delivery) {
 
 func (q *queue) messageChannel() <-chan amqp.Delivery {
 	messageChannel, err := q.amqpChan.Consume(
-		q.name,
+		string(q.name),
 		"",
 		false,
 		false,
@@ -105,7 +106,7 @@ func (q *queue) messageChannel() <-chan amqp.Delivery {
 		nil,
 	)
 	if err != nil {
-		log.Fatal("MQ issue" + err.Error() + " for queue: " + q.name)
+		log.Fatal("MQ issue" + err.Error() + " for queue: " + string(q.name))
 	}
 
 	err = q.amqpChan.Qos(

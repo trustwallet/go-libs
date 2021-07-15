@@ -17,6 +17,9 @@ type Pool struct {
 	queues    []Queue
 	queuesMux sync.RWMutex
 
+	exchanges    []Exchange
+	exchangesMux sync.RWMutex
+
 	retriesNumber int
 	timeout       time.Duration
 }
@@ -34,7 +37,7 @@ func InitPool(url string, options ...PoolOption) *Pool {
 		amqpChan: amqpChan,
 		conn:     conn,
 
-		timeout: time.Second * 10,
+		timeout: time.Second * 10, // default timeout value
 	}
 
 	for _, opt := range options {
@@ -44,11 +47,22 @@ func InitPool(url string, options ...PoolOption) *Pool {
 	return pool
 }
 
+func (p *Pool) AMQPChan() *amqp.Channel {
+	return p.amqpChan
+}
+
 func (p *Pool) AddQueue(queue Queue) {
 	p.queuesMux.Lock()
 	defer p.queuesMux.Unlock()
 
 	p.queues = append(p.queues, queue)
+}
+
+func (p *Pool) AddExchange(exchange Exchange) {
+	p.exchangesMux.Lock()
+	defer p.exchangesMux.Unlock()
+
+	p.exchanges = append(p.exchanges, exchange)
 }
 
 func (p *Pool) Close() error {
@@ -60,7 +74,7 @@ func (p *Pool) Close() error {
 	return p.conn.Close()
 }
 
-func (p *Pool) Consume(ctx context.Context) {
+func (p *Pool) Start(ctx context.Context) {
 	for _, q := range p.queues {
 		q.Consume(ctx)
 	}
@@ -77,7 +91,8 @@ func (p *Pool) Consume(ctx context.Context) {
 				log.Info("Connecting to MQ... Attempt ", i+1)
 				conn, amqpChan, err := connect(p.connURL)
 				if err == nil {
-					p.reconnect(conn, amqpChan)
+					p.reconnect(ctx, conn, amqpChan)
+					log.Info("MQ Connection established")
 					break
 				}
 				log.Error("Failed to establish MQ connection: ", err)
@@ -95,11 +110,15 @@ func (p *Pool) Consume(ctx context.Context) {
 	}
 }
 
-func (p *Pool) reconnect(conn *amqp.Connection, amqpChan *amqp.Channel) {
+func (p *Pool) reconnect(ctx context.Context, conn *amqp.Connection, amqpChan *amqp.Channel) {
 	p.conn = conn
 	p.amqpChan = amqpChan
 
 	for _, q := range p.queues {
-		q.Reconnect(amqpChan)
+		q.Reconnect(ctx, amqpChan)
+	}
+
+	for _, e := range p.exchanges {
+		e.Reconnect(ctx, amqpChan)
 	}
 }
