@@ -426,6 +426,29 @@ func TestUTXOValueByAddress(t *testing.T) {
 			expectedErrAssertion: assert.NoError,
 		},
 		{
+			name: "transfer_self_multi",
+			tx: Tx{
+				Inputs: []TxOutput{
+					{
+						Address: "bc1qrfr44n2j4czd5c9txwlnw0yj2h82x9566fglqj",
+						Value:   "10772",
+					},
+					{
+						Address: "bc1qf9xslrccq3hnwa8dyd9gnjcuxlyz45v5dku5t9",
+						Value:   "12257",
+					}},
+				Outputs: []TxOutput{
+					{
+						Address: "bc1qrfr44n2j4czd5c9txwlnw0yj2h82x9566fglqj",
+						Value:   "14663",
+					},
+				},
+			},
+			address:              "bc1qrfr44n2j4czd5c9txwlnw0yj2h82x9566fglqj",
+			expected:             "14663",
+			expectedErrAssertion: assert.NoError,
+		},
+		{
 			name: "transfer_in",
 			tx: Tx{
 				Outputs: []TxOutput{{
