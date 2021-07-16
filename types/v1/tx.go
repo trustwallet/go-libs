@@ -7,10 +7,12 @@ import (
 
 	mapset "github.com/deckarep/golang-set"
 	"github.com/trustwallet/golibs/asset"
+	"github.com/trustwallet/golibs/coin"
 )
 
 const (
 	StatusCompleted Status = "completed"
+	StatusPending   Status = "pending"
 	StatusError     Status = "error"
 
 	DirectionOutgoing Direction = "outgoing"
@@ -31,7 +33,7 @@ var SupportedTypes = []TransactionType{
 
 // Transaction fields
 type (
-	Asset           string
+	AssetID         string
 	Direction       string
 	Status          string
 	TransactionType string
@@ -103,8 +105,8 @@ type (
 
 	// Every transaction consumes some Fee
 	Fee struct {
-		Asset Asset  `json:"asset"`
-		Value Amount `json:"value"`
+		Asset AssetID `json:"asset"`
+		Value Amount  `json:"value"`
 	}
 
 	// UTXO transactions consist of a set of inputs and a set of outputs
@@ -116,21 +118,32 @@ type (
 
 	// Transfer describes the transfer of currency
 	Transfer struct {
-		Asset Asset  `json:"asset"`
-		Value Amount `json:"value"`
+		Asset AssetID `json:"asset"`
+		Value Amount  `json:"value"`
 	}
 
 	// ContractCall describes a
 	ContractCall struct {
-		Asset Asset  `json:"asset"`
-		Value Amount `json:"value"`
-		Input string `json:"input"`
+		Asset AssetID `json:"asset"`
+		Value Amount  `json:"value"`
+		Input string  `json:"input"`
+	}
+
+	// Token describes the non-native tokens.
+	// Examples: ERC-20, TRC-20, BEP-2
+	Token struct {
+		Name     string    `json:"name"`
+		Symbol   string    `json:"symbol"`
+		Decimals uint      `json:"decimals"`
+		TokenID  string    `json:"token_id"`
+		Coin     uint      `json:"coin"`
+		Type     TokenType `json:"type"`
 	}
 
 	Txs []Tx
 
 	AssetHolder interface {
-		GetAsset() Asset
+		GetAsset() AssetID
 	}
 
 	Validator interface {
@@ -190,7 +203,7 @@ func (txs Txs) FilterTransactionsByType(types []TransactionType) Txs {
 	return result
 }
 
-func (t *Transfer) GetAsset() Asset {
+func (t *Transfer) GetAsset() AssetID {
 	return t.Asset
 }
 
@@ -206,7 +219,7 @@ func (t *Transfer) Validate() error {
 	return nil
 }
 
-func (cc *ContractCall) GetAsset() Asset {
+func (cc *ContractCall) GetAsset() AssetID {
 	return cc.Asset
 }
 
@@ -388,4 +401,27 @@ func IsTxTypeAmong(txType TransactionType, types []TransactionType) bool {
 	}
 
 	return result
+}
+
+func (t Token) AssetId() string {
+	return asset.BuildID(t.Coin, t.TokenID)
+}
+
+func GetTokenType(c uint, tokenID string) (string, bool) {
+	switch c {
+	case coin.Ethereum().ID:
+		return string(ERC20), true
+	case coin.Tron().ID:
+		_, err := strconv.Atoi(tokenID)
+		if err != nil {
+			return string(TRC20), true
+		}
+		return string(TRC10), true
+	case coin.Smartchain().ID:
+		return string(BEP20), true
+	case coin.Binance().ID:
+		return string(BEP2), true
+	default:
+		return "", false
+	}
 }
