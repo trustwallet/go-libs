@@ -221,7 +221,7 @@ func TestTx_GetAddresses(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			result := tc.tx.GetAddresses()
-			assert.Equal(t, tc.expected, result)
+			assert.EqualValues(t, tc.expected, result)
 		})
 	}
 
