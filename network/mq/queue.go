@@ -2,6 +2,7 @@ package mq
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	log "github.com/sirupsen/logrus"
@@ -9,18 +10,10 @@ import (
 )
 
 type queue struct {
-	name     QueueName
-	amqpChan *amqp.Channel
-
+	name         QueueName
+	mq           *MQ
 	consumer     Consumer
 	consumerOpts ConsumerOptions
-}
-
-func InitQueue(name QueueName, amqpChan *amqp.Channel) Queue {
-	return &queue{
-		name:     name,
-		amqpChan: amqpChan,
-	}
 }
 
 type Queue interface {
@@ -28,26 +21,34 @@ type Queue interface {
 	Publish(body []byte) error
 	Name() QueueName
 	WithConsumer(consumer Consumer, consumerOptions ConsumerOptions) Queue
-	Consume(ctx context.Context)
-	Reconnect(ctx context.Context, amqpChan *amqp.Channel)
+	Consume(ctx context.Context) error
+	Reconnect(ctx context.Context, amqpChan *amqp.Channel) error
 }
+
+type Consumer func([]byte) error
 
 func (q *queue) Name() QueueName {
 	return q.name
 }
 
 func (q *queue) Declare() error {
-	_, err := q.amqpChan.QueueDeclare(string(q.name), true, false, false, false, nil)
+	_, err := q.mq.amqpChan.QueueDeclare(string(q.name), true, false, false, false, nil)
 	return err
 }
 
 func (q *queue) Publish(body []byte) error {
-	return publish(q.amqpChan, "", ExchangeKey(q.name), body)
+	return publish(q.mq.amqpChan, "", ExchangeKey(q.name), body)
 }
 
-func (q *queue) Reconnect(ctx context.Context, amqpChan *amqp.Channel) {
-	q.amqpChan = amqpChan
-	q.Consume(ctx)
+func (q *queue) Reconnect(ctx context.Context, amqpChan *amqp.Channel) error {
+	q.mq.amqpChan = amqpChan
+
+	err := q.Consume(ctx)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (q *queue) WithConsumer(consumer Consumer, consumerOptions ConsumerOptions) Queue {
@@ -57,13 +58,18 @@ func (q *queue) WithConsumer(consumer Consumer, consumerOptions ConsumerOptions)
 	return q
 }
 
-func (q *queue) Consume(ctx context.Context) {
-	messages := q.messageChannel()
+func (q *queue) Consume(ctx context.Context) error {
+	messages, err := q.messageChannel()
+	if err != nil {
+		return err
+	}
 	for w := 1; w <= q.consumerOpts.Workers; w++ {
 		go q.consume(ctx, messages)
 	}
 
 	log.Infof("Started %d MQ consumer workers for queue %s", q.consumerOpts.Workers, q.name)
+
+	return nil
 }
 
 func (q *queue) consume(ctx context.Context, messages <-chan amqp.Delivery) {
@@ -77,7 +83,7 @@ func (q *queue) consume(ctx context.Context, messages <-chan amqp.Delivery) {
 				continue
 			}
 
-			err := q.consumer.Callback(msg)
+			err := q.consumer(msg.Body)
 			if err != nil {
 				log.Error(err)
 			}
@@ -95,8 +101,8 @@ func (q *queue) consume(ctx context.Context, messages <-chan amqp.Delivery) {
 	}
 }
 
-func (q *queue) messageChannel() <-chan amqp.Delivery {
-	messageChannel, err := q.amqpChan.Consume(
+func (q *queue) messageChannel() (<-chan amqp.Delivery, error) {
+	messageChannel, err := q.mq.amqpChan.Consume(
 		string(q.name),
 		"",
 		false,
@@ -106,17 +112,8 @@ func (q *queue) messageChannel() <-chan amqp.Delivery {
 		nil,
 	)
 	if err != nil {
-		log.Fatal("MQ issue" + err.Error() + " for queue: " + string(q.name))
+		return nil, fmt.Errorf("MQ issue" + err.Error() + " for queue: " + string(q.name))
 	}
 
-	err = q.amqpChan.Qos(
-		q.consumerOpts.PrefetchLimit,
-		0,
-		true,
-	)
-	if err != nil {
-		log.Error("No qos limit ", err)
-	}
-
-	return messageChannel
+	return messageChannel, nil
 }

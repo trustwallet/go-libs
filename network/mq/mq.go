@@ -1,17 +1,8 @@
 package mq
 
 import (
-	"os"
-	"syscall"
-	"time"
-
 	log "github.com/sirupsen/logrus"
 	"github.com/streadway/amqp"
-)
-
-var (
-	Conn     *amqp.Connection
-	AMQPChan *amqp.Channel
 )
 
 type (
@@ -20,33 +11,73 @@ type (
 	ExchangeKey  string
 )
 
-type Consumer interface {
-	Callback(msg amqp.Delivery) error
+type MQ struct {
+	url      string
+	conn     *amqp.Connection
+	amqpChan *amqp.Channel
 }
 
-type ConsumerDefaultCallback struct {
-	Delivery func(amqp.Delivery) error
-}
+type Option func(amqpChan *amqp.Channel) error
 
-func (c ConsumerDefaultCallback) Callback(msg amqp.Delivery) error {
-	return c.Delivery(msg)
-}
-
-func Connect(url string) {
-	var err error
-	Conn, AMQPChan, err = connect(url)
+func Open(url string, options ...Option) (*MQ, error) {
+	conn, err := amqp.Dial(url)
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
+	}
+
+	amqpChan, err := conn.Channel()
+	if err != nil {
+		return nil, err
+	}
+
+	for _, opt := range options {
+		err = opt(amqpChan)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return &MQ{
+		url:      url,
+		conn:     conn,
+		amqpChan: amqpChan,
+	}, nil
+}
+
+func (mq *MQ) Close() error {
+	if mq.amqpChan != nil {
+		err := mq.amqpChan.Close()
+		if err != nil {
+			log.Error(err)
+		}
+	}
+
+	if mq.conn != nil && !mq.conn.IsClosed() {
+		err := mq.conn.Close()
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (mq *MQ) NewQueue(name QueueName) Queue {
+	return &queue{
+		name: name,
+		mq:   mq,
 	}
 }
 
-func Close() error {
-	err := AMQPChan.Close()
-	if err != nil {
-		log.Print(err)
+func (mq *MQ) NewExchange(name ExchangeName) Exchange {
+	return &exchange{
+		name: name,
+		mq:   mq,
 	}
+}
 
-	return Conn.Close()
+func (mq *MQ) NewPool(options ...PoolOption) Pool {
+	return initPool(mq, options...)
 }
 
 func connect(url string) (*amqp.Connection, *amqp.Channel, error) {
@@ -68,26 +99,4 @@ func publish(amqpChan *amqp.Channel, exchange ExchangeName, key ExchangeKey, bod
 		ContentType:  "text/plain",
 		Body:         body,
 	})
-}
-
-func QuitWorker(timeout time.Duration, quit chan<- os.Signal) {
-	log.Info("Run CancelWorker")
-	for {
-		if Conn.IsClosed() {
-			log.Error("MQ is not available now")
-			quit <- syscall.SIGTERM
-			return
-		}
-		time.Sleep(timeout)
-	}
-}
-
-func FatalWorker(timeout time.Duration) {
-	log.Info("Run MQ FatalWorker")
-	for {
-		if Conn.IsClosed() {
-			log.Fatal("MQ is not available now")
-		}
-		time.Sleep(timeout)
-	}
 }

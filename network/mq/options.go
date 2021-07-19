@@ -2,6 +2,8 @@ package mq
 
 import (
 	"time"
+
+	"github.com/streadway/amqp"
 )
 
 type ConsumerOptions struct {
@@ -9,6 +11,21 @@ type ConsumerOptions struct {
 	PrefetchLimit int
 	RetryOnError  bool
 	RetryDelay    time.Duration
+}
+
+func OptionPrefetchLimit(limit int) Option {
+	return func(amqpChan *amqp.Channel) error {
+		err := amqpChan.Qos(
+			limit,
+			0,
+			true,
+		)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	}
 }
 
 func InitDefaultConsumerOptions(workers int) ConsumerOptions {
@@ -21,7 +38,7 @@ func InitDefaultConsumerOptions(workers int) ConsumerOptions {
 }
 
 func PoolOptionRetriesNumber(number int) PoolOption {
-	return func(p *Pool) {
+	return func(p *pool) {
 		p.retriesNumber = number
 	}
 }
