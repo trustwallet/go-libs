@@ -7,10 +7,9 @@ import (
 )
 
 type ConsumerOptions struct {
-	Workers       int
-	PrefetchLimit int
-	RetryOnError  bool
-	RetryDelay    time.Duration
+	Workers      int
+	RetryOnError bool
+	RetryDelay   time.Duration
 }
 
 func OptionPrefetchLimit(limit int) Option {
@@ -28,12 +27,11 @@ func OptionPrefetchLimit(limit int) Option {
 	}
 }
 
-func InitDefaultConsumerOptions(workers int) ConsumerOptions {
+func DefaultConsumerOptions(workers int) ConsumerOptions {
 	return ConsumerOptions{
-		Workers:       workers,
-		PrefetchLimit: 10,
-		RetryOnError:  true,
-		RetryDelay:    time.Second * 1,
+		Workers:      workers,
+		RetryOnError: true,
+		RetryDelay:   time.Second,
 	}
 }
 

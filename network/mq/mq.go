@@ -11,7 +11,7 @@ type (
 	ExchangeKey  string
 )
 
-type MQ struct {
+type Manager struct {
 	url      string
 	conn     *amqp.Connection
 	amqpChan *amqp.Channel
@@ -19,7 +19,7 @@ type MQ struct {
 
 type Option func(amqpChan *amqp.Channel) error
 
-func Open(url string, options ...Option) (*MQ, error) {
+func Open(url string, options ...Option) (*Manager, error) {
 	conn, err := amqp.Dial(url)
 	if err != nil {
 		return nil, err
@@ -37,23 +37,23 @@ func Open(url string, options ...Option) (*MQ, error) {
 		}
 	}
 
-	return &MQ{
+	return &Manager{
 		url:      url,
 		conn:     conn,
 		amqpChan: amqpChan,
 	}, nil
 }
 
-func (mq *MQ) Close() error {
-	if mq.amqpChan != nil {
-		err := mq.amqpChan.Close()
+func (m *Manager) Close() error {
+	if m.amqpChan != nil {
+		err := m.amqpChan.Close()
 		if err != nil {
 			log.Error(err)
 		}
 	}
 
-	if mq.conn != nil && !mq.conn.IsClosed() {
-		err := mq.conn.Close()
+	if m.conn != nil && !m.conn.IsClosed() {
+		err := m.conn.Close()
 		if err != nil {
 			return err
 		}
@@ -62,35 +62,48 @@ func (mq *MQ) Close() error {
 	return nil
 }
 
-func (mq *MQ) NewQueue(name QueueName) Queue {
+func (m *Manager) InitQueue(name QueueName) Queue {
 	return &queue{
-		name: name,
-		mq:   mq,
+		name:    name,
+		manager: m,
 	}
 }
 
-func (mq *MQ) NewExchange(name ExchangeName) Exchange {
+func (m *Manager) InitExchange(name ExchangeName) Exchange {
 	return &exchange{
-		name: name,
-		mq:   mq,
+		name:    name,
+		manager: m,
 	}
 }
 
-func (mq *MQ) NewPool(options ...PoolOption) Pool {
-	return initPool(mq, options...)
+func (m *Manager) InitConsumer(queueName QueueName, tag string, options ConsumerOptions, fn func([]byte) error) Consumer {
+	return &consumer{
+		manager: m,
+		queue:   m.InitQueue(queueName),
+		fn:      fn,
+		options: options,
+		tag:     tag,
+	}
 }
 
-func connect(url string) (*amqp.Connection, *amqp.Channel, error) {
-	conn, err := amqp.Dial(url)
+func (m *Manager) InitPool(options ...PoolOption) Pool {
+	return initPool(m, options...)
+}
+
+func (m *Manager) reconnect() error {
+	conn, err := amqp.Dial(m.url)
 	if err != nil {
-		return nil, nil, err
+		return err
 	}
 	amqpChan, err := conn.Channel()
 	if err != nil {
-		return nil, nil, err
+		return err
 	}
 
-	return conn, amqpChan, nil
+	m.conn = conn
+	m.amqpChan = amqpChan
+
+	return nil
 }
 
 func publish(amqpChan *amqp.Channel, exchange ExchangeName, key ExchangeKey, body []byte) error {

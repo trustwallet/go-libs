@@ -6,31 +6,26 @@ import (
 	"time"
 
 	log "github.com/sirupsen/logrus"
-	"github.com/streadway/amqp"
 )
 
 type pool struct {
-	mq *MQ
+	mq *Manager
 
-	queues    []Queue
-	queuesMux sync.RWMutex
-
-	exchanges    []Exchange
-	exchangesMux sync.RWMutex
+	consumers    []Consumer
+	consumersMux sync.RWMutex
 
 	retriesNumber int
 	timeout       time.Duration
 }
 
 type Pool interface {
-	AddQueue(queue Queue)
-	AddExchange(exchange Exchange)
-	Start(ctx context.Context)
+	AddConsumer(queueName QueueName, tag string, consumerOptions ConsumerOptions, consumerFn func([]byte) error)
+	Consume(ctx context.Context) error
 }
 
 type PoolOption func(p *pool)
 
-func initPool(mq *MQ, options ...PoolOption) *pool {
+func initPool(mq *Manager, options ...PoolOption) *pool {
 	pool := &pool{
 		mq:      mq,
 		timeout: time.Second * 10, // default timeout value
@@ -43,23 +38,19 @@ func initPool(mq *MQ, options ...PoolOption) *pool {
 	return pool
 }
 
-func (p *pool) AddQueue(queue Queue) {
-	p.queuesMux.Lock()
-	defer p.queuesMux.Unlock()
+func (p *pool) AddConsumer(queueName QueueName, tag string, consumerOptions ConsumerOptions, consumerFn func([]byte) error) {
+	p.consumersMux.Lock()
+	defer p.consumersMux.Unlock()
 
-	p.queues = append(p.queues, queue)
+	p.consumers = append(p.consumers, p.mq.InitConsumer(queueName, tag, consumerOptions, consumerFn))
 }
 
-func (p *pool) AddExchange(exchange Exchange) {
-	p.exchangesMux.Lock()
-	defer p.exchangesMux.Unlock()
-
-	p.exchanges = append(p.exchanges, exchange)
-}
-
-func (p *pool) Start(ctx context.Context) {
-	for _, q := range p.queues {
-		q.Consume(ctx)
+func (p *pool) Consume(ctx context.Context) error {
+	for _, q := range p.consumers {
+		err := q.Consume(ctx)
+		if err != nil {
+			return err
+		}
 	}
 
 	for {
@@ -72,9 +63,8 @@ func (p *pool) Start(ctx context.Context) {
 
 			for i := 0; i < p.retriesNumber; i++ {
 				log.Info("Connecting to MQ... Attempt ", i+1)
-				conn, amqpChan, err := connect(p.mq.url)
+				err := p.reconnect(ctx)
 				if err == nil {
-					p.reconnect(ctx, conn, amqpChan)
 					log.Info("MQ Connection established")
 					break
 				}
@@ -93,15 +83,18 @@ func (p *pool) Start(ctx context.Context) {
 	}
 }
 
-func (p *pool) reconnect(ctx context.Context, conn *amqp.Connection, amqpChan *amqp.Channel) {
-	p.mq.conn = conn
-	p.mq.amqpChan = amqpChan
-
-	for _, q := range p.queues {
-		q.Reconnect(ctx, amqpChan)
+func (p *pool) reconnect(ctx context.Context) error {
+	err := p.mq.reconnect()
+	if err != nil {
+		return err
 	}
 
-	for _, e := range p.exchanges {
-		e.Reconnect(ctx, amqpChan)
+	for _, c := range p.consumers {
+		err = c.Consume(ctx)
+		if err != nil {
+			return err
+		}
 	}
+
+	return nil
 }
