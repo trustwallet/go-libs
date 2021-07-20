@@ -35,8 +35,8 @@ func DefaultConsumerOptions(workers int) ConsumerOptions {
 	}
 }
 
-func PoolOptionRetriesNumber(number int) PoolOption {
+func PoolOptionTimeout(timeout time.Duration) PoolOption {
 	return func(p *pool) {
-		p.retriesNumber = number
+		p.timeout = timeout
 	}
 }

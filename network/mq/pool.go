@@ -8,6 +8,14 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+var retriesDelay = []time.Duration{
+	time.Second,
+	time.Second * 3,
+	time.Second * 10,
+	time.Second * 15,
+	time.Second * 30,
+}
+
 type pool struct {
 	mq *Manager
 
@@ -57,12 +65,11 @@ func (p *pool) Consume(ctx context.Context) error {
 		if p.mq.conn.IsClosed() {
 			log.Warn("MQ connection lost")
 
-			if p.retriesNumber == 0 {
-				log.Fatal("MQ connection closed")
-			}
+			for i := 0; i < len(retriesDelay); i++ {
+				time.Sleep(retriesDelay[i])
 
-			for i := 0; i < p.retriesNumber; i++ {
 				log.Info("Connecting to MQ... Attempt ", i+1)
+
 				err := p.reconnect(ctx)
 				if err == nil {
 					log.Info("MQ Connection established")
@@ -73,8 +80,6 @@ func (p *pool) Consume(ctx context.Context) error {
 				if p.retriesNumber-i == 1 {
 					log.Fatal("MQ is not available now")
 				}
-
-				time.Sleep(p.timeout)
 			}
 
 		}
