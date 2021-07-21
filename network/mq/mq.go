@@ -144,7 +144,7 @@ func (m *Manager) checkConnection(ctx context.Context) error {
 			for _, connClient := range m.connClients {
 				err = connClient.Reconnect(ctx)
 				if err != nil {
-					log.Error("Reconnect for %+v: %v", connClient, err)
+					log.Errorf("Reconnect for %+v: %v", connClient, err)
 					continue
 				}
 			}
