@@ -103,6 +103,19 @@ func (c *Client) InitConsumer(queueName QueueName, options ConsumerOptions, fn f
 	}
 }
 
+func (c *Client) StartConsumers(ctx context.Context, consumers ...Consumer) error {
+	for _, consumer := range consumers {
+		err := consumer.Start(ctx)
+		if err != nil {
+			return err
+		}
+
+		c.AddConnectionClient(consumer)
+	}
+
+	return nil
+}
+
 func (c *Client) AddConnectionClient(connClient ConnectionClient) {
 	c.connClients = append(c.connClients, connClient)
 }
