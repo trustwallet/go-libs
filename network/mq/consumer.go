@@ -15,24 +15,32 @@ type consumer struct {
 	queue   Queue
 	fn      func([]byte) error
 	options ConsumerOptions
-
-	tag string
 }
 
 type Consumer interface {
-	Consume(ctx context.Context) error
+	Start(ctx context.Context) error
+	Reconnect(ctx context.Context) error
 }
 
-func (c *consumer) Consume(ctx context.Context) error {
+func (c *consumer) Start(ctx context.Context) error {
 	messages, err := c.messageChannel()
 	if err != nil {
-		return err
+		return fmt.Errorf("get message channel: %v", err)
 	}
 	for w := 1; w <= c.options.Workers; w++ {
 		go c.consume(ctx, messages)
 	}
 
 	log.Infof("Started %d MQ consumer workers for queue %s", c.options.Workers, c.queue.Name())
+
+	return nil
+}
+
+func (c *consumer) Reconnect(ctx context.Context) error {
+	err := c.Start(ctx)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -73,7 +81,7 @@ func (c *consumer) consume(ctx context.Context, messages <-chan amqp.Delivery) {
 func (c *consumer) messageChannel() (<-chan amqp.Delivery, error) {
 	messageChannel, err := c.manager.amqpChan.Consume(
 		string(c.queue.Name()),
-		c.tag,
+		"",
 		false,
 		false,
 		false,
