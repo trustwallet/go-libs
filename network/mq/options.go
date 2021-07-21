@@ -19,7 +19,7 @@ func DefaultConsumerOptions(workers int) ConsumerOptions {
 }
 
 func OptionPrefetchLimit(limit int) Option {
-	return func(m *Manager) error {
+	return func(m *Client) error {
 		err := m.amqpChan.Qos(
 			limit,
 			0,
@@ -34,7 +34,7 @@ func OptionPrefetchLimit(limit int) Option {
 }
 
 func OptionConnCheckTimeout(timeout time.Duration) Option {
-	return func(m *Manager) error {
+	return func(m *Client) error {
 		m.connCheckTimeout = timeout
 		return nil
 	}

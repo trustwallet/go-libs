@@ -10,10 +10,10 @@ import (
 )
 
 type consumer struct {
-	manager *Manager
+	client *Client
 
 	queue   Queue
-	fn      func([]byte) error
+	fn      func(Message) error
 	options ConsumerOptions
 }
 
@@ -79,7 +79,7 @@ func (c *consumer) consume(ctx context.Context, messages <-chan amqp.Delivery) {
 }
 
 func (c *consumer) messageChannel() (<-chan amqp.Delivery, error) {
-	messageChannel, err := c.manager.amqpChan.Consume(
+	messageChannel, err := c.client.amqpChan.Consume(
 		string(c.queue.Name()),
 		"",
 		false,

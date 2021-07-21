@@ -2,7 +2,7 @@ package mq
 
 type queue struct {
 	name         QueueName
-	manager      *Manager
+	client       *Client
 	consumer     Consumer
 	consumerOpts ConsumerOptions
 }
@@ -18,10 +18,10 @@ func (q *queue) Name() QueueName {
 }
 
 func (q *queue) Declare() error {
-	_, err := q.manager.amqpChan.QueueDeclare(string(q.name), true, false, false, false, nil)
+	_, err := q.client.amqpChan.QueueDeclare(string(q.name), true, false, false, false, nil)
 	return err
 }
 
 func (q *queue) Publish(body []byte) error {
-	return publish(q.manager.amqpChan, "", ExchangeKey(q.name), body)
+	return publish(q.client.amqpChan, "", ExchangeKey(q.name), body)
 }

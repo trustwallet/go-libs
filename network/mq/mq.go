@@ -13,6 +13,7 @@ type (
 	QueueName    string
 	ExchangeName string
 	ExchangeKey  string
+	Message      []byte
 )
 
 const (
@@ -20,7 +21,7 @@ const (
 	reconnectionTimeout     = time.Second * 30
 )
 
-type Manager struct {
+type Client struct {
 	url      string
 	conn     *amqp.Connection
 	amqpChan *amqp.Channel
@@ -30,9 +31,9 @@ type Manager struct {
 	connCheckTimeout time.Duration
 }
 
-type Option func(m *Manager) error
+type Option func(c *Client) error
 
-func Open(url string, options ...Option) (*Manager, error) {
+func Connect(url string, options ...Option) (*Client, error) {
 	conn, err := amqp.Dial(url)
 	if err != nil {
 		return nil, err
@@ -43,7 +44,7 @@ func Open(url string, options ...Option) (*Manager, error) {
 		return nil, err
 	}
 
-	m := &Manager{
+	c := &Client{
 		url:      url,
 		conn:     conn,
 		amqpChan: amqpChan,
@@ -52,25 +53,25 @@ func Open(url string, options ...Option) (*Manager, error) {
 	}
 
 	for _, opt := range options {
-		err = opt(m)
+		err = opt(c)
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	return m, nil
+	return c, nil
 }
 
-func (m *Manager) Close() error {
-	if m.amqpChan != nil {
-		err := m.amqpChan.Close()
+func (c *Client) Close() error {
+	if c.amqpChan != nil {
+		err := c.amqpChan.Close()
 		if err != nil {
 			log.Errorf("Close amqp channel: %v", err)
 		}
 	}
 
-	if m.conn != nil && !m.conn.IsClosed() {
-		err := m.conn.Close()
+	if c.conn != nil && !c.conn.IsClosed() {
+		err := c.conn.Close()
 		if err != nil {
 			return err
 		}
@@ -79,44 +80,44 @@ func (m *Manager) Close() error {
 	return nil
 }
 
-func (m *Manager) InitQueue(name QueueName) Queue {
+func (c *Client) InitQueue(name QueueName) Queue {
 	return &queue{
-		name:    name,
-		manager: m,
+		name:   name,
+		client: c,
 	}
 }
 
-func (m *Manager) InitExchange(name ExchangeName) Exchange {
+func (c *Client) InitExchange(name ExchangeName) Exchange {
 	return &exchange{
-		name:    name,
-		manager: m,
+		name:   name,
+		client: c,
 	}
 }
 
-func (m *Manager) InitConsumer(queueName QueueName, options ConsumerOptions, fn func([]byte) error) Consumer {
+func (c *Client) InitConsumer(queueName QueueName, options ConsumerOptions, fn func(message Message) error) Consumer {
 	return &consumer{
-		manager: m,
-		queue:   m.InitQueue(queueName),
+		client:  c,
+		queue:   c.InitQueue(queueName),
 		fn:      fn,
 		options: options,
 	}
 }
 
-func (m *Manager) AddConnectionClient(connClient ConnectionClient) {
-	m.connClients = append(m.connClients, connClient)
+func (c *Client) AddConnectionClient(connClient ConnectionClient) {
+	c.connClients = append(c.connClients, connClient)
 }
 
-func (m *Manager) ListenConnection(ctx context.Context) error {
+func (c *Client) ListenConnection(ctx context.Context) error {
 	for {
 		select {
 		case <-ctx.Done():
-			err := m.Close()
+			err := c.Close()
 			if err != nil {
 				return fmt.Errorf("close mq: %v", err)
 			}
 			return nil
 		default:
-			err := m.checkConnection(ctx)
+			err := c.checkConnection(ctx)
 			if err != nil {
 				return fmt.Errorf("check mq connection: %v", err)
 			}
@@ -126,8 +127,8 @@ func (m *Manager) ListenConnection(ctx context.Context) error {
 	}
 }
 
-func (m *Manager) checkConnection(ctx context.Context) error {
-	if m.conn.IsClosed() {
+func (c *Client) checkConnection(ctx context.Context) error {
+	if c.conn.IsClosed() {
 		log.Warn("MQ connection lost")
 
 		for i := 0; i < reconnectionAttemptsNum; i++ {
@@ -135,13 +136,13 @@ func (m *Manager) checkConnection(ctx context.Context) error {
 
 			log.Info("Connecting to MQ... Attempt ", i+1)
 
-			err := m.reconnect()
+			err := c.reconnect()
 			if err != nil {
 				log.Errorf("Reconnect: %v", err)
 				continue
 			}
 
-			for _, connClient := range m.connClients {
+			for _, connClient := range c.connClients {
 				err = connClient.Reconnect(ctx)
 				if err != nil {
 					log.Errorf("Reconnect for %+v: %v", connClient, err)
@@ -159,8 +160,8 @@ func (m *Manager) checkConnection(ctx context.Context) error {
 	return nil
 }
 
-func (m *Manager) reconnect() error {
-	conn, err := amqp.Dial(m.url)
+func (c *Client) reconnect() error {
+	conn, err := amqp.Dial(c.url)
 	if err != nil {
 		return err
 	}
@@ -169,8 +170,8 @@ func (m *Manager) reconnect() error {
 		return err
 	}
 
-	m.conn = conn
-	m.amqpChan = amqpChan
+	c.conn = conn
+	c.amqpChan = amqpChan
 
 	return nil
 }
