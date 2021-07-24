@@ -26,6 +26,7 @@ const (
 	TT20    TokenType = "TT20"
 	KAVA    TokenType = "KAVA"
 	SPL     TokenType = "SPL"
+	POLYGON TokenType = "POLYGON"
 )
 
 func GetEthereumTokenTypeByIndex(coinIndex uint) TokenType {
@@ -51,6 +52,8 @@ func GetEthereumTokenTypeByIndex(coinIndex uint) TokenType {
 		tokenType = BEP20
 	case coin.Solana().ID:
 		tokenType = SPL
+	case coin.Polygon().ID:
+		tokenType = POLYGON
 	default:
 		tokenType = ERC20
 	}
