@@ -13,7 +13,7 @@ require (
 	github.com/docker/go-units v0.4.0 // indirect
 	github.com/evalphobia/logrus_sentry v0.8.2
 	github.com/getsentry/raven-go v0.2.0
-	github.com/gin-gonic/gin v1.6.3
+	github.com/gin-gonic/gin v1.7.2
 	github.com/google/go-cmp v0.5.4 // indirect
 	github.com/gotestyourself/gotestyourself v2.2.0+incompatible // indirect
 	github.com/kr/pretty v0.1.0 // indirect
