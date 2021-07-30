@@ -2,196 +2,201 @@ package mq
 
 import (
 	"context"
-	"os"
-	"syscall"
+	"fmt"
 	"time"
 
 	log "github.com/sirupsen/logrus"
-
 	"github.com/streadway/amqp"
 )
 
-var (
-	amqpChan *amqp.Channel
-	conn     *amqp.Connection
+type (
+	QueueName    string
+	ExchangeName string
+	ExchangeKey  string
+	Message      []byte
 )
 
-type Consumer interface {
-	Callback(msg amqp.Delivery) error
+const (
+	reconnectionAttemptsNum = 5
+	reconnectionTimeout     = time.Second * 30
+)
+
+type Client struct {
+	url      string
+	conn     *amqp.Connection
+	amqpChan *amqp.Channel
+
+	connClients []ConnectionClient
+
+	connCheckTimeout time.Duration
 }
 
-type (
-	Queue          string
-	Exchange       string
-	MessageChannel <-chan amqp.Delivery
-)
+type Option func(c *Client) error
 
-func Init(url string) (err error) {
-	conn, err = amqp.Dial(url)
+func Connect(url string, options ...Option) (*Client, error) {
+	conn, err := amqp.Dial(url)
+	if err != nil {
+		return nil, err
+	}
+
+	amqpChan, err := conn.Channel()
+	if err != nil {
+		return nil, err
+	}
+
+	c := &Client{
+		url:      url,
+		conn:     conn,
+		amqpChan: amqpChan,
+
+		connCheckTimeout: time.Second * 10, // default value
+	}
+
+	for _, opt := range options {
+		err = opt(c)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return c, nil
+}
+
+func (c *Client) Close() error {
+	if c.amqpChan != nil {
+		err := c.amqpChan.Close()
+		if err != nil {
+			log.Errorf("Close amqp channel: %v", err)
+		}
+	}
+
+	if c.conn != nil && !c.conn.IsClosed() {
+		err := c.conn.Close()
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (c *Client) InitQueue(name QueueName) Queue {
+	return &queue{
+		name:   name,
+		client: c,
+	}
+}
+
+func (c *Client) InitExchange(name ExchangeName) Exchange {
+	return &exchange{
+		name:   name,
+		client: c,
+	}
+}
+
+func (c *Client) InitConsumer(queueName QueueName, options ConsumerOptions, fn func(message Message) error) Consumer {
+	return &consumer{
+		client:  c,
+		queue:   c.InitQueue(queueName),
+		fn:      fn,
+		options: options,
+	}
+}
+
+func (c *Client) StartConsumers(ctx context.Context, consumers ...Consumer) error {
+	for _, consumer := range consumers {
+		err := consumer.Start(ctx)
+		if err != nil {
+			return err
+		}
+
+		c.AddConnectionClient(consumer)
+	}
+
+	return nil
+}
+
+func (c *Client) AddConnectionClient(connClient ConnectionClient) {
+	c.connClients = append(c.connClients, connClient)
+}
+
+func (c *Client) ListenConnection(ctx context.Context) error {
+	for {
+		select {
+		case <-ctx.Done():
+			err := c.Close()
+			if err != nil {
+				return fmt.Errorf("close mq: %v", err)
+			}
+			return nil
+		default:
+			err := c.checkConnection(ctx)
+			if err != nil {
+				return fmt.Errorf("check mq connection: %v", err)
+			}
+
+			time.Sleep(time.Second * 10)
+		}
+	}
+}
+
+func (c *Client) checkConnection(ctx context.Context) error {
+	if c.conn.IsClosed() {
+		log.Warn("MQ connection lost")
+
+		for i := 0; i < reconnectionAttemptsNum; i++ {
+			time.Sleep(reconnectionTimeout)
+
+			log.Info("Connecting to MQ... Attempt ", i+1)
+
+			err := c.reconnect()
+			if err != nil {
+				log.Errorf("Reconnect: %v", err)
+				continue
+			}
+
+			for _, connClient := range c.connClients {
+				err = connClient.Reconnect(ctx)
+				if err != nil {
+					log.Errorf("Reconnect for %+v: %v", connClient, err)
+					continue
+				}
+			}
+
+			log.Info("MQ connection established")
+			return nil
+		}
+
+		return fmt.Errorf("failed to establish MQ connection")
+	}
+
+	return nil
+}
+
+func (c *Client) reconnect() error {
+	conn, err := amqp.Dial(c.url)
 	if err != nil {
 		return err
 	}
-	amqpChan, err = conn.Channel()
-	return err
-}
-
-type ConsumerDefaultCallback struct {
-	Delivery func(amqp.Delivery) error
-}
-
-func (c ConsumerDefaultCallback) Callback(msg amqp.Delivery) error {
-	return c.Delivery(msg)
-}
-
-func Close() error {
-	err := amqpChan.Close()
+	amqpChan, err := conn.Channel()
 	if err != nil {
-		log.Error(err)
+		return err
 	}
 
-	return conn.Close()
+	c.conn = conn
+	c.amqpChan = amqpChan
+
+	return nil
 }
 
-func (mc MessageChannel) GetMessage() amqp.Delivery {
-	return <-mc
-}
-
-func publish(exchange, queue string, body []byte) error {
-	return amqpChan.Publish(exchange, queue, false, false, amqp.Publishing{
+func publish(amqpChan *amqp.Channel, exchange ExchangeName, key ExchangeKey, body []byte) error {
+	return amqpChan.Publish(string(exchange), string(key), false, false, amqp.Publishing{
 		DeliveryMode: amqp.Persistent,
 		ContentType:  "text/plain",
 		Body:         body,
 	})
 }
 
-// Queue
-
-func (q Queue) Declare() error {
-	_, err := amqpChan.QueueDeclare(string(q), true, false, false, false, nil)
-	return err
-}
-
-func (q Queue) Publish(body []byte) error {
-	return publish("", string(q), body)
-}
-
-// Exchange
-func (e Exchange) Declare(kind string) error {
-	return amqpChan.ExchangeDeclare(string(e), kind, true, false, false, false, nil)
-}
-
-func (e Exchange) Bind(queues []Queue) error {
-	for _, queue := range queues {
-		err := amqpChan.QueueBind(string(queue), "", string(e), false, nil)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func (e Exchange) BindWithKey(queues []Queue, key string) error {
-	for _, queue := range queues {
-		err := amqpChan.QueueBind(string(queue), key, string(e), false, nil)
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-func (e Exchange) Publish(body []byte) error {
-	return publish(string(e), "", body)
-}
-
-func (e Exchange) PublishWithKey(body []byte, key string) error {
-	return publish(string(e), key, body)
-}
-
-func (q Queue) GetMessageChannel(prefetchCount int) MessageChannel {
-	messageChannel, err := amqpChan.Consume(
-		string(q),
-		"",
-		false,
-		false,
-		false,
-		false,
-		nil,
-	)
-	if err != nil {
-		log.Fatal("MQ issue" + err.Error() + " for queue: " + string(q))
-	}
-
-	err = amqpChan.Qos(
-		prefetchCount,
-		0,
-		true,
-	)
-	if err != nil {
-		log.Error("No qos limit ", err)
-	}
-
-	return messageChannel
-}
-
-func worker(messages <-chan amqp.Delivery, consumer Consumer, options ConsumerOptions) {
-	for msg := range messages {
-		err := consumer.Callback(msg)
-		if err != nil {
-			log.Error(err)
-		}
-		if err != nil && options.RetryOnError {
-			time.Sleep(options.RetryDelay)
-			if err := msg.Reject(true); err != nil {
-				log.Error(err)
-			}
-		} else {
-			if err := msg.Ack(false); err != nil {
-				log.Error(err)
-			}
-		}
-	}
-}
-
-func (q Queue) RunConsumer(consumer Consumer, options ConsumerOptions, ctx context.Context) {
-	messages := make(chan amqp.Delivery)
-	for w := 1; w <= options.Workers; w++ {
-		go worker(messages, consumer, options)
-	}
-	messageChannel := q.GetMessageChannel(options.PrefetchLimit)
-	for {
-		select {
-		case <-ctx.Done():
-			log.Info("Consumer stopped")
-			return
-		case message := <-messageChannel:
-			if message.Body == nil {
-				continue
-			}
-			messages <- message
-		}
-	}
-}
-
-func QuitWorker(timeout time.Duration, quit chan<- os.Signal) {
-	log.Info("Run CancelWorker")
-	for {
-		if conn.IsClosed() {
-			log.Error("MQ is not available now")
-			quit <- syscall.SIGTERM
-			return
-		}
-		time.Sleep(timeout)
-	}
-}
-
-func FatalWorker(timeout time.Duration) {
-	log.Info("Run MQ FatalWorker")
-	for {
-		if conn.IsClosed() {
-			log.Fatal("MQ is not available now")
-		}
-		time.Sleep(timeout)
-	}
+type ConnectionClient interface {
+	Reconnect(ctx context.Context) error
 }

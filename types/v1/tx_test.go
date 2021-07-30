@@ -221,7 +221,7 @@ func TestTx_GetAddresses(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			result := tc.tx.GetAddresses()
-			assert.Equal(t, tc.expected, result)
+			assert.EqualValues(t, tc.expected, result)
 		})
 	}
 
@@ -423,6 +423,29 @@ func TestUTXOValueByAddress(t *testing.T) {
 			},
 			address:              "addr",
 			expected:             "1000",
+			expectedErrAssertion: assert.NoError,
+		},
+		{
+			name: "transfer_self_multi",
+			tx: Tx{
+				Inputs: []TxOutput{
+					{
+						Address: "bc1qrfr44n2j4czd5c9txwlnw0yj2h82x9566fglqj",
+						Value:   "10772",
+					},
+					{
+						Address: "bc1qf9xslrccq3hnwa8dyd9gnjcuxlyz45v5dku5t9",
+						Value:   "12257",
+					}},
+				Outputs: []TxOutput{
+					{
+						Address: "bc1qrfr44n2j4czd5c9txwlnw0yj2h82x9566fglqj",
+						Value:   "14663",
+					},
+				},
+			},
+			address:              "bc1qrfr44n2j4czd5c9txwlnw0yj2h82x9566fglqj",
+			expected:             "14663",
 			expectedErrAssertion: assert.NoError,
 		},
 		{
