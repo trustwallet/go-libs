@@ -92,6 +92,8 @@ type (
 		Inputs  []TxOutput `json:"inputs,omitempty"`
 		Outputs []TxOutput `json:"outputs,omitempty"`
 
+		Tokens []Asset `json:"tokens,omitempty"`
+
 		Memo string `json:"memo,omitempty"`
 
 		Fee Fee `json:"fee"`
