@@ -29,30 +29,33 @@ func Load(confPath string, receiver interface{}) {
 
 	log.WithFields(log.Fields{"config": viper.ConfigFileUsed()}).Infof("Viper using %s config", configType)
 
-	bindEnvs(receiver)
+	bindEnvs(reflect.ValueOf(receiver))
 	if err := viper.Unmarshal(receiver); err != nil {
 		log.Panic(err, "Error Unmarshal Viper Config File")
 	}
 }
 
-func bindEnvs(iface interface{}, parts ...string) {
-	ifv := reflect.ValueOf(iface)
-	if ifv.Kind() == reflect.Ptr {
-		bindEnvs(ifv.Elem(), parts...)
+func bindEnvs(v reflect.Value, parts ...string) {
+	if v.Kind() == reflect.Ptr {
+		if v.IsNil() {
+			return
+		}
+
+		bindEnvs(v.Elem(), parts...)
 		return
 	}
 
-	ift := reflect.TypeOf(iface)
+	ift := v.Type()
 	for i := 0; i < ift.NumField(); i++ {
-		v := ifv.Field(i)
+		val := v.Field(i)
 		t := ift.Field(i)
 		tv, ok := t.Tag.Lookup("mapstructure")
 		if !ok {
 			continue
 		}
-		switch v.Kind() {
+		switch val.Kind() {
 		case reflect.Struct:
-			bindEnvs(v.Interface(), append(parts, tv)...)
+			bindEnvs(val, append(parts, tv)...)
 		default:
 			if err := viper.BindEnv(strings.Join(append(parts, tv), ".")); err != nil {
 				log.Fatal(err)
