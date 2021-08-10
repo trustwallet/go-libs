@@ -37,6 +37,11 @@ func Load(confPath string, receiver interface{}) {
 
 func bindEnvs(iface interface{}, parts ...string) {
 	ifv := reflect.ValueOf(iface)
+	if ifv.Kind() == reflect.Ptr {
+		bindEnvs(ifv.Elem(), parts...)
+		return
+	}
+
 	ift := reflect.TypeOf(iface)
 	for i := 0; i < ift.NumField(); i++ {
 		v := ifv.Field(i)
