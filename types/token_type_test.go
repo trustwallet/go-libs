@@ -35,11 +35,6 @@ func TestGetEthereumTokenTypeByIndex(t *testing.T) {
 			args{coinIndex: coin.WANCHAIN},
 			WAN20,
 		},
-		{
-			"Polygon",
-			args{coinIndex: coin.POLYGON},
-			POLYGON,
-		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

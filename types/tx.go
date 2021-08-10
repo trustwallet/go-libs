@@ -1,14 +1,13 @@
 package types
 
 import (
+	"fmt"
 	"sort"
 	"strconv"
-	"strings"
 
 	mapset "github.com/deckarep/golang-set"
 	"github.com/trustwallet/golibs/asset"
 	"github.com/trustwallet/golibs/coin"
-	"github.com/trustwallet/golibs/numbers"
 )
 
 const (
@@ -20,190 +19,116 @@ const (
 	DirectionIncoming Direction = "incoming"
 	DirectionSelf     Direction = "yourself"
 
-	TxTransfer              TransactionType = "transfer"
-	TxNativeTokenTransfer   TransactionType = "native_token_transfer"
-	TxTokenTransfer         TransactionType = "token_transfer"
-	TxCollectibleTransfer   TransactionType = "collectible_transfer"
-	TxTokenSwap             TransactionType = "token_swap"
-	TxContractCall          TransactionType = "contract_call"
-	TxAnyAction             TransactionType = "any_action"
-	TxMultiCurrencyTransfer TransactionType = "multi_currency_transfer"
-	TxDelegation            TransactionType = "delegation"
-	TxUndelegation          TransactionType = "undelegation"
-
-	KeyPlaceOrder        KeyType = "place_order"
-	KeyCancelOrder       KeyType = "cancel_order"
-	KeyIssueToken        KeyType = "issue_token"
-	KeyBurnToken         KeyType = "burn_token"
-	KeyMintToken         KeyType = "mint_token"
-	KeyApproveToken      KeyType = "approve_token"
-	KeyStakeDelegate     KeyType = "stake_delegate"
-	KeyStakeClaimRewards KeyType = "stake_claim_rewards"
-
-	KeyTitlePlaceOrder    KeyTitle = "Place Order"
-	KeyTitleCancelOrder   KeyTitle = "Cancel Order"
-	AnyActionDelegation   KeyTitle = "Delegation"
-	AnyActionUndelegation KeyTitle = "Undelegation"
-	AnyActionClaimRewards KeyTitle = "Claim Rewards"
-
-	// TxPerPage says how many transactions to return per page
-	TxPerPage = 25
+	TxTransfer          TransactionType = "transfer"
+	TxContractCall      TransactionType = "contract_call"
+	TxStakeClaimRewards TransactionType = "stake_claim_rewards"
+	TxStakeDelegate     TransactionType = "stake_delegate"
+	TxStakeUndelegate   TransactionType = "stake_undelegate"
+	TxStakeRedelegate   TransactionType = "stake_redelegate"
 )
 
+var SupportedTypes = []TransactionType{
+	TxTransfer, TxContractCall, TxStakeClaimRewards, TxStakeDelegate, TxStakeUndelegate, TxStakeRedelegate,
+}
+
+// Transaction fields
 type (
-	// Types of transaction statuses
+	AssetID         string
 	Direction       string
 	Status          string
 	TransactionType string
 	KeyType         string
 	KeyTitle        string
 
+	// Amount is a positive decimal integer string.
+	// It is written in the smallest possible unit (e.g. Wei, Satoshis)
+	Amount string
+)
+
+// Data objects
+type (
 	Block struct {
 		Number int64 `json:"number"`
 		Txs    []Tx  `json:"txs"`
 	}
 
 	TxPage struct {
-		Total  int  `json:"total"`
-		Docs   []Tx `json:"docs"`
-		Status bool `json:"status"`
+		Total int  `json:"total"`
+		Docs  []Tx `json:"docs"`
 	}
-	// Amount is a positive decimal integer string.
-	// It is written in the smallest possible unit (e.g. Wei, Satoshis)
-	Amount string
 
 	// Tx describes an on-chain transaction generically
 	Tx struct {
 		// Unique identifier
 		ID string `json:"id"`
-		// SLIP-44 coin index of the platform
-		Coin uint `json:"coin"`
+
 		// Address of the transaction sender
 		From string `json:"from"`
+
 		// Address of the transaction recipient
 		To string `json:"to"`
-		// Transaction fee (native currency)
-		Fee Amount `json:"fee"`
+
 		// Unix timestamp of the block the transaction was included in
-		Date int64 `json:"date"`
+		BlockCreatedAt int64 `json:"block_created_at"`
+
 		// Height of the block the transaction was included in
 		Block uint64 `json:"block"`
+
 		// Status of the transaction e.g: "completed", "pending", "error"
 		Status Status `json:"status"`
+
 		// Empty if the transaction "completed" or "pending", else error explaining why the transaction failed (optional)
 		Error string `json:"error,omitempty"`
+
 		// Transaction nonce or sequence
 		Sequence uint64 `json:"sequence"`
+
 		// Type of metadata
 		Type TransactionType `json:"type"`
-		// Input addresses
-		Inputs []TxOutput `json:"inputs,omitempty"`
-		// Output addresses
-		Outputs []TxOutput `json:"outputs,omitempty"`
+
 		// Transaction Direction
 		Direction Direction `json:"direction,omitempty"`
-		// TokenTransfers
-		TokenTransfers []TokenTransfer `json:"token_transfers,omitempty"`
-		// Meta data object
-		Meta interface{} `json:"metadata"`
-		Memo string      `json:"memo"`
+
+		Inputs  []TxOutput `json:"inputs,omitempty"`
+		Outputs []TxOutput `json:"outputs,omitempty"`
+
+		Tokens []Asset `json:"tokens,omitempty"`
+
+		Memo string `json:"memo,omitempty"`
+
+		Fee Fee `json:"fee"`
+
+		// Metadata data object
+		Metadata interface{} `json:"metadata"`
+
+		// Create At indicates transactions creation time in database, Unix
+		CreatedAt int64 `json:"created_at"`
 	}
 
+	// Every transaction consumes some Fee
+	Fee struct {
+		Asset AssetID `json:"asset"`
+		Value Amount  `json:"value"`
+	}
+
+	// UTXO transactions consist of a set of inputs and a set of outputs
+	// both represented by TxOutput model
 	TxOutput struct {
 		Address string `json:"address"`
 		Value   Amount `json:"value"`
 	}
 
-	// Transfer describes the transfer of currency native to the platform
+	// Transfer describes the transfer of currency
 	Transfer struct {
-		Value    Amount `json:"value"`
-		Symbol   string `json:"symbol"`
-		Decimals uint   `json:"decimals"`
-		AssetID  string `json:"asset_id"`
-	}
-
-	// NativeTokenTransfer describes the transfer of native tokens.
-	// Example: Stellar Tokens, TRC10
-	NativeTokenTransfer struct {
-		AssetID  string `json:"asset_id,omitempty"`
-		Name     string `json:"name"`
-		Symbol   string `json:"symbol"`
-		TokenID  string `json:"token_id"`
-		Decimals uint   `json:"decimals"`
-		Value    Amount `json:"value"`
-		From     string `json:"from"`
-		To       string `json:"to"`
-	}
-
-	// TokenTransfer describes the transfer of non-native tokens.
-	// Examples: ERC-20, TRC20
-	TokenTransfer struct {
-		AssetID  string `json:"asset_id,omitempty"`
-		Name     string `json:"name"`
-		Symbol   string `json:"symbol"`
-		TokenID  string `json:"token_id"`
-		Decimals uint   `json:"decimals"`
-		Value    Amount `json:"value"`
-		From     string `json:"from"`
-		To       string `json:"to"`
-	}
-
-	// Delegation describes the blocking of a stacked currency
-	Delegation struct {
-		Value    Amount `json:"value"`
-		Symbol   string `json:"symbol"`
-		Decimals uint   `json:"decimals"`
-	}
-
-	// Undelegation describes the unblocking of stacked currency
-	Undelegation struct {
-		Value    Amount `json:"value"`
-		Symbol   string `json:"symbol"`
-		Decimals uint   `json:"decimals"`
-	}
-
-	// CollectibleTransfer describes the transfer of a
-	// "collectible", unique token.
-	CollectibleTransfer struct {
-		Name     string `json:"name"`
-		Contract string `json:"contract"`
-		ImageURL string `json:"image_url"`
-	}
-
-	// TokenSwap describes the exchange of two different tokens
-	TokenSwap struct {
-		Input  TokenTransfer `json:"input"`
-		Output TokenTransfer `json:"output"`
+		Asset AssetID `json:"asset"`
+		Value Amount  `json:"value"`
 	}
 
 	// ContractCall describes a
 	ContractCall struct {
-		Input string `json:"input"`
-		Value string `json:"value"`
-	}
-
-	// Currency describes currency information with its amount
-	Currency struct {
-		Token Token  `json:"token"`
-		Value Amount `json:"value"`
-	}
-
-	// MultiCurrencyTransfer describes the transfer of multiple currency native to the platform
-	MultiCurrencyTransfer struct {
-		Currencies []Currency `json:"currencies"`
-		Fees       []Currency `json:"fees"`
-	}
-
-	// AnyAction describes all other types
-	AnyAction struct {
-		Coin     uint     `json:"coin"`
-		Title    KeyTitle `json:"title"`
-		Key      KeyType  `json:"key"`
-		TokenID  string   `json:"token_id"`
-		Name     string   `json:"name"`
-		Symbol   string   `json:"symbol"`
-		Decimals uint     `json:"decimals"`
-		Value    Amount   `json:"value"`
+		Asset AssetID `json:"asset"`
+		Value Amount  `json:"value"`
+		Input string  `json:"input"`
 	}
 
 	// Token describes the non-native tokens.
@@ -218,10 +143,18 @@ type (
 	}
 
 	Txs []Tx
+
+	AssetHolder interface {
+		GetAsset() AssetID
+	}
+
+	Validator interface {
+		Validate() error
+	}
 )
 
 var (
-	EmptyTxPage = TxPage{Total: 0, Docs: Txs{}, Status: true}
+	EmptyTxPage = TxPage{Total: 0, Docs: Txs{}}
 )
 
 func NewTxPage(txs Txs) TxPage {
@@ -229,14 +162,9 @@ func NewTxPage(txs Txs) TxPage {
 		txs = Txs{}
 	}
 	return TxPage{
-		Total:  len(txs),
-		Docs:   txs,
-		Status: true,
+		Total: len(txs),
+		Docs:  txs,
 	}
-}
-
-func (t Token) AssetId() string {
-	return asset.BuildID(t.Coin, t.TokenID)
 }
 
 func (txs Txs) FilterUniqueID() Txs {
@@ -251,15 +179,17 @@ func (txs Txs) FilterUniqueID() Txs {
 	return list
 }
 
-func (txs Txs) FilterTransactionsByMemo() Txs {
-	result := make(Txs, 0)
-	for _, tx := range txs {
-		if !AllowMemo(tx.Memo) {
-			tx.Memo = ""
-		}
-		result = append(result, tx)
+func (txs Txs) CleanMemos() {
+	for i := range txs {
+		txs[i].Memo = cleanMemo(txs[i].Memo)
 	}
-	return result
+}
+
+func (txs Txs) SortByBlockCreationTime() Txs {
+	sort.Slice(txs, func(i, j int) bool {
+		return txs[i].BlockCreatedAt > txs[j].BlockCreatedAt
+	})
+	return txs
 }
 
 func (txs Txs) FilterTransactionsByType(types []TransactionType) Txs {
@@ -271,145 +201,119 @@ func (txs Txs) FilterTransactionsByType(types []TransactionType) Txs {
 			}
 		}
 	}
+
 	return result
 }
 
-func AllowMemo(memo string) bool {
-	// only allows numeric values
+func (t *Transfer) GetAsset() AssetID {
+	return t.Asset
+}
+
+func (t *Transfer) Validate() error {
+	if t.Value == "" {
+		return fmt.Errorf("emtpy transfer value")
+	}
+
+	if t.Asset == "" {
+		return fmt.Errorf("empty transfer asset")
+	}
+
+	return nil
+}
+
+func (cc *ContractCall) GetAsset() AssetID {
+	return cc.Asset
+}
+
+func (cc *ContractCall) Validate() error {
+	if cc.Value == "" {
+		return fmt.Errorf("empty contract call value")
+	}
+
+	if cc.Asset == "" {
+		return fmt.Errorf("empty contract call asset")
+	}
+
+	return nil
+}
+
+func cleanMemo(memo string) string {
+	if len(memo) == 0 {
+		return ""
+	}
+
 	_, err := strconv.ParseFloat(memo, 64)
-	return err == nil
-}
-
-func (txs Txs) FilterTransactionsByToken(token string) Txs {
-	result := make(Txs, 0)
-	for _, tx := range txs {
-		switch tx.Meta.(type) {
-		case TokenTransfer:
-			if strings.EqualFold(tx.Meta.(TokenTransfer).TokenID, token) {
-				result = append(result, tx)
-			}
-		case *TokenTransfer:
-			if strings.EqualFold(tx.Meta.(*TokenTransfer).TokenID, token) {
-				result = append(result, tx)
-			}
-		case NativeTokenTransfer:
-			if strings.EqualFold(tx.Meta.(NativeTokenTransfer).TokenID, token) {
-				result = append(result, tx)
-			}
-		case *NativeTokenTransfer:
-			if strings.EqualFold(tx.Meta.(*NativeTokenTransfer).TokenID, token) {
-				result = append(result, tx)
-			}
-		case AnyAction:
-			if strings.EqualFold(tx.Meta.(AnyAction).TokenID, token) {
-				result = append(result, tx)
-			}
-		case *AnyAction:
-			if strings.EqualFold(tx.Meta.(*AnyAction).TokenID, token) {
-				result = append(result, tx)
-			}
-		default:
-			continue
-		}
-	}
-	return result
-}
-
-func (txs Txs) SortByDate() Txs {
-	sort.Slice(txs, func(i, j int) bool {
-		return txs[i].Date > txs[j].Date
-	})
-	return txs
-}
-
-func (t *Tx) GetUtxoAddresses() (addresses []string) {
-	for _, input := range t.Inputs {
-		addresses = append(addresses, input.Address)
+	if err != nil {
+		return ""
 	}
 
-	for _, output := range t.Outputs {
-		addresses = append(addresses, output.Address)
-	}
-
-	return addresses
+	return memo
 }
 
 func (t *Tx) GetAddresses() []string {
 	addresses := make([]string, 0)
-	switch t.Meta.(type) {
-	case Transfer, *Transfer, CollectibleTransfer, *CollectibleTransfer, ContractCall, *ContractCall, AnyAction, *AnyAction, MultiCurrencyTransfer, *MultiCurrencyTransfer:
+	switch t.Type {
+	case TxTransfer:
+		if len(t.Inputs) > 0 || len(t.Outputs) > 0 {
+			uniqueAddresses := make(map[string]struct{})
+			for _, input := range t.Inputs {
+				uniqueAddresses[input.Address] = struct{}{}
+			}
+
+			for _, output := range t.Outputs {
+				uniqueAddresses[output.Address] = struct{}{}
+			}
+
+			for address := range uniqueAddresses {
+				addresses = append(addresses, address)
+			}
+
+			return addresses
+		}
+
 		return append(addresses, t.From, t.To)
-	case NativeTokenTransfer:
-		return append(addresses, t.Meta.(NativeTokenTransfer).From, t.Meta.(NativeTokenTransfer).To)
-	case *NativeTokenTransfer:
-		return append(addresses, t.Meta.(*NativeTokenTransfer).From, t.Meta.(*NativeTokenTransfer).To)
-	case TokenTransfer:
-		return append(addresses, t.Meta.(TokenTransfer).From, t.Meta.(TokenTransfer).To)
-	case *TokenTransfer:
-		return append(addresses, t.Meta.(*TokenTransfer).From, t.Meta.(*TokenTransfer).To)
-	case TokenSwap:
-		{
-			m := t.Meta.(TokenSwap)
-			return append(addresses, m.Input.From, m.Input.To, m.Output.From, m.Output.To)
-		}
-	case *TokenSwap:
-		{
-			m := t.Meta.(*TokenSwap)
-			return append(addresses, m.Input.From, m.Input.To, m.Output.From, m.Output.To)
-		}
+	case TxContractCall:
+		return append(addresses, t.From, t.To)
+	case TxStakeDelegate, TxStakeRedelegate, TxStakeUndelegate, TxStakeClaimRewards:
+		return append(addresses, t.From)
 	default:
 		return addresses
 	}
 }
 
-func (t *Tx) TokenID() (string, bool) {
-	var tokenID string
-	switch t.Meta.(type) {
-	case Transfer, *Transfer, CollectibleTransfer, *CollectibleTransfer, ContractCall, *ContractCall, MultiCurrencyTransfer, *MultiCurrencyTransfer:
-		return "", false
-	case NativeTokenTransfer:
-		tokenID = t.Meta.(NativeTokenTransfer).TokenID
-	case *NativeTokenTransfer:
-		tokenID = t.Meta.(*NativeTokenTransfer).TokenID
-	case TokenTransfer:
-		tokenID = t.Meta.(TokenTransfer).TokenID
-	case AnyAction:
-		tokenID = t.Meta.(AnyAction).TokenID
-	case *AnyAction:
-		tokenID = t.Meta.(*AnyAction).TokenID
-	default:
-		return "", false
+func (t *Tx) GetSubscriptionAddresses() ([]string, error) {
+	coin, _, err := asset.ParseID(string(t.Metadata.(AssetHolder).GetAsset()))
+	if err != nil {
+		return nil, err
 	}
-	return tokenID, true
+
+	addresses := t.GetAddresses()
+	result := make([]string, len(addresses))
+	for i, a := range addresses {
+		result[i] = fmt.Sprintf("%d_%s", coin, a)
+	}
+
+	return result, nil
 }
 
-func (t *Tx) GetTransactionDirection(address string) Direction {
-	if t.Direction != "" {
+func (t *Tx) GetDirection(address string) Direction {
+	if len(t.Direction) > 0 {
 		return t.Direction
 	}
+
 	if len(t.Inputs) > 0 && len(t.Outputs) > 0 {
 		addressSet := mapset.NewSet(address)
 		return InferDirection(t, addressSet)
 	}
-	switch meta := t.Meta.(type) {
-	case *TokenTransfer:
-		return determineTransactionDirection(address, meta.From, meta.To)
-	case *NativeTokenTransfer:
-		return determineTransactionDirection(address, meta.From, meta.To)
-	case TokenTransfer:
-		return determineTransactionDirection(address, meta.From, meta.To)
-	case NativeTokenTransfer:
-		return determineTransactionDirection(address, meta.From, meta.To)
-	case Delegation:
-		return DirectionOutgoing
-	case Undelegation:
-		return DirectionIncoming
-	default:
-		return determineTransactionDirection(address, t.From, t.To)
-	}
+
+	return t.determineTransactionDirection(address, t.From, t.To)
 }
 
-func determineTransactionDirection(address, from, to string) Direction {
+func (t *Tx) determineTransactionDirection(address, from, to string) Direction {
+	if t.Type == TxStakeUndelegate || t.Type == TxStakeClaimRewards {
+		return DirectionIncoming
+	}
+
 	if address == to {
 		if from == to {
 			return DirectionSelf
@@ -419,16 +323,57 @@ func determineTransactionDirection(address, from, to string) Direction {
 	return DirectionOutgoing
 }
 
-func (t *Tx) InferUtxoValue(address string, coinIndex uint) {
-	if len(t.Inputs) > 0 && len(t.Outputs) > 0 {
-		addressSet := mapset.NewSet(address)
-		value := InferValue(t, t.Direction, addressSet)
-		t.Meta = Transfer{
-			Value:    value,
-			Symbol:   coin.Coins[coinIndex].Symbol,
-			Decimals: coin.Coins[coinIndex].Decimals,
+func (t *Tx) IsUTXO() bool {
+	return t.Type == TxTransfer && len(t.Outputs) > 0
+}
+
+func (t *Tx) GetUTXOValueFor(address string) (Amount, error) {
+	isTransferOut := false
+	isSelf := true
+
+	var totalInputValue uint64
+	var addressInputValue uint64
+	for _, input := range t.Inputs {
+		value, err := strconv.ParseUint(string(input.Value), 10, 64)
+		if err != nil {
+			return "0", fmt.Errorf("input value for address %s: %v", input.Address, err)
+		}
+
+		totalInputValue += value
+
+		if input.Address == address {
+			addressInputValue = value
+			isTransferOut = true
 		}
 	}
+
+	var addressOutputValue uint64
+	var totalOutputValue uint64
+	for _, output := range t.Outputs {
+		value, err := strconv.ParseUint(string(output.Value), 10, 64)
+		if err != nil {
+			return "0", fmt.Errorf("output value for address %s: %v", output.Address, err)
+		}
+		totalOutputValue += value
+		if output.Address == address {
+			addressOutputValue += value
+		} else {
+			isSelf = false
+		}
+	}
+
+	var result uint64
+	if isTransferOut && !isSelf {
+		if addressInputValue < addressOutputValue {
+			result = 0 // address received more than sent although it's an outgoing tx
+		} else {
+			result = addressInputValue - (totalInputValue-totalOutputValue)/uint64(len(t.Inputs)) - addressOutputValue
+		}
+	} else {
+		result = addressOutputValue
+	}
+
+	return Amount(fmt.Sprintf("%d", result)), nil
 }
 
 func InferDirection(tx *Tx, addressSet mapset.Set) Direction {
@@ -450,25 +395,20 @@ func InferDirection(tx *Tx, addressSet mapset.Set) Direction {
 	return DirectionOutgoing
 }
 
-func InferValue(tx *Tx, direction Direction, addressSet mapset.Set) Amount {
-	value := Amount("0")
-	if len(tx.Outputs) == 0 {
-		return value
-	}
-	if direction == DirectionOutgoing || direction == DirectionSelf {
-		value = tx.Outputs[0].Value
-	} else if direction == DirectionIncoming {
-		amount := value
-		for _, output := range tx.Outputs {
-			if !addressSet.Contains(output.Address) {
-				continue
-			}
-			value := numbers.AddAmount(string(amount), string(output.Value))
-			amount = Amount(value)
+func IsTxTypeAmong(txType TransactionType, types []TransactionType) bool {
+	result := false
+	for _, t := range types {
+		if txType == t {
+			result = true
+			break
 		}
-		value = amount
 	}
-	return value
+
+	return result
+}
+
+func (t Token) AssetId() string {
+	return asset.BuildID(t.Coin, t.TokenID)
 }
 
 func GetTokenType(c uint, tokenID string) (string, bool) {

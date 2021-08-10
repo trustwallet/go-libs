@@ -2,15 +2,9 @@ package types
 
 import (
 	"encoding/json"
-	"regexp"
-	"strings"
-
 	"errors"
-
-	"github.com/trustwallet/golibs/numbers"
+	"fmt"
 )
-
-var matchNumber = regexp.MustCompile(`^\d+(\.\d+)?$`)
 
 // Tx, but with default JSON marshalling methods
 type wrappedTx Tx
@@ -22,7 +16,7 @@ func (t *Tx) UnmarshalJSON(data []byte) error {
 	var wrapped wrappedTx
 
 	var raw json.RawMessage
-	wrapped.Meta = &raw
+	wrapped.Metadata = &raw
 	if err := json.Unmarshal(data, &wrapped); err != nil {
 		return err
 	}
@@ -30,31 +24,15 @@ func (t *Tx) UnmarshalJSON(data []byte) error {
 	*t = Tx(wrapped)
 
 	switch t.Type {
-	case TxTransfer:
-		t.Meta = new(Transfer)
-	case TxMultiCurrencyTransfer:
-		t.Meta = new(MultiCurrencyTransfer)
-	case TxNativeTokenTransfer:
-		t.Meta = new(NativeTokenTransfer)
-	case TxTokenTransfer:
-		t.Meta = new(TokenTransfer)
-	case TxCollectibleTransfer:
-		t.Meta = new(CollectibleTransfer)
-	case TxTokenSwap:
-		t.Meta = new(TokenSwap)
+	case TxTransfer, TxStakeDelegate, TxStakeUndelegate, TxStakeRedelegate, TxStakeClaimRewards:
+		t.Metadata = new(Transfer)
 	case TxContractCall:
-		t.Meta = new(ContractCall)
-	case TxAnyAction:
-		t.Meta = new(AnyAction)
-	case TxDelegation:
-		t.Meta = new(Delegation)
-	case TxUndelegation:
-		t.Meta = new(Undelegation)
+		t.Metadata = new(ContractCall)
 	default:
-		return errors.New("unsupported tx type")
+		return fmt.Errorf("unsupported tx type: %s, hash: %s, metadata: %+v", t.Type, t.ID, t.Metadata)
 	}
 
-	err := json.Unmarshal(raw, t.Meta)
+	err := json.Unmarshal(raw, t.Metadata)
 	if err != nil {
 		return err
 	}
@@ -62,30 +40,22 @@ func (t *Tx) UnmarshalJSON(data []byte) error {
 }
 
 // MarshalJSON creates a JSON object from a transaction.
-// Sets the Type field to the correct value based on the Meta type.
-func (t *Tx) MarshalJSON() ([]byte, error) {
-	// Set type from metadata content
-	switch t.Meta.(type) {
-	case Transfer, *Transfer:
-		t.Type = TxTransfer
-	case MultiCurrencyTransfer, *MultiCurrencyTransfer:
-		t.Type = TxMultiCurrencyTransfer
-	case NativeTokenTransfer, *NativeTokenTransfer:
-		t.Type = TxNativeTokenTransfer
-	case TokenTransfer, *TokenTransfer:
-		t.Type = TxTokenTransfer
-	case CollectibleTransfer, *CollectibleTransfer:
-		t.Type = TxCollectibleTransfer
-	case TokenSwap, *TokenSwap:
-		t.Type = TxTokenSwap
-	case ContractCall, *ContractCall:
-		t.Type = TxContractCall
-	case AnyAction, *AnyAction:
-		t.Type = TxAnyAction
-	case Delegation, *Delegation:
-		t.Type = TxDelegation
-	case Undelegation, *Undelegation:
-		t.Type = TxUndelegation
+func (t Tx) MarshalJSON() ([]byte, error) {
+	isTypeOk := false
+	for _, txType := range SupportedTypes {
+		if t.Type == txType {
+			isTypeOk = true
+			break
+		}
+	}
+	if !isTypeOk {
+		return nil, fmt.Errorf("tx type is not supported: %v", t)
+	}
+
+	// validate metadata type
+	switch t.Metadata.(type) {
+	case *Transfer, *ContractCall:
+		break
 	default:
 		return nil, errors.New("unsupported tx metadata")
 	}
@@ -96,66 +66,10 @@ func (t *Tx) MarshalJSON() ([]byte, error) {
 	}
 
 	// Wrap the Tx type to avoid infinite recursion
-	return json.Marshal(wrappedTx(*t))
-}
-
-// UnmarshalJSON reads an amount from a JSON string or number.
-// Comma separators get dropped with address.DecimalToSatoshis.
-func (a *Amount) UnmarshalJSON(data []byte) error {
-	var n json.Number
-	err := json.Unmarshal(data, &n)
-	if err != nil {
-		return err
-	}
-	str := string(n)
-	if !matchNumber.MatchString(str) {
-		return errors.New("not a regular decimal number: " + str)
-	}
-	if strings.ContainsRune(str, '.') {
-		str, _ = numbers.DecimalToSatoshis(str)
-	}
-	*a = Amount(str)
-	return nil
-}
-
-// MarshalJSON returns a JSON string representing the amount
-func (a *Amount) MarshalJSON() ([]byte, error) {
-	return json.Marshal(string(*a))
+	return json.Marshal(wrappedTx(t))
 }
 
 // Sort sorts the response by date, descending
 func (txs Txs) Len() int           { return len(txs) }
-func (txs Txs) Less(i, j int) bool { return txs[i].Date > txs[j].Date }
+func (txs Txs) Less(i, j int) bool { return txs[i].CreatedAt > txs[j].CreatedAt }
 func (txs Txs) Swap(i, j int)      { txs[i], txs[j] = txs[j], txs[i] }
-
-// MarshalJSON returns a wrapped list of collections in JSON
-func (r CollectionPage) MarshalJSON() ([]byte, error) {
-	var page struct {
-		Total  int          `json:"total"`
-		Docs   []Collection `json:"docs"`
-		Status bool         `json:"status"`
-	}
-	page.Docs = []Collection(r)
-	if page.Docs == nil {
-		page.Docs = make([]Collection, 0)
-	}
-	page.Total = len(page.Docs)
-	page.Status = true
-	return json.Marshal(page)
-}
-
-// MarshalJSON returns a wrapped list of collectibles in JSON
-func (r CollectiblePage) MarshalJSON() ([]byte, error) {
-	var page struct {
-		Total  int           `json:"total"`
-		Docs   []Collectible `json:"docs"`
-		Status bool          `json:"status"`
-	}
-	page.Docs = []Collectible(r)
-	if page.Docs == nil {
-		page.Docs = make([]Collectible, 0)
-	}
-	page.Total = len(page.Docs)
-	page.Status = true
-	return json.Marshal(page)
-}
