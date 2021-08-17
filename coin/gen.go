@@ -39,12 +39,14 @@ type Coin struct {
 	SampleAddr       string
 }
 
+type AssetID string
+
 func (c *Coin) String() string {
 	return fmt.Sprintf("[%s] %s (#%d)", c.Symbol, c.Name, c.ID)
 }
 
-func (c *Coin) AssetID() types.AssetID {
-	return types.AssetID(fmt.Sprintf("c%d", c.ID))
+func (c *Coin) AssetID() AssetID {
+	return AssetID(fmt.Sprintf("c%d", c.ID))
 }
 
 const (
