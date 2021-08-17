@@ -48,11 +48,11 @@ func (c *Coin) String() string {
 	return fmt.Sprintf("[%s] %s (#%d)", c.Symbol, c.Name, c.ID)
 }
 
-func (c *Coin) AssetID() AssetID {
+func (c Coin) AssetID() AssetID {
 	return AssetID(coinPrefix + fmt.Sprint(c.ID))
 }
 
-func (c *Coin) TokenAssetID(t string) AssetID {
+func (c Coin) TokenAssetID(t string) AssetID {
 	result := c.AssetID()
 	if len(t) > 0 {
 		result += AssetID("_" + tokenPrefix + t)
