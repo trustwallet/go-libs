@@ -33,7 +33,6 @@ var SupportedTypes = []TransactionType{
 
 // Transaction fields
 type (
-	AssetID         string
 	Direction       string
 	Status          string
 	TransactionType string
@@ -107,8 +106,8 @@ type (
 
 	// Every transaction consumes some Fee
 	Fee struct {
-		Asset AssetID `json:"asset"`
-		Value Amount  `json:"value"`
+		Asset coin.AssetID `json:"asset"`
+		Value Amount       `json:"value"`
 	}
 
 	// UTXO transactions consist of a set of inputs and a set of outputs
@@ -120,15 +119,15 @@ type (
 
 	// Transfer describes the transfer of currency
 	Transfer struct {
-		Asset AssetID `json:"asset"`
-		Value Amount  `json:"value"`
+		Asset coin.AssetID `json:"asset"`
+		Value Amount       `json:"value"`
 	}
 
 	// ContractCall describes a
 	ContractCall struct {
-		Asset AssetID `json:"asset"`
-		Value Amount  `json:"value"`
-		Input string  `json:"input"`
+		Asset coin.AssetID `json:"asset"`
+		Value Amount       `json:"value"`
+		Input string       `json:"input"`
 	}
 
 	// Token describes the non-native tokens.
@@ -145,7 +144,7 @@ type (
 	Txs []Tx
 
 	AssetHolder interface {
-		GetAsset() AssetID
+		GetAsset() coin.AssetID
 	}
 
 	Validator interface {
@@ -205,7 +204,7 @@ func (txs Txs) FilterTransactionsByType(types []TransactionType) Txs {
 	return result
 }
 
-func (t *Transfer) GetAsset() AssetID {
+func (t *Transfer) GetAsset() coin.AssetID {
 	return t.Asset
 }
 
@@ -221,7 +220,7 @@ func (t *Transfer) Validate() error {
 	return nil
 }
 
-func (cc *ContractCall) GetAsset() AssetID {
+func (cc *ContractCall) GetAsset() coin.AssetID {
 	return cc.Asset
 }
 

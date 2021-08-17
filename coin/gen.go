@@ -25,6 +25,11 @@ import (
 	"fmt"
 )
 
+const (
+	coinPrefix  = "c"
+	tokenPrefix = "t"
+)
+
 // Coin is the native currency of a blockchain
 type Coin struct {
 	ID               uint
@@ -37,8 +42,23 @@ type Coin struct {
 	SampleAddr       string
 }
 
+type AssetID string
+
 func (c *Coin) String() string {
 	return fmt.Sprintf("[%s] %s (#%d)", c.Symbol, c.Name, c.ID)
+}
+
+func (c Coin) AssetID() AssetID {
+	return AssetID(coinPrefix + fmt.Sprint(c.ID))
+}
+
+func (c Coin) TokenAssetID(t string) AssetID {
+	result := c.AssetID()
+	if len(t) > 0 {
+		result += AssetID("_" + tokenPrefix + t)
+	}
+
+	return result
 }
 
 const (
@@ -61,8 +81,8 @@ var Coins = map[uint]Coin{
 	},
 {{- end }}
 }
-
 {{- range .Coins }}
+
 func {{ .Handle | Capitalize }}() Coin {
 	return Coins[{{ .Handle | ToUpper }}]
 }
