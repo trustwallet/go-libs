@@ -23,6 +23,8 @@ package coin
 
 import (
 	"fmt"
+
+	"github.com/trustwallet/golibs/types"
 )
 
 // Coin is the native currency of a blockchain
@@ -39,6 +41,10 @@ type Coin struct {
 
 func (c *Coin) String() string {
 	return fmt.Sprintf("[%s] %s (#%d)", c.Symbol, c.Name, c.ID)
+}
+
+func (c *Coin) AssetID() types.AssetID {
+	return types.AssetID(fmt.Sprintf("c%d", c.ID))
 }
 
 const (
@@ -61,8 +67,8 @@ var Coins = map[uint]Coin{
 	},
 {{- end }}
 }
-
 {{- range .Coins }}
+
 func {{ .Handle | Capitalize }}() Coin {
 	return Coins[{{ .Handle | ToUpper }}]
 }
