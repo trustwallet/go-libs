@@ -13,7 +13,7 @@ require (
 	github.com/sirupsen/logrus v1.7.0
 	github.com/spf13/viper v1.8.1
 	github.com/stretchr/testify v1.7.0
-	github.com/trustwallet/golibs/network v0.0.0-20210810071310-ac2826c6c3b4
+	github.com/trustwallet/golibs/network v0.0.0-20210818120751-9f2d9854c619
 	golang.org/x/crypto v0.0.0-20201016220609-9e8e0b390897
 	gopkg.in/yaml.v2 v2.4.0
 )
