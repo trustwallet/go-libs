@@ -29,6 +29,5 @@ jobs:
     - name: Test
       run: go test -v ./...
 
-    - name: Test network module
-      run: go test -v ./...
-      working-directory: network
+    - name: Lint
+      run: make lint
