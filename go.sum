@@ -419,8 +419,6 @@ github.com/stretchr/testify v1.7.0 h1:nwc3DEeHmmLAfoZucVR881uASk0Mfjw8xYJ99tb5Cc
 github.com/stretchr/testify v1.7.0/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/h/Wwjteg=
 github.com/subosito/gotenv v1.2.0 h1:Slr1R9HxAlEKefgq5jn9U+DnETlIUa6HfgEzj0g5d7s=
 github.com/subosito/gotenv v1.2.0/go.mod h1:N0PQaV/YGNqwC0u51sEeR/aUtSLEXKX9iv69rRypqCw=
-github.com/trustwallet/golibs/network v0.0.0-20210810071310-ac2826c6c3b4 h1:qEYv0+Kd3LTKBCbkLHHi2Lcvwh6b6+bVTvKFbRlpU54=
-github.com/trustwallet/golibs/network v0.0.0-20210810071310-ac2826c6c3b4/go.mod h1:pBG40TogHLYH0Wj0ry1ZrJPIcym2uGiOS5WYydw5DzQ=
 github.com/trustwallet/golibs/network v0.0.0-20210818120751-9f2d9854c619 h1:g0ctKVnZNm/rBua4vZ9lY6Rb586oILBwn4grqaHOTYM=
 github.com/trustwallet/golibs/network v0.0.0-20210818120751-9f2d9854c619/go.mod h1:pBG40TogHLYH0Wj0ry1ZrJPIcym2uGiOS5WYydw5DzQ=
 github.com/ugorji/go v1.1.7 h1:/68gy2h+1mWMrwZFeD1kQialdSzAb432dtpeJ42ovdo=
