@@ -2,7 +2,7 @@ package eventer
 
 import (
 	"github.com/trustwallet/golibs/client"
-	middleware2 "github.com/trustwallet/golibs/middleware"
+	"github.com/trustwallet/golibs/middleware"
 )
 
 type Client struct {
@@ -23,7 +23,7 @@ var senderClient *Client
 var batchLimit = 100
 
 func Init(url string, limit int) {
-	senderClient = &Client{client.InitJSONClient(url, middleware2.SentryErrorHandler)}
+	senderClient = &Client{client.InitJSONClient(url, middleware.SentryErrorHandler)}
 	batchLimit = limit
 }
 
