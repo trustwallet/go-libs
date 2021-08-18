@@ -15,6 +15,9 @@ type consumer struct {
 	queue   Queue
 	fn      func(Message) error
 	options ConsumerOptions
+
+	messages <-chan amqp.Delivery
+	stopChan chan struct{}
 }
 
 type Consumer interface {
@@ -23,12 +26,15 @@ type Consumer interface {
 }
 
 func (c *consumer) Start(ctx context.Context) error {
-	messages, err := c.messageChannel()
+	c.stopChan = make(chan struct{})
+
+	var err error
+	c.messages, err = c.messageChannel()
 	if err != nil {
 		return fmt.Errorf("get message channel: %v", err)
 	}
 	for w := 1; w <= c.options.Workers; w++ {
-		go c.consume(ctx, messages)
+		go c.consume(ctx)
 	}
 
 	log.Infof("Started %d MQ consumer workers for queue %s", c.options.Workers, c.queue.Name())
@@ -37,6 +43,11 @@ func (c *consumer) Start(ctx context.Context) error {
 }
 
 func (c *consumer) Reconnect(ctx context.Context) error {
+	c.messages = nil
+	if c.stopChan != nil {
+		close(c.stopChan)
+	}
+
 	err := c.Start(ctx)
 	if err != nil {
 		return err
@@ -45,13 +56,16 @@ func (c *consumer) Reconnect(ctx context.Context) error {
 	return nil
 }
 
-func (c *consumer) consume(ctx context.Context, messages <-chan amqp.Delivery) {
+func (c *consumer) consume(ctx context.Context) {
 	for {
 		select {
 		case <-ctx.Done():
-			log.Infof("Stopped consuming queue %s", c.queue.Name())
+			log.Infof("Finished consuming queue %s", c.queue.Name())
 			return
-		case msg := <-messages:
+		case <-c.stopChan:
+			log.Infof("Force stopped consuming queue %s", c.queue.Name())
+			return
+		case msg := <-c.messages:
 			if msg.Body == nil {
 				continue
 			}
