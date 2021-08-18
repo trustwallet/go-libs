@@ -3,6 +3,7 @@ package mq
 import (
 	"context"
 	"fmt"
+	"sync"
 	"time"
 
 	log "github.com/sirupsen/logrus"
@@ -118,6 +119,17 @@ func (c *Client) StartConsumers(ctx context.Context, consumers ...Consumer) erro
 
 func (c *Client) AddConnectionClient(connClient ConnectionClient) {
 	c.connClients = append(c.connClients, connClient)
+}
+
+func (c *Client) ListenConnectionAsync(ctx context.Context, wg *sync.WaitGroup) {
+	wg.Add(1)
+	go func() {
+		err := c.ListenConnection(ctx)
+		if err != nil {
+			log.Fatal(err)
+		}
+		wg.Done()
+	}()
 }
 
 func (c *Client) ListenConnection(ctx context.Context) error {
