@@ -1,10 +1,8 @@
 package mq
 
 type queue struct {
-	name         QueueName
-	client       *Client
-	consumer     Consumer
-	consumerOpts ConsumerOptions
+	name   QueueName
+	client *Client
 }
 
 type Queue interface {

@@ -2,7 +2,7 @@ package eventer
 
 import (
 	"github.com/trustwallet/golibs/client"
-	"github.com/trustwallet/golibs/network/middleware"
+	"github.com/trustwallet/golibs/middleware"
 )
 
 type Client struct {
