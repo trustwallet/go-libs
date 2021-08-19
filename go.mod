@@ -8,8 +8,8 @@ require (
 	github.com/go-redis/redis/v8 v8.8.2
 	github.com/gogap/env_json v0.0.0-20150503135429-86150085ddbe // indirect
 	github.com/gogap/env_strings v0.0.1 // indirect
-	github.com/heirko/go-contrib v0.0.0-20200825160048-11fc5e2235fa // indirect
-	github.com/heralight/logrus_mate v1.0.1 // indirect
+	github.com/heirko/go-contrib v0.0.0-20200825160048-11fc5e2235fa
+	github.com/heralight/logrus_mate v1.0.1
 	github.com/hoisie/redis v0.0.0-20160730154456-b5c6e81454e0 // indirect
 	github.com/onsi/ginkgo v1.16.1 // indirect
 	github.com/onsi/gomega v1.11.0 // indirect
@@ -21,5 +21,5 @@ require (
 	github.com/trustwallet/golibs/network v0.0.0-20210818203024-16caa9b66ddd
 	golang.org/x/crypto v0.0.0-20201016220609-9e8e0b390897
 	gopkg.in/yaml.v2 v2.4.0
-	gotest.tools v2.2.0+incompatible // indirect
+	gotest.tools v2.2.0+incompatible
 )
