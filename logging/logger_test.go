@@ -65,7 +65,7 @@ logging:
 
 	logger := logging.GetLogger()
 	// Unmarshal configuration from Viper
-	var c = logrusHelper.UnmarshalConfiguration(viper.Sub("logging" ))
+	var c = logrusHelper.UnmarshalConfiguration(viper.Sub("logging"))
 	err = logrusHelper.SetConfig(logger, c)
 	assert.NilError(t, err)
 
@@ -79,7 +79,7 @@ logging:
   formatter:
     name: text
     options:
-      full_timestamp: false
+      disable_timestamp: true
 `)
 
 	viper.SetConfigType("yaml")
@@ -95,6 +95,7 @@ logging:
 
 	logger := logging.GetLogger()
 	assert.Equal(t, logger.Level, logrus.DebugLevel, "logging level set to debug via config")
+	assert.Equal(t, logger.Formatter.(*logrus.TextFormatter).DisableTimestamp, true)
 }
 
 func TestSetLogger(t *testing.T) {
