@@ -17,6 +17,10 @@ func init() {
 }
 
 func SetLoggerConfig(config Config) error {
+	err := logrusHelper.SetConfig(logrus.StandardLogger(), mate.LoggerConfig(config))
+	if err != nil {
+		return err
+	}
 	return logrusHelper.SetConfig(logger, mate.LoggerConfig(config))
 }
 

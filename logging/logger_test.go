@@ -98,6 +98,35 @@ logging:
 	assert.Equal(t, logger.Formatter.(*logrus.TextFormatter).DisableTimestamp, true)
 }
 
+func TestSetLoggerConfigForStandardLogger(t *testing.T) {
+	// Not every component would be able to use logging.GetLogger()
+	// This test makes sure the config loaded with viper is also
+	// applied globally to standard logger
+
+	yamlConfig := []byte(`
+logging:
+  level: debug 
+  formatter:
+    name: text
+    options:
+      disable_timestamp: true
+`)
+
+	viper.SetConfigType("yaml")
+	err := viper.ReadConfig(bytes.NewBuffer(yamlConfig))
+	assert.NilError(t, err)
+
+	var config logging.Config
+	err = viper.UnmarshalKey("logging", &config)
+	assert.NilError(t, err)
+
+	err = logging.SetLoggerConfig(config)
+	assert.NilError(t, err)
+
+	std := logrus.StandardLogger()
+	assert.Equal(t, std.Formatter.(*logrus.TextFormatter).DisableTimestamp, true)
+}
+
 func TestSetLogger(t *testing.T) {
 	testLogger, hook := test.NewNullLogger()
 	testLogger.SetLevel(logrus.WarnLevel)
@@ -115,7 +144,6 @@ func TestSetLogger(t *testing.T) {
 		t.Log(e)
 	}
 	assert.Equal(t, len(hook.Entries), 2)
-
 }
 
 func logAndAssertText(t *testing.T, entry *logrus.Entry, assertions func(fields map[string]string)) {
