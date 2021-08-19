@@ -17,11 +17,10 @@ require (
 	github.com/onsi/ginkgo v1.16.1 // indirect
 	github.com/onsi/gomega v1.11.0 // indirect
 	github.com/patrickmn/go-cache v2.1.0+incompatible
-	github.com/shopspring/decimal v1.2.0
 	github.com/sirupsen/logrus v1.8.1
 	github.com/spf13/viper v1.8.1
 	github.com/streadway/amqp v1.0.0
 	github.com/stretchr/testify v1.7.0
 	golang.org/x/crypto v0.0.0-20201016220609-9e8e0b390897 // indirect
-	gopkg.in/yaml.v2 v2.4.0
 	gotest.tools v2.2.0+incompatible
+)
