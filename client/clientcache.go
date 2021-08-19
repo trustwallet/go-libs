@@ -38,8 +38,8 @@ func (r *Request) PostWithCache(result interface{}, path string, body interface{
 	if err != nil {
 		return err
 	}
-	memoryCache.setCache(key, result, cache)
-	return err
+
+	return memoryCache.setCache(key, result, cache)
 }
 
 func (r *Request) PostWithCacheAndContext(result interface{}, path string, body interface{}, cache time.Duration, ctx context.Context) error {
@@ -53,8 +53,8 @@ func (r *Request) PostWithCacheAndContext(result interface{}, path string, body 
 	if err != nil {
 		return err
 	}
-	memoryCache.setCache(key, result, cache)
-	return err
+
+	return memoryCache.setCache(key, result, cache)
 }
 
 func (r *Request) GetWithCache(result interface{}, path string, query url.Values, cache time.Duration) error {
@@ -68,8 +68,8 @@ func (r *Request) GetWithCache(result interface{}, path string, query url.Values
 	if err != nil {
 		return err
 	}
-	memoryCache.setCache(key, result, cache)
-	return err
+
+	return memoryCache.setCache(key, result, cache)
 }
 
 func (r *Request) GetWithCacheAndContext(result interface{}, path string, query url.Values, cache time.Duration, ctx context.Context) error {
@@ -83,8 +83,8 @@ func (r *Request) GetWithCacheAndContext(result interface{}, path string, query 
 	if err != nil {
 		return err
 	}
-	memoryCache.setCache(key, result, cache)
-	return err
+
+	return memoryCache.setCache(key, result, cache)
 }
 
 //nolint
