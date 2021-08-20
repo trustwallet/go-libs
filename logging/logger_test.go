@@ -98,6 +98,32 @@ logging:
 	assert.Equal(t, logger.Formatter.(*logrus.TextFormatter).DisableTimestamp, true)
 }
 
+func TestOverrideBoolOptionAsString(t *testing.T) {
+	yamlConfig := []byte(`
+logging:
+  level: debug 
+  formatter:
+    name: strict_text
+    options:
+      disable_timestamp: "true"
+`)
+
+	viper.SetConfigType("yaml")
+	err := viper.ReadConfig(bytes.NewBuffer(yamlConfig))
+	assert.NilError(t, err)
+
+	var config logging.Config
+	err = viper.UnmarshalKey("logging", &config)
+	assert.NilError(t, err)
+
+	err = logging.SetLoggerConfig(config)
+	assert.NilError(t, err)
+
+	logger := logging.GetLogger()
+	assert.Equal(t, logger.Level, logrus.DebugLevel, "logging level set to debug via config")
+	assert.Equal(t, logger.Formatter.(*logrus.TextFormatter).DisableTimestamp, true)
+}
+
 func TestSetLoggerConfigForStandardLogger(t *testing.T) {
 	// Not every component would be able to use logging.GetLogger()
 	// This test makes sure the config loaded with viper is also
