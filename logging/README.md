@@ -10,7 +10,7 @@ Features:
 
 * [Logrus Wrapper](#logrus-wrapper) allows an easy acces to common logger instance as well as override it in tests
 * [Logging Configuration](#logging-configuration) allows for the logging configuration to be loaded with viper
-
+* [Strict Text Formatter](#strict-text-formatter) allows to unmarshall boolean `logrus` formatter options as **strings**
 
 ### Logrus Wrapper
 
@@ -98,4 +98,52 @@ import log "github.com/sirupsen/logrus"
 func LogSomething() {
          log.Info("some log message") // will respect logging configuration
 }
+```
+
+### Strict Text Formatter
+
+This package contains a `strict_text` formatter which replicates 
+[Logrus Mate](https://github.com/gogap/logrus_mate) `text` formatter behaviour
+with a small difference that every boolean Option **should** be passed as a string.
+This allows to correctly override logging configuration from Env variables.
+
+To demonstrate the issue assuming the `config.yml`:
+
+```yaml
+logging:
+  level: debug 
+  formatter:
+    name: text
+```
+
+When application executed with the Env override `LOGGING_FORMATTER_OPTIONS_DISABLE_TIMESTAMP=true` the 
+config will be equally represented as:
+
+```yaml
+logging:
+  level: debug 
+  formatter:
+    name: text
+    options:
+      disable_timestamp: "true"
+```
+
+Notice, the `disable_timestamp` option which will be of type `interface {} | string` when unmarshalled by `viper`.
+The [Logrus Mate](https://github.com/gogap/logrus_mate) `text` formatter cannot handle it 
+and throws an error:
+
+```txt
+json: cannot unmarshal string into Go struct field TextFormatterConfig.disable_timestamp of type bool
+```
+
+:white_check_mark: Using the new `strict_text` formatter and making sure all logging bool Options
+are specified as strings will handle any overrides easily:
+
+```yaml
+logging:
+  level: debug 
+  formatter:
+    name: strict_text
+    options:
+      disable_timestamp: "true"
 ```
