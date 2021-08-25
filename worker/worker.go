@@ -27,14 +27,17 @@ func (w *worker) Start(ctx context.Context, wg *sync.WaitGroup) {
 	go func() {
 		defer wg.Done()
 
+		// run worker immediately
+		w.workerFn()
+
 		for {
 			select {
 			case <-ctx.Done():
 				log.WithField("service", w.name).Info("Stopped")
 				return
-			default:
+			case <-time.After(w.interval):
+				log.WithField("service", w.name).Info("Processing")
 				w.workerFn()
-				time.Sleep(w.interval)
 			}
 		}
 	}()
