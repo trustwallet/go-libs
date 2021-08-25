@@ -14,8 +14,6 @@ func Load(confPath string, receiver interface{}) {
 
 	viper.AddConfigPath(".")
 	viper.SetConfigName("config")
-	viper.SetConfigType("yml")
-	viper.SetConfigFile(".env")
 
 	configType := "default"
 	if confPath != "" {
