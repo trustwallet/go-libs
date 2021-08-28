@@ -122,3 +122,39 @@ var SentryErrorHandler = func(res *http.Response, url string) error {
 
 	return nil
 }
+
+func GetSentryErrorHandler(filters ...func(res *http.Response, url string) bool) func(res *http.Response, url string) error {
+	return func(res *http.Response, url string) error {
+		for _, filter := range filters {
+			if filter(res, url) {
+				log.WithFields(log.Fields{
+					"tags": raven.Tags{
+						{Key: "status_code", Value: strconv.Itoa(res.StatusCode)},
+						{Key: "host", Value: res.Request.URL.Host},
+						{Key: "path", Value: res.Request.URL.Path},
+					},
+					"url":         url,
+					"fingerprint": []string{"client_errors"},
+				}).Error("Client Errors")
+
+				break
+			}
+		}
+
+		return nil
+	}
+}
+
+var (
+	OkStatusFilter = func(res *http.Response, _ string) bool {
+		if res.StatusCode >= 200 && res.StatusCode < 300 {
+			return false
+		}
+
+		return true
+	}
+
+	BadRequestFilter = func(res *http.Response, _ string) bool {
+		return res.StatusCode != http.StatusBadRequest
+	}
+)
