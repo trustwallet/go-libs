@@ -3,6 +3,7 @@ package client
 import (
 	"net/url"
 	"testing"
+	"time"
 )
 
 func TestRequest_generateKey(t *testing.T) {
@@ -69,6 +70,61 @@ func TestRequest_generateKey(t *testing.T) {
 			r := &Request{BaseUrl: tt.args.baseUrl}
 			if got := r.generateKey(tt.args.path, tt.args.query, tt.args.body); got != tt.want {
 				t.Errorf("generateKey() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestRequest_GetWithCache(t *testing.T) {
+	type args struct {
+		baseUrl string
+		path    string
+		query   url.Values
+		result  interface{}
+	}
+
+	type response struct {
+		ID          string `json:"id"`
+		Name        string `json:"name"`
+		Description string `json:"description"`
+		Website     string `json:"website"`
+	}
+
+	tests := []struct {
+		name string
+		args args
+	}{
+		{
+			name: "test cosmos key without params",
+			args: args{
+				baseUrl: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/cosmos/",
+				path:    "validators/list.json",
+				result:  new([]response),
+			},
+		},
+		{
+			name: "test cosmos key with params",
+			args: args{
+				baseUrl: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/cosmos/",
+				path:    "validators/list.json",
+				query:   url.Values{"address": {"TQZskDJJRGAHifeKoQ7wLey42iGvwp3"}, "visible": {"false"}},
+				result:  new([]response),
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			r := InitClient(tt.args.baseUrl, nil)
+			if err := r.GetWithCache(tt.args.result, tt.args.path, tt.args.query, time.Duration(1*time.Second)); err != nil {
+				t.Errorf("GetWithCache was failed for %v, error %v", tt.name, err)
+			}
+
+			key := r.generateKey(tt.args.path, tt.args.query, nil)
+
+			_, ok := memoryCache.cache.Get(key)
+
+			if !ok {
+				t.Errorf("GetWithCache could not find cache for %v", tt.name)
 			}
 		})
 	}
