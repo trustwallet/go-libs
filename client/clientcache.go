@@ -8,7 +8,6 @@ import (
 	"errors"
 	"net/url"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/patrickmn/go-cache"
@@ -23,7 +22,6 @@ func init() {
 }
 
 type memCache struct {
-	sync.RWMutex
 	cache *cache.Cache
 }
 
@@ -87,16 +85,11 @@ func (r *Request) GetWithCacheAndContext(result interface{}, path string, query 
 	return memoryCache.setCache(key, result, cache)
 }
 
-//nolint
 func (mc *memCache) deleteCache(key string) {
-	mc.RLock()
-	defer mc.RUnlock()
 	memoryCache.cache.Delete(key)
 }
 
 func (mc *memCache) setCache(key string, value interface{}, duration time.Duration) error {
-	mc.RLock()
-	defer mc.RUnlock()
 	b, err := json.Marshal(value)
 	if err != nil {
 		return errors.New(err.Error() + " client cache cannot marshal cache object")
