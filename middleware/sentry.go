@@ -10,6 +10,7 @@ import (
 )
 
 type SentryOption func(hook *logrus_sentry.SentryHook) error
+type SentryCondition func(res *http.Response, url string) bool
 
 func SetupSentry(dsn string, opts ...SentryOption) error {
 	hook, err := logrus_sentry.NewSentryHook(dsn, []log.Level{
@@ -123,10 +124,12 @@ var SentryErrorHandler = func(res *http.Response, url string) error {
 	return nil
 }
 
-func GetSentryErrorHandler(filters ...func(res *http.Response, url string) bool) func(res *http.Response, url string) error {
+// GetSentryErrorHandler initializes sentry logger for http response errors
+// Responses to be logged are defined via passed conditions
+func GetSentryErrorHandler(conditions ...SentryCondition) func(res *http.Response, url string) error {
 	return func(res *http.Response, url string) error {
-		for _, filter := range filters {
-			if filter(res, url) {
+		for _, condition := range conditions {
+			if condition(res, url) {
 				log.WithFields(log.Fields{
 					"tags": raven.Tags{
 						{Key: "status_code", Value: strconv.Itoa(res.StatusCode)},
@@ -146,15 +149,43 @@ func GetSentryErrorHandler(filters ...func(res *http.Response, url string) bool)
 }
 
 var (
-	OkStatusFilter = func(res *http.Response, _ string) bool {
-		if res.StatusCode >= 200 && res.StatusCode < 300 {
-			return false
-		}
+	// SentryConditionAnd returns true only when all conditions are satisfied
+	SentryConditionAnd = func(conditions ...SentryCondition) SentryCondition {
+		return func(res *http.Response, url string) bool {
+			result := true
+			for _, condition := range conditions {
+				if !condition(res, url) {
+					result = false
+					break
+				}
+			}
 
-		return true
+			return result
+		}
 	}
 
-	BadRequestFilter = func(res *http.Response, _ string) bool {
+	// SentryConditionOr return true when any of conditions is satisfied
+	SentryConditionOr = func(conditions ...SentryCondition) SentryCondition {
+		return func(res *http.Response, url string) bool {
+			for _, condition := range conditions {
+				if condition(res, url) {
+					return true
+				}
+			}
+
+			return false
+		}
+	}
+
+	SentryConditionNotStatusOk = func(res *http.Response, _ string) bool {
+		return res.StatusCode < 200 || res.StatusCode > 299
+	}
+
+	SentryConditionNotStatusBadRequest = func(res *http.Response, _ string) bool {
 		return res.StatusCode != http.StatusBadRequest
+	}
+
+	SentryConditionNotStatusNotFound = func(res *http.Response, _ string) bool {
+		return res.StatusCode != http.StatusNotFound
 	}
 )
