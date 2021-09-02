@@ -3,7 +3,7 @@
 Add dependency to the project
 
 ```sh
-go get github.com/trustwallet/golibs/logging
+go get github.com/trustwallet/go-libs/logging
 ```
 
 Features:
