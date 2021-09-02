@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/trustwallet/golibs/client"
+	"github.com/trustwallet/go-libs/client"
 )
 
 type response struct {

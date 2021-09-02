@@ -2,15 +2,16 @@ package logging_test
 
 import (
 	"bytes"
+	"strconv"
+	"strings"
+	"testing"
+
 	"github.com/heirko/go-contrib/logrusHelper"
 	"github.com/sirupsen/logrus"
 	"github.com/sirupsen/logrus/hooks/test"
 	"github.com/spf13/viper"
-	"github.com/trustwallet/golibs/logging"
+	"github.com/trustwallet/go-libs/logging"
 	"gotest.tools/assert"
-	"strconv"
-	"strings"
-	"testing"
 )
 
 func TestGetLogger(t *testing.T) {
