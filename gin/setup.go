@@ -12,6 +12,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+// SetupGracefulShutdown blocks execution until interruption command sent
 func SetupGracefulShutdown(ctx context.Context, port string, engine *gin.Engine) {
 	server := &http.Server{
 		Addr:    ":" + port,
@@ -33,13 +34,13 @@ func SetupGracefulShutdown(ctx context.Context, port string, engine *gin.Engine)
 
 	go func() {
 		if err := server.ListenAndServe(); err != nil {
-			log.Fatal("Application failed", err)
+			log.Error("Application failed ", err)
 		}
 	}()
 	log.WithFields(log.Fields{"bind": port}).Info("Running application")
 
 	stop := <-signalForExit
-	log.Info("Stop signal Received", stop)
+	log.Info("Stop signal Received ", stop)
 	log.Info("Waiting for all jobs to stop")
 }
 
