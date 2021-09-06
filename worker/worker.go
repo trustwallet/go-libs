@@ -9,26 +9,30 @@ import (
 )
 
 type worker struct {
-	workerFn func()
-	interval time.Duration
-	name     string
+	workerFn       func()
+	interval       time.Duration
+	name           string
+	runImmediately bool
 }
 
-func New(name string, workerFn func(), interval time.Duration) *worker {
+func New(name string, workerFn func(), interval time.Duration, runImmediately bool) *worker {
 	return &worker{
-		name:     name,
-		workerFn: workerFn,
-		interval: interval,
+		name:           name,
+		workerFn:       workerFn,
+		interval:       interval,
+		runImmediately: runImmediately,
 	}
 }
 
-func (w *worker) Start(ctx context.Context, wg *sync.WaitGroup) {
+// StartConsequently waits for w.interval before each iteration
+func (w *worker) StartConsequently(ctx context.Context, wg *sync.WaitGroup) {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
 
-		// run worker immediately
-		w.workerFn()
+		if w.runImmediately {
+			w.workerFn()
+		}
 
 		for {
 			select {
@@ -36,6 +40,33 @@ func (w *worker) Start(ctx context.Context, wg *sync.WaitGroup) {
 				log.WithField("service", w.name).Info("Stopped")
 				return
 			case <-time.After(w.interval):
+				log.WithField("service", w.name).Info("Processing")
+				w.workerFn()
+			}
+		}
+	}()
+}
+
+// StartWithTicker executes the function with the provided interval
+// In case execution takes longer than interval, next iteration start immediately
+func (w *worker) StartWithTicker(ctx context.Context, wg *sync.WaitGroup) {
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+
+		ticker := time.NewTicker(w.interval)
+		defer ticker.Stop()
+
+		if w.runImmediately {
+			w.workerFn()
+		}
+
+		for {
+			select {
+			case <-ctx.Done():
+				log.WithField("service", w.name).Info("Stopped")
+				return
+			case <-ticker.C:
 				log.WithField("service", w.name).Info("Processing")
 				w.workerFn()
 			}
