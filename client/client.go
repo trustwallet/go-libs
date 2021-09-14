@@ -42,8 +42,10 @@ func InitClient(baseUrl string, errorHandler HttpErrorHandler, options ...Option
 	}
 
 	client := Request{
-		Headers:          make(map[string]string),
-		HttpClient:       DefaultClient,
+		Headers: make(map[string]string),
+		HttpClient: &http.Client{
+			Timeout: time.Second * 15,
+		},
 		HttpErrorHandler: errorHandler,
 		BaseUrl:          baseUrl,
 	}
@@ -65,10 +67,6 @@ func InitJSONClient(baseUrl string, errorHandler HttpErrorHandler, options ...Op
 		"Accept":       "application/json",
 	}
 	return client
-}
-
-var DefaultClient = &http.Client{
-	Timeout: time.Second * 15,
 }
 
 var DefaultErrorHandler = func(res *http.Response, uri string) error {
