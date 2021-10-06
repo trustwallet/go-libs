@@ -1,6 +1,8 @@
 package middleware
 
 import (
+	"bytes"
+	"io/ioutil"
 	"net/http"
 	"strconv"
 
@@ -115,6 +117,7 @@ var SentryErrorHandler = func(res *http.Response, url string) error {
 				{Key: "status_code", Value: strconv.Itoa(res.StatusCode)},
 				{Key: "host", Value: res.Request.URL.Host},
 				{Key: "path", Value: res.Request.URL.Path},
+				{Key: "body", Value: getBody(res)},
 			},
 			"url":         url,
 			"fingerprint": []string{"client_errors"},
@@ -135,6 +138,7 @@ func GetSentryErrorHandler(conditions ...SentryCondition) func(res *http.Respons
 						{Key: "status_code", Value: strconv.Itoa(res.StatusCode)},
 						{Key: "host", Value: res.Request.URL.Host},
 						{Key: "path", Value: res.Request.URL.Path},
+						{Key: "body", Value: getBody(res)},
 					},
 					"url":         url,
 					"fingerprint": []string{"client_errors"},
@@ -146,6 +150,14 @@ func GetSentryErrorHandler(conditions ...SentryCondition) func(res *http.Respons
 
 		return nil
 	}
+}
+
+func getBody(res *http.Response) string {
+	bodyBytes, _ := ioutil.ReadAll(res.Body)
+	_ = res.Body.Close() //  must close
+	res.Body = ioutil.NopCloser(bytes.NewBuffer(bodyBytes))
+
+	return string(bodyBytes)
 }
 
 var (
