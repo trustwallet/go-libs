@@ -67,3 +67,10 @@ func OptionBytesLimit(bytesLimit int64) Option {
 		return nil
 	}
 }
+
+func OptionHttpClient(client http.Client) Option {
+	return func(d *dl) error {
+		d.client = client
+		return nil
+	}
+}
