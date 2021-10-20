@@ -45,9 +45,9 @@ func (d *downloader) Download(url string) ([]byte, error) {
 	return b, nil
 }
 
-type Option func(d *downloader) error
+type DownloaderOption func(d *downloader) error
 
-func NewDownloader(opts ...Option) (Downloader, error) {
+func NewDownloader(opts ...DownloaderOption) (Downloader, error) {
 	d := &downloader{
 		client: http.Client{},
 	}
@@ -61,16 +61,16 @@ func NewDownloader(opts ...Option) (Downloader, error) {
 	return d, nil
 }
 
-// OptionBytesSizeLimit limits the downloaded file size to the provided number of bytes.
-func OptionBytesSizeLimit(n int64) Option {
+// DownloaderOptionBytesSizeLimit limits the downloaded file size to the provided number of bytes.
+func DownloaderOptionBytesSizeLimit(n int64) DownloaderOption {
 	return func(d *downloader) error {
 		d.bytesSizeLimit = n
 		return nil
 	}
 }
 
-// OptionHttpClient sets a custom http client to perform the request.
-func OptionHttpClient(client http.Client) Option {
+// DownloaderOptionHttpClient sets a custom http client to perform the request.
+func DownloaderOptionHttpClient(client http.Client) DownloaderOption {
 	return func(d *downloader) error {
 		d.client = client
 		return nil
