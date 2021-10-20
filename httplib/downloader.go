@@ -1,4 +1,4 @@
-package downloader
+package httplib
 
 import (
 	"fmt"
@@ -9,16 +9,16 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-type Interface interface {
+type Downloader interface {
 	Download(url string) ([]byte, error)
 }
 
-type dl struct {
-	client     http.Client
-	bytesLimit int64
+type downloader struct {
+	client         http.Client
+	bytesSizeLimit int64
 }
 
-func (d *dl) Download(url string) ([]byte, error) {
+func (d *downloader) Download(url string) ([]byte, error) {
 	resp, err := d.client.Get(url)
 	if err != nil {
 		return nil, err
@@ -33,8 +33,8 @@ func (d *dl) Download(url string) ([]byte, error) {
 	}()
 
 	reader, _ := resp.Body.(io.Reader)
-	if d.bytesLimit > 0 {
-		reader = &io.LimitedReader{R: resp.Body, N: d.bytesLimit}
+	if d.bytesSizeLimit > 0 {
+		reader = &io.LimitedReader{R: resp.Body, N: d.bytesSizeLimit}
 	}
 
 	b, err := ioutil.ReadAll(reader)
@@ -45,10 +45,10 @@ func (d *dl) Download(url string) ([]byte, error) {
 	return b, nil
 }
 
-type Option func(d *dl) error
+type Option func(d *downloader) error
 
-func New(opts ...Option) (Interface, error) {
-	d := &dl{
+func NewDownloader(opts ...Option) (Downloader, error) {
+	d := &downloader{
 		client: http.Client{},
 	}
 
@@ -61,15 +61,17 @@ func New(opts ...Option) (Interface, error) {
 	return d, nil
 }
 
-func OptionBytesLimit(bytesLimit int64) Option {
-	return func(d *dl) error {
-		d.bytesLimit = bytesLimit
+// OptionBytesSizeLimit limits the downloaded file size to the provided number of bytes.
+func OptionBytesSizeLimit(n int64) Option {
+	return func(d *downloader) error {
+		d.bytesSizeLimit = n
 		return nil
 	}
 }
 
+// OptionHttpClient sets a custom http client to perform the request.
 func OptionHttpClient(client http.Client) Option {
-	return func(d *dl) error {
+	return func(d *downloader) error {
 		d.client = client
 		return nil
 	}
