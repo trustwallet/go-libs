@@ -16,7 +16,7 @@ import (
 )
 
 type Request struct {
-	BaseUrl          string
+	BaseURL          string
 	Headers          map[string]string
 	HttpClient       *http.Client
 	HttpErrorHandler HttpErrorHandler
@@ -36,7 +36,7 @@ type HttpErrorHandler func(res *http.Response, uri string) error
 
 type Option func(request *Request) error
 
-func InitClient(baseUrl string, errorHandler HttpErrorHandler, options ...Option) Request {
+func InitClient(baseURL string, errorHandler HttpErrorHandler, options ...Option) Request {
 	if errorHandler == nil {
 		errorHandler = DefaultErrorHandler
 	}
@@ -47,7 +47,7 @@ func InitClient(baseUrl string, errorHandler HttpErrorHandler, options ...Option
 			Timeout: time.Second * 15,
 		},
 		HttpErrorHandler: errorHandler,
-		BaseUrl:          baseUrl,
+		BaseURL:          baseURL,
 	}
 
 	for _, option := range options {
@@ -83,7 +83,7 @@ func TimeoutOption(seconds time.Duration) Option {
 
 func ProxyOption(proxyURL string) Option {
 	return func(request *Request) error {
-		if len(proxyURL) == 0 {
+		if proxyURL == "" {
 			return nil
 		}
 
@@ -101,7 +101,7 @@ func (r *Request) SetTimeout(seconds time.Duration) {
 }
 
 func (r *Request) SetProxy(proxyUrl string) error {
-	if len(proxyUrl) == 0 {
+	if proxyUrl == "" {
 		return errors.New("empty proxy url")
 	}
 	url, err := url.Parse(proxyUrl)
@@ -112,7 +112,7 @@ func (r *Request) SetProxy(proxyUrl string) error {
 	return nil
 }
 
-func (r *Request) AddHeader(key string, value string) {
+func (r *Request) AddHeader(key, value string) {
 	r.Headers[key] = value
 }
 
@@ -168,7 +168,11 @@ func (r *Request) Execute(method string, url string, body io.Reader, result inte
 
 	if res.StatusCode < http.StatusOK || res.StatusCode >= http.StatusBadRequest {
 		defer res.Body.Close()
-		body, _ := ioutil.ReadAll(res.Body)
+		body, err := ioutil.ReadAll(res.Body)
+		if err != nil {
+			return err
+		}
+
 		return &HttpError{
 			StatusCode: res.StatusCode,
 			URL:        *res.Request.URL,
@@ -189,21 +193,21 @@ func (r *Request) Execute(method string, url string, body io.Reader, result inte
 }
 
 func (r *Request) GetBase(path string) string {
-	baseUrl := strings.TrimRight(r.BaseUrl, "/")
+	baseURL := strings.TrimRight(r.BaseURL, "/")
 	if path == "" {
-		return baseUrl
+		return baseURL
 	}
 	path = strings.TrimLeft(path, "/")
-	return fmt.Sprintf("%s/%s", baseUrl, path)
+	return fmt.Sprintf("%s/%s", baseURL, path)
 }
 
 func (r *Request) GetURL(path string, query url.Values) string {
-	baseUrl := r.GetBase(path)
+	baseURL := r.GetBase(path)
 	if query == nil {
-		return baseUrl
+		return baseURL
 	}
 	queryStr := query.Encode()
-	return fmt.Sprintf("%s?%s", baseUrl, queryStr)
+	return fmt.Sprintf("%s?%s", baseURL, queryStr)
 }
 
 func GetBody(body interface{}) (buf io.ReadWriter, err error) {

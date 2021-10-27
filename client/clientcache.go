@@ -13,9 +13,7 @@ import (
 	"github.com/patrickmn/go-cache"
 )
 
-var (
-	memoryCache *memCache
-)
+var memoryCache *memCache
 
 func init() {
 	memoryCache = &memCache{cache: cache.New(5*time.Minute, 5*time.Minute)}
@@ -83,10 +81,6 @@ func (r *Request) GetWithCacheAndContext(result interface{}, path string, query 
 	}
 
 	return memoryCache.setCache(key, result, cache)
-}
-
-func (mc *memCache) deleteCache(key string) {
-	memoryCache.cache.Delete(key)
 }
 
 func (mc *memCache) setCache(key string, value interface{}, duration time.Duration) error {

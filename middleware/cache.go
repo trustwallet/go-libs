@@ -13,15 +13,11 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-
 	"github.com/patrickmn/go-cache"
-
 	log "github.com/sirupsen/logrus"
 )
 
-var (
-	memoryCache *memCache
-)
+var memoryCache *memCache
 
 func init() {
 	memoryCache = &memCache{cache: cache.New(5*time.Minute, 5*time.Minute)}
@@ -67,7 +63,7 @@ func (w *cachedWriter) Written() bool {
 func (w *cachedWriter) Write(data []byte) (int, error) {
 	ret, err := w.ResponseWriter.Write(data)
 	if err != nil {
-		return 0, nil
+		return 0, err
 	}
 	if w.Status() != 200 {
 		return 0, nil
