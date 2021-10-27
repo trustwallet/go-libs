@@ -8,15 +8,15 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-type worker struct {
+type Worker struct {
 	workerFn       func()
 	interval       time.Duration
 	name           string
 	runImmediately bool
 }
 
-func New(name string, workerFn func(), interval time.Duration, runImmediately bool) *worker {
-	return &worker{
+func New(name string, workerFn func(), interval time.Duration, runImmediately bool) *Worker {
+	return &Worker{
 		name:           name,
 		workerFn:       workerFn,
 		interval:       interval,
@@ -25,7 +25,7 @@ func New(name string, workerFn func(), interval time.Duration, runImmediately bo
 }
 
 // StartConsequently waits for w.interval before each iteration
-func (w *worker) StartConsequently(ctx context.Context, wg *sync.WaitGroup) {
+func (w *Worker) StartConsequently(ctx context.Context, wg *sync.WaitGroup) {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
@@ -49,7 +49,7 @@ func (w *worker) StartConsequently(ctx context.Context, wg *sync.WaitGroup) {
 
 // StartWithTicker executes the function with the provided interval
 // In case execution takes longer than interval, next iteration start immediately
-func (w *worker) StartWithTicker(ctx context.Context, wg *sync.WaitGroup) {
+func (w *Worker) StartWithTicker(ctx context.Context, wg *sync.WaitGroup) {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
