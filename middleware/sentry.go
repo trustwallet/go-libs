@@ -110,7 +110,7 @@ func WithServerName(serverName string) SentryOption {
 
 var SentryErrorHandler = func(res *http.Response, url string) error {
 	statusCode := res.StatusCode
-	//Improve ways to identify if worth logging the error
+	// Improve ways to identify if worth logging the error
 	if statusCode != http.StatusOK && statusCode != http.StatusNotFound {
 		log.WithFields(log.Fields{
 			"tags": raven.Tags{

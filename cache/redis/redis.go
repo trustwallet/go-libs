@@ -3,17 +3,18 @@ package redis
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"time"
 
 	"github.com/go-redis/redis/v8"
 )
 
+var ErrNotFound = fmt.Errorf("not found")
+
 type Redis struct {
 	client *redis.Client
 }
-
-var ErrNotFound = fmt.Errorf("not found")
 
 func Init(ctx context.Context, host string) (*Redis, error) {
 	options, err := redis.ParseURL(host)
@@ -32,7 +33,7 @@ func Init(ctx context.Context, host string) (*Redis, error) {
 
 func (r *Redis) Get(ctx context.Context, key string, receiver interface{}) error {
 	cmd := r.client.Get(ctx, key)
-	if cmd.Err() == redis.Nil {
+	if errors.Is(cmd.Err(), redis.Nil) {
 		return ErrNotFound
 	} else if cmd.Err() != nil {
 		return cmd.Err()

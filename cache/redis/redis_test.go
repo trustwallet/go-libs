@@ -98,7 +98,7 @@ func TestRedis_Get(t *testing.T) {
 
 	var empty interface{}
 	err = r.Get(context.TODO(), "1", empty)
-	assert.NotNil(t, err)
+	assert.Equal(t, err, ErrNotFound)
 	assert.Nil(t, empty)
 }
 

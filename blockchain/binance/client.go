@@ -33,7 +33,12 @@ func (c Client) FetchTransactionsInBlock(blockNumber int64) (result Transactions
 
 func (c Client) FetchTransactionsByAddressAndTokenID(address, tokenID string, limit int) ([]Tx, error) {
 	startTime := strconv.Itoa(int(time.Now().AddDate(0, -3, 0).Unix() * 1000))
-	params := url.Values{"address": {address}, "txAsset": {tokenID}, "startTime": {startTime}, "limit": {strconv.Itoa(limit)}}
+	params := url.Values{
+		"address":   {address},
+		"txAsset":   {tokenID},
+		"startTime": {startTime},
+		"limit":     {strconv.Itoa(limit)},
+	}
 	var result TransactionsInBlockResponse
 	err := c.req.Get(&result, "api/v1/transactions", params)
 	return result.Tx, err

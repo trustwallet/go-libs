@@ -5,13 +5,9 @@ import (
 	"fmt"
 )
 
-var (
-	requestId = int64(0)
-)
+var requestID = int64(0)
 
-const (
-	JsonRpcVersion = "2.0"
-)
+const JsonRpcVersion = "2.0"
 
 type (
 	RpcRequests []*RpcRequest
@@ -37,8 +33,7 @@ type (
 )
 
 func (r *Request) RpcCall(result interface{}, method string, params interface{}) error {
-
-	req := &RpcRequest{JsonRpc: JsonRpcVersion, Method: method, Params: params, Id: genId()}
+	req := &RpcRequest{JsonRpc: JsonRpcVersion, Method: method, Params: params, Id: genID()}
 	var resp *RpcResponse
 	err := r.Post(&resp, "", req)
 	if err != nil {
@@ -79,12 +74,12 @@ func (r *RpcResponse) GetObject(toType interface{}) error {
 func (rs RpcRequests) fillDefaultValues() RpcRequests {
 	for _, r := range rs {
 		r.JsonRpc = JsonRpcVersion
-		r.Id = genId()
+		r.Id = genID()
 	}
 	return rs
 }
 
-func genId() int64 {
-	requestId += 1
-	return requestId
+func genID() int64 {
+	requestID++
+	return requestID
 }
