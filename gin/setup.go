@@ -33,7 +33,10 @@ func SetupGracefulShutdown(ctx context.Context, port string, engine *gin.Engine)
 		syscall.SIGQUIT)
 
 	go func() {
-		if err := server.ListenAndServe(); err != nil {
+		switch err := server.ListenAndServe(); err {
+		case http.ErrServerClosed:
+			log.Info("server closed")
+		default:
 			log.Error("Application failed ", err)
 		}
 	}()
