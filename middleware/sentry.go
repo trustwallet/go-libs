@@ -28,6 +28,7 @@ func SetupSentry(dsn string, opts ...SentryOption) error {
 	hook.StacktraceConfiguration.IncludeErrorBreadcrumb = true
 	hook.StacktraceConfiguration.Context = 10
 	hook.StacktraceConfiguration.SendExceptionType = true
+	hook.StacktraceConfiguration.SwitchExceptionTypeAndMessage = true
 
 	for _, o := range opts {
 		err = o(hook)
