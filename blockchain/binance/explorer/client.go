@@ -7,7 +7,7 @@ import (
 	"github.com/trustwallet/go-libs/client"
 )
 
-// URL: https://explorer.binance.org
+// Client is a binance explorer API client
 type Client struct {
 	req client.Request
 }

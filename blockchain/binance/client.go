@@ -9,7 +9,7 @@ import (
 	"github.com/trustwallet/go-libs/client"
 )
 
-// URL: https://dex.binance.org
+// Client is a binance dex API client
 type Client struct {
 	req client.Request
 }
