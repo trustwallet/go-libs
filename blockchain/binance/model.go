@@ -79,4 +79,11 @@ type (
 		Symbol          string `json:"symbol"`
 		TotalSupply     string `json:"total_supply"`
 	}
+
+	MarketPair struct {
+		BaseAssetSymbol  string `json:"base_asset_symbol"`
+		LotSize          string `json:"lot_size"`
+		QuoteAssetSymbol string `json:"quote_asset_symbol"`
+		TickSize         string `json:"tick_size"`
+	}
 )
