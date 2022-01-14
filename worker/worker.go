@@ -8,6 +8,11 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+type Instance interface {
+	Start(ctx context.Context, wg *sync.WaitGroup)
+	Name() string
+}
+
 type Worker struct {
 	workerFn       func()
 	interval       time.Duration
