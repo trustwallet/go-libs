@@ -9,6 +9,8 @@ import (
 	"github.com/streadway/amqp"
 )
 
+const headerRemainingRetries = "x-remaining-retries"
+
 type consumer struct {
 	client *Client
 
@@ -70,19 +72,27 @@ func (c *consumer) consume(ctx context.Context) {
 				continue
 			}
 
+			remainingRetries := c.getRemainingRetries(msg)
 			err := c.fn(msg.Body)
-			if err != nil {
+
+			if err != nil && remainingRetries != 0 {
 				log.Error(err)
 
 				if c.options.RetryOnError {
 					time.Sleep(c.options.RetryDelay)
 
+					c.setRemainingRetries(&msg, remainingRetries-1)
 					if err := msg.Reject(true); err != nil {
 						log.Error(err)
 					}
 
 					continue
 				}
+			}
+
+			if err != nil && remainingRetries == 0 {
+				log.Infof("message failed to get processed after all the retries")
+				// todo: push to dead letter queue if available
 			}
 
 			if err := msg.Ack(false); err != nil {
@@ -107,4 +117,24 @@ func (c *consumer) messageChannel() (<-chan amqp.Delivery, error) {
 	}
 
 	return messageChannel, nil
+}
+
+func (c *consumer) getRemainingRetries(delivery amqp.Delivery) int {
+	var remainingRetries int
+
+	remainingRetriesRaw, exists := delivery.Headers[headerRemainingRetries]
+	if !exists {
+		return -1
+	}
+
+	remainingRetries, ok := remainingRetriesRaw.(int)
+	if !ok {
+		return -1
+	}
+
+	return remainingRetries
+}
+
+func (c *consumer) setRemainingRetries(delivery *amqp.Delivery, remainingRetries int) {
+	delivery.Headers[headerRemainingRetries] = remainingRetries
 }
