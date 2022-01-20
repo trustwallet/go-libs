@@ -119,15 +119,15 @@ func (c *consumer) messageChannel() (<-chan amqp.Delivery, error) {
 	return messageChannel, nil
 }
 
-func (c *consumer) getRemainingRetries(delivery amqp.Delivery) int {
-	var remainingRetries int
+func (c *consumer) getRemainingRetries(delivery amqp.Delivery) int32 {
+	var remainingRetries int32
 
 	remainingRetriesRaw, exists := delivery.Headers[headerRemainingRetries]
 	if !exists {
 		return -1
 	}
 
-	remainingRetries, ok := remainingRetriesRaw.(int)
+	remainingRetries, ok := remainingRetriesRaw.(int32)
 	if !ok {
 		return -1
 	}
@@ -135,6 +135,6 @@ func (c *consumer) getRemainingRetries(delivery amqp.Delivery) int {
 	return remainingRetries
 }
 
-func (c *consumer) setRemainingRetries(delivery *amqp.Delivery, remainingRetries int) {
+func (c *consumer) setRemainingRetries(delivery *amqp.Delivery, remainingRetries int32) {
 	delivery.Headers[headerRemainingRetries] = remainingRetries
 }
