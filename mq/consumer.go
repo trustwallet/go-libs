@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/trustwallet/go-libs/pkg/nullable"
+
 	log "github.com/sirupsen/logrus"
 	"github.com/streadway/amqp"
 )
@@ -75,24 +77,29 @@ func (c *consumer) consume(ctx context.Context) {
 			remainingRetries := c.getRemainingRetries(msg)
 			err := c.fn(msg.Body)
 
-			if err != nil && remainingRetries != 0 {
+			if err != nil && c.options.RetryOnError {
 				log.Error(err)
+				time.Sleep(c.options.RetryDelay)
 
-				if c.options.RetryOnError {
-					time.Sleep(c.options.RetryDelay)
-
-					c.setRemainingRetries(&msg, remainingRetries-1)
+				switch {
+				case remainingRetries > 0:
+					// we want to keep track of retries, so we publish a new message and ack the current one
+					if err := c.queue.PublishWithConfig(msg.Body, PublishConfig{
+						MaxRetries: nullable.Int(int(remainingRetries - 1)),
+					}); err != nil {
+						log.Error(err)
+					}
+				case remainingRetries == 0:
+					// this was the last retry, we just ack the message
+					log.Infof("message failed to get processed after all the retries")
+					// todo: push to dead letter queue if available
+				default:
+					// don't keep track of retries, reject the message with requeue set to true for reprocessing it
 					if err := msg.Reject(true); err != nil {
 						log.Error(err)
 					}
-
 					continue
 				}
-			}
-
-			if err != nil && remainingRetries == 0 {
-				log.Infof("message failed to get processed after all the retries")
-				// todo: push to dead letter queue if available
 			}
 
 			if err := msg.Ack(false); err != nil {
@@ -133,8 +140,4 @@ func (c *consumer) getRemainingRetries(delivery amqp.Delivery) int32 {
 	}
 
 	return remainingRetries
-}
-
-func (c *consumer) setRemainingRetries(delivery *amqp.Delivery, remainingRetries int32) {
-	delivery.Headers[headerRemainingRetries] = remainingRetries
 }
