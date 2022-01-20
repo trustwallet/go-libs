@@ -90,9 +90,11 @@ func (c *consumer) consume(ctx context.Context) {
 						log.Error(err)
 					}
 				case remainingRetries == 0:
-					// this was the last retry, we just ack the message
-					log.Infof("message failed to get processed after all the retries")
-					// todo: push to dead letter queue if available
+					// this was the last retry, we reject the message
+					if err := msg.Reject(false); err != nil {
+						log.WithError(err).Errorf("reject without requeue, after all retries")
+					}
+					continue
 				default:
 					// don't keep track of retries, reject the message with requeue set to true for reprocessing it
 					if err := msg.Reject(true); err != nil {
