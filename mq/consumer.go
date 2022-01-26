@@ -74,29 +74,25 @@ func (c *consumer) consume(ctx context.Context) {
 				continue
 			}
 
-			remainingRetries := c.getRemainingRetries(msg)
 			err := c.fn(msg.Body)
+			if err != nil {
+				log.Error(err)
+			}
 
 			if err != nil && c.options.RetryOnError {
-				log.Error(err)
 				time.Sleep(c.options.RetryDelay)
+				remainingRetries := c.getRemainingRetries(msg)
 
 				switch {
 				case remainingRetries > 0:
-					// we want to keep track of retries, so we publish a new message and ack the current one
 					if err := c.queue.PublishWithConfig(msg.Body, PublishConfig{
 						MaxRetries: nullable.Int(int(remainingRetries - 1)),
 					}); err != nil {
 						log.Error(err)
 					}
 				case remainingRetries == 0:
-					// this was the last retry, we reject the message
-					if err := msg.Reject(false); err != nil {
-						log.WithError(err).Errorf("reject without requeue, after all retries")
-					}
-					continue
+					break
 				default:
-					// don't keep track of retries, reject the message with requeue set to true for reprocessing it
 					if err := msg.Reject(true); err != nil {
 						log.Error(err)
 					}
@@ -129,16 +125,14 @@ func (c *consumer) messageChannel() (<-chan amqp.Delivery, error) {
 }
 
 func (c *consumer) getRemainingRetries(delivery amqp.Delivery) int32 {
-	var remainingRetries int32
-
 	remainingRetriesRaw, exists := delivery.Headers[headerRemainingRetries]
 	if !exists {
-		return -1
+		return int32(c.options.MaxRetries)
 	}
 
 	remainingRetries, ok := remainingRetriesRaw.(int32)
 	if !ok {
-		return -1
+		return int32(c.options.MaxRetries)
 	}
 
 	return remainingRetries

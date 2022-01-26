@@ -206,18 +206,17 @@ func publish(amqpChan *amqp.Channel, exchange ExchangeName, key ExchangeKey, bod
 }
 
 func publishWithConfig(amqpChan *amqp.Channel, exchange ExchangeName, key ExchangeKey, body []byte, cfg PublishConfig) error {
-	remainingRetries := -1
+	headers := map[string]interface{}{}
+
 	if cfg.MaxRetries != nil {
-		remainingRetries = *cfg.MaxRetries
+		headers[headerRemainingRetries] = *cfg.MaxRetries
 	}
 
 	return amqpChan.Publish(string(exchange), string(key), false, false, amqp.Publishing{
 		DeliveryMode: amqp.Persistent,
 		ContentType:  "text/plain",
 		Body:         body,
-		Headers: map[string]interface{}{
-			headerRemainingRetries: remainingRetries,
-		},
+		Headers:      headers,
 	})
 }
 
