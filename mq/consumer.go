@@ -5,9 +5,13 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/trustwallet/go-libs/pkg/nullable"
+
 	log "github.com/sirupsen/logrus"
 	"github.com/streadway/amqp"
 )
+
+const headerRemainingRetries = "x-remaining-retries"
 
 type consumer struct {
 	client *Client
@@ -73,14 +77,25 @@ func (c *consumer) consume(ctx context.Context) {
 			err := c.fn(msg.Body)
 			if err != nil {
 				log.Error(err)
+			}
 
-				if c.options.RetryOnError {
-					time.Sleep(c.options.RetryDelay)
+			if err != nil && c.options.RetryOnError {
+				time.Sleep(c.options.RetryDelay)
+				remainingRetries := c.getRemainingRetries(msg)
 
+				switch {
+				case remainingRetries > 0:
+					if err := c.queue.PublishWithConfig(msg.Body, PublishConfig{
+						MaxRetries: nullable.Int(int(remainingRetries - 1)),
+					}); err != nil {
+						log.Error(err)
+					}
+				case remainingRetries == 0:
+					break
+				default:
 					if err := msg.Reject(true); err != nil {
 						log.Error(err)
 					}
-
 					continue
 				}
 			}
@@ -107,4 +122,18 @@ func (c *consumer) messageChannel() (<-chan amqp.Delivery, error) {
 	}
 
 	return messageChannel, nil
+}
+
+func (c *consumer) getRemainingRetries(delivery amqp.Delivery) int32 {
+	remainingRetriesRaw, exists := delivery.Headers[headerRemainingRetries]
+	if !exists {
+		return int32(c.options.MaxRetries)
+	}
+
+	remainingRetries, ok := remainingRetriesRaw.(int32)
+	if !ok {
+		return int32(c.options.MaxRetries)
+	}
+
+	return remainingRetries
 }

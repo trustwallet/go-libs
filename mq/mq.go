@@ -202,10 +202,21 @@ func (c *Client) reconnect() error {
 }
 
 func publish(amqpChan *amqp.Channel, exchange ExchangeName, key ExchangeKey, body []byte) error {
+	return publishWithConfig(amqpChan, exchange, key, body, PublishConfig{})
+}
+
+func publishWithConfig(amqpChan *amqp.Channel, exchange ExchangeName, key ExchangeKey, body []byte, cfg PublishConfig) error {
+	headers := map[string]interface{}{}
+
+	if cfg.MaxRetries != nil {
+		headers[headerRemainingRetries] = *cfg.MaxRetries
+	}
+
 	return amqpChan.Publish(string(exchange), string(key), false, false, amqp.Publishing{
 		DeliveryMode: amqp.Persistent,
 		ContentType:  "text/plain",
 		Body:         body,
+		Headers:      headers,
 	})
 }
 

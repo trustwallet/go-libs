@@ -8,6 +8,10 @@ type ConsumerOptions struct {
 	Workers      int
 	RetryOnError bool
 	RetryDelay   time.Duration
+
+	// MaxRetries specifies the default number of retries for consuming a message.
+	// A negative value is equal to infinite retries.
+	MaxRetries int
 }
 
 func DefaultConsumerOptions(workers int) ConsumerOptions {
@@ -15,6 +19,7 @@ func DefaultConsumerOptions(workers int) ConsumerOptions {
 		Workers:      workers,
 		RetryOnError: true,
 		RetryDelay:   time.Second,
+		MaxRetries:   -1,
 	}
 }
 
