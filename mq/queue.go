@@ -51,5 +51,6 @@ type DeclareConfig struct {
 
 type PublishConfig struct {
 	// MaxRetries defines the maximum number of retries after processing failures.
+	// Overrides the value of consumer's config.
 	MaxRetries *int
 }
