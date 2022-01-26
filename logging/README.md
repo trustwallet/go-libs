@@ -6,7 +6,7 @@ Add dependency to the project
 go get github.com/trustwallet/go-libs/logging
 ```
 
-Features:
+## Features
 
 * [Logrus Wrapper](#logrus-wrapper) allows an easy acces to common logger instance as well as override it in tests
 * [Logging Configuration](#logging-configuration) allows for the logging configuration to be loaded with viper
@@ -24,9 +24,9 @@ log := logging.GetLogger()
 Also there is a helper method to get log Entry with `component` filed preset:
 
 ```go
-log := logging.GetLoggerForComponent("market")
+log := logging.GetLogger().WithField("module", "market")
 log.Info("some log entry")
-// time="2021-08-19T12:33:21Z" level=info msg="some log entry" component="market"
+// time="2021-08-19T12:33:21Z" level=info msg="some log entry" module="market"
 ```
 
 For testing purposes the `logger` instance can be replaced:
@@ -37,7 +37,8 @@ func TestMyService (t *testing.T) {
 	testLogger.SetLevel(logrus.WarnLevel)
 	logging.SetLogger(testLogger)
 
-	// create instance of service which utilises logging.GetLogger() inside
+	// create instance of service which
+	// utilises logging.GetLogger() inside
 	s := service.NewService() 
 	s.DoSomWork()
 
@@ -84,19 +85,23 @@ Once viper has unmarshalled the configuration taken from all sources:
 
 ```go
 err = logging.SetLoggerConfig(config.Logging)
-// error handling
+if err != nil {
+	// ...
+}
 
 log := logging.GetLogger()
 ```
 
-✨  It's fully backward compatible for code which uses `logrus` directly.
+✨  It's fully backward compatible with code which uses `logrus` directly.
 
 ```go
 
 import log "github.com/sirupsen/logrus"
 
 func LogSomething() {
-         log.Info("some log message") // will respect logging configuration
+	// respects logging configuration set with 
+ 	// logging.SetLoggerConfig(...)
+	log.Info("some log message")
 }
 ```
 
@@ -105,7 +110,7 @@ func LogSomething() {
 This package contains a `strict_text` formatter which replicates 
 [Logrus Mate](https://github.com/gogap/logrus_mate) `text` formatter behaviour
 with a small difference that every boolean Option **should** be passed as a string.
-This allows to correctly override logging configuration from Env variables.
+This allows to correctly override logging configuration from environment variables.
 
 To demonstrate the issue assuming the `config.yml`:
 
@@ -116,7 +121,7 @@ logging:
     name: text
 ```
 
-When application executed with the Env override `LOGGING_FORMATTER_OPTIONS_DISABLE_TIMESTAMP=true` the 
+When application executed with the Environment variable override `LOGGING_FORMATTER_OPTIONS_DISABLE_TIMESTAMP=true` the 
 config will be equally represented as:
 
 ```yaml
@@ -128,22 +133,11 @@ logging:
       disable_timestamp: "true"
 ```
 
-Notice, the `disable_timestamp` option which will be of type `interface {} | string` when unmarshalled by `viper`.
-The [Logrus Mate](https://github.com/gogap/logrus_mate) `text` formatter cannot handle it 
-and throws an error:
+Notice, the `disable_timestamp` option which will be of type `interface {} | string`
+when unmarshalled by `viper`.
+The [Logrus Mate](https://github.com/gogap/logrus_mate) `text` formatter cannot
+handle it and throws an error:
 
 ```txt
 json: cannot unmarshal string into Go struct field TextFormatterConfig.disable_timestamp of type bool
-```
-
-:white_check_mark: Using the new `strict_text` formatter and making sure all logging bool Options
-are specified as strings will handle any overrides easily:
-
-```yaml
-logging:
-  level: debug 
-  formatter:
-    name: strict_text
-    options:
-      disable_timestamp: "true"
 ```
