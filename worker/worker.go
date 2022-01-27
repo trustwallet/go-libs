@@ -8,44 +8,80 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-type Instance interface {
+type Worker interface {
 	Start(ctx context.Context, wg *sync.WaitGroup)
 	Name() string
 }
 
-type Worker struct {
-	workerFn       func()
-	interval       time.Duration
-	name           string
-	runImmediately bool
+type worker struct {
+	name     string
+	workerFn func() error
+	options  WorkerOptions
 }
 
-func New(name string, workerFn func(), interval time.Duration, runImmediately bool) *Worker {
-	return &Worker{
-		name:           name,
-		workerFn:       workerFn,
-		interval:       interval,
-		runImmediately: runImmediately,
+func InitWorker(name string, options WorkerOptions, workerFn func() error) Worker {
+	return &worker{
+		name:     name,
+		options:  options,
+		workerFn: workerFn,
 	}
 }
 
-// StartConsequently waits for w.interval before each iteration
-func (w *Worker) StartConsequently(ctx context.Context, wg *sync.WaitGroup) {
+func (w *worker) Name() string {
+	return w.name
+}
+
+func (w *worker) Start(ctx context.Context, wg *sync.WaitGroup) {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
 
-		if w.runImmediately {
+		ticker := time.NewTicker(w.options.Interval)
+		defer ticker.Stop()
+
+		if w.options.RunImmediately {
 			w.workerFn()
 		}
 
 		for {
 			select {
 			case <-ctx.Done():
-				log.WithField("service", w.name).Info("Stopped")
+				log.WithField("worker", w.name).Info("stopped")
 				return
-			case <-time.After(w.interval):
-				log.WithField("service", w.name).Info("Processing")
+			case <-ticker.C:
+				if w.options.RunConsequently {
+					ticker.Stop()
+				}
+
+				log.WithField("worker", w.name).Info("processing")
+				w.workerFn()
+
+				if w.options.RunConsequently {
+					ticker = time.NewTicker(w.options.Interval)
+				}
+			}
+		}
+	}()
+}
+
+// StartConsequently waits for w.interval before each iteration
+// Deprecated: User Start() method
+func (w *worker) StartConsequently(ctx context.Context, wg *sync.WaitGroup) {
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+
+		if w.options.RunImmediately {
+			w.workerFn()
+		}
+
+		for {
+			select {
+			case <-ctx.Done():
+				log.WithField("worker", w.name).Info("stopped")
+				return
+			case <-time.After(w.options.Interval):
+				log.WithField("worker", w.name).Info("processing")
 				w.workerFn()
 			}
 		}
@@ -54,25 +90,26 @@ func (w *Worker) StartConsequently(ctx context.Context, wg *sync.WaitGroup) {
 
 // StartWithTicker executes the function with the provided interval
 // In case execution takes longer than interval, next iteration start immediately
-func (w *Worker) StartWithTicker(ctx context.Context, wg *sync.WaitGroup) {
+// Deprecated: User Start() method
+func (w *worker) StartWithTicker(ctx context.Context, wg *sync.WaitGroup) {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
 
-		ticker := time.NewTicker(w.interval)
+		ticker := time.NewTicker(w.options.Interval)
 		defer ticker.Stop()
 
-		if w.runImmediately {
+		if w.options.RunImmediately {
 			w.workerFn()
 		}
 
 		for {
 			select {
 			case <-ctx.Done():
-				log.WithField("service", w.name).Info("Stopped")
+				log.WithField("worker", w.name).Info("stopped")
 				return
 			case <-ticker.C:
-				log.WithField("service", w.name).Info("Processing")
+				log.WithField("worker", w.name).Info("processing")
 				w.workerFn()
 			}
 		}
