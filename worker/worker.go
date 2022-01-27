@@ -32,6 +32,7 @@ func (w *worker) Name() string {
 }
 
 func (w *worker) Start(ctx context.Context, wg *sync.WaitGroup) {
+
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
@@ -40,7 +41,8 @@ func (w *worker) Start(ctx context.Context, wg *sync.WaitGroup) {
 		defer ticker.Stop()
 
 		if w.options.RunImmediately {
-			w.workerFn()
+			log.WithField("worker", w.name).Info("run immediately")
+			w.invoke()
 		}
 
 		for {
@@ -54,7 +56,7 @@ func (w *worker) Start(ctx context.Context, wg *sync.WaitGroup) {
 				}
 
 				log.WithField("worker", w.name).Info("processing")
-				w.workerFn()
+				w.invoke()
 
 				if w.options.RunConsequently {
 					ticker = time.NewTicker(w.options.Interval)
@@ -62,6 +64,22 @@ func (w *worker) Start(ctx context.Context, wg *sync.WaitGroup) {
 			}
 		}
 	}()
+}
+
+func (w *worker) invoke() {
+	metric := w.options.PerformanceMetric
+	lvs := []string{w.Name()}
+
+	t, _ := metric.Start(lvs)
+	err := w.workerFn()
+	metric.Duration(t, lvs)
+
+	if err != nil {
+		metric.Failure(lvs)
+		log.Error(err)
+	} else {
+		metric.Success(lvs)
+	}
 }
 
 // StartConsequently waits for w.interval before each iteration
