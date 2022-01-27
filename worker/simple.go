@@ -22,7 +22,7 @@ type metricsWorker struct {
 	log      *logrus.Entry
 }
 
-func NewSimpleWoker(interval time.Duration, invoke Invoke) SimpleWorker {
+func NewSimpleWorker(interval time.Duration, invoke Invoke) SimpleWorker {
 	return &metricsWorker{
 		interval: interval,
 		invoke:   invoke,
