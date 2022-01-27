@@ -61,22 +61,32 @@ func (c *consumer) Reconnect(ctx context.Context) error {
 }
 
 func (c *consumer) consume(ctx context.Context) {
+	metric := c.options.PerformanceMetric
+	queueName := string(c.queue.Name())
+	lvs := []string{queueName}
+
 	for {
 		select {
 		case <-ctx.Done():
-			log.Infof("Finished consuming queue %s", c.queue.Name())
+			log.Infof("Finished consuming queue %s", queueName)
 			return
 		case <-c.stopChan:
-			log.Infof("Force stopped consuming queue %s", c.queue.Name())
+			log.Infof("Force stopped consuming queue %s", queueName)
 			return
 		case msg := <-c.messages:
 			if msg.Body == nil {
 				continue
 			}
 
+			t, _ := metric.Start(lvs)
 			err := c.fn(msg.Body)
+			metric.Duration(t, lvs)
+
 			if err != nil {
+				metric.Failure(lvs)
 				log.Error(err)
+			} else {
+				metric.Success(lvs)
 			}
 
 			if err != nil && c.options.RetryOnError {
