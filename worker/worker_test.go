@@ -22,7 +22,7 @@ func TestWorkerWithDefaultOptions(t *testing.T) {
 
 	worker.Start(cxt, wg)
 
-	time.Sleep(350 * time.Millisecond) // 3.5s
+	time.Sleep(350 * time.Millisecond)
 
 	assert.Equal(t, 4, counter, "Should execute 3 times - 1st immidietly, and 3 after")
 }
@@ -42,7 +42,7 @@ func TestWorkerStartsConsequently(t *testing.T) {
 
 	worker.Start(cxt, wg)
 
-	time.Sleep(350 * time.Millisecond) // 3.5s
+	time.Sleep(350 * time.Millisecond)
 
 	assert.Equal(t, 3, counter, "Should execute 2 times - 1st immidietly, and 2 after with delat 2sec between runs")
 }
