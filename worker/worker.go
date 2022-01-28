@@ -76,7 +76,7 @@ func (w *worker) invoke() {
 
 	if err != nil {
 		metric.Failure(lvs)
-		log.Error(err)
+		log.WithField("worker", w.name).Error(err)
 	} else {
 		metric.Success(lvs)
 	}
@@ -90,9 +90,7 @@ func (w *worker) StartConsequently(ctx context.Context, wg *sync.WaitGroup) {
 		defer wg.Done()
 
 		if w.options.RunImmediately {
-			if err := w.workerFn(); err != nil {
-				log.WithField("worker", w.name).Error(err)
-			}
+			w.invoke()
 		}
 
 		for {
@@ -102,9 +100,7 @@ func (w *worker) StartConsequently(ctx context.Context, wg *sync.WaitGroup) {
 				return
 			case <-time.After(w.options.Interval):
 				log.WithField("worker", w.name).Info("processing")
-				if err := w.workerFn(); err != nil {
-					log.WithField("worker", w.name).Error(err)
-				}
+				w.invoke()
 			}
 		}
 	}()
@@ -122,9 +118,7 @@ func (w *worker) StartWithTicker(ctx context.Context, wg *sync.WaitGroup) {
 		defer ticker.Stop()
 
 		if w.options.RunImmediately {
-			if err := w.workerFn(); err != nil {
-				log.WithField("worker", w.name).Error(err)
-			}
+			w.invoke()
 		}
 
 		for {
@@ -134,9 +128,7 @@ func (w *worker) StartWithTicker(ctx context.Context, wg *sync.WaitGroup) {
 				return
 			case <-ticker.C:
 				log.WithField("worker", w.name).Info("processing")
-				if err := w.workerFn(); err != nil {
-					log.WithField("worker", w.name).Error(err)
-				}
+				w.invoke()
 			}
 		}
 	}()
