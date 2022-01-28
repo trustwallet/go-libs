@@ -90,7 +90,9 @@ func (w *worker) StartConsequently(ctx context.Context, wg *sync.WaitGroup) {
 		defer wg.Done()
 
 		if w.options.RunImmediately {
-			w.workerFn() // noqa errcheck
+			if err := w.workerFn(); err != nil {
+				log.WithField("worker", w.name).Error(err)
+			}
 		}
 
 		for {
@@ -100,7 +102,9 @@ func (w *worker) StartConsequently(ctx context.Context, wg *sync.WaitGroup) {
 				return
 			case <-time.After(w.options.Interval):
 				log.WithField("worker", w.name).Info("processing")
-				w.workerFn() // noqa errcheck
+				if err := w.workerFn(); err != nil {
+					log.WithField("worker", w.name).Error(err)
+				}
 			}
 		}
 	}()
@@ -118,7 +122,9 @@ func (w *worker) StartWithTicker(ctx context.Context, wg *sync.WaitGroup) {
 		defer ticker.Stop()
 
 		if w.options.RunImmediately {
-			w.workerFn() // noqa errcheck
+			if err := w.workerFn(); err != nil {
+				log.WithField("worker", w.name).Error(err)
+			}
 		}
 
 		for {
@@ -128,7 +134,9 @@ func (w *worker) StartWithTicker(ctx context.Context, wg *sync.WaitGroup) {
 				return
 			case <-ticker.C:
 				log.WithField("worker", w.name).Info("processing")
-				w.workerFn() // noqa errcheck
+				if err := w.workerFn(); err != nil {
+					log.WithField("worker", w.name).Error(err)
+				}
 			}
 		}
 	}()
