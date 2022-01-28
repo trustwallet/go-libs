@@ -95,7 +95,7 @@ func (c *Client) InitExchange(name ExchangeName) Exchange {
 	}
 }
 
-func (c *Client) InitConsumer(queueName QueueName, options ConsumerOptions, fn func(message Message) error) Consumer {
+func (c *Client) InitConsumer(queueName QueueName, options *ConsumerOptions, fn func(message Message) error) Consumer {
 	return &consumer{
 		client:  c,
 		queue:   c.InitQueue(queueName),

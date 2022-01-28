@@ -18,7 +18,7 @@ type consumer struct {
 
 	queue   Queue
 	fn      func(Message) error
-	options ConsumerOptions
+	options *ConsumerOptions
 
 	messages <-chan amqp.Delivery
 	stopChan chan struct{}
