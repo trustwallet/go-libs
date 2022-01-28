@@ -9,17 +9,18 @@ import (
 )
 
 type Worker interface {
-	Start(ctx context.Context, wg *sync.WaitGroup)
 	Name() string
+	Options() *WorkerOptions
+	Start(ctx context.Context, wg *sync.WaitGroup)
 }
 
 type worker struct {
 	name     string
 	workerFn func() error
-	options  WorkerOptions
+	options  *WorkerOptions
 }
 
-func InitWorker(name string, options WorkerOptions, workerFn func() error) Worker {
+func InitWorker(name string, options *WorkerOptions, workerFn func() error) Worker {
 	return &worker{
 		name:     name,
 		options:  options,
@@ -29,6 +30,10 @@ func InitWorker(name string, options WorkerOptions, workerFn func() error) Worke
 
 func (w *worker) Name() string {
 	return w.name
+}
+
+func (w *worker) Options() *WorkerOptions {
+	return w.options
 }
 
 func (w *worker) Start(ctx context.Context, wg *sync.WaitGroup) {

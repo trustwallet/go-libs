@@ -13,8 +13,8 @@ type WorkerOptions struct {
 	PerformanceMetric metrics.PerformanceMetric
 }
 
-func DefaultWorkerOptions(interval time.Duration) WorkerOptions {
-	return WorkerOptions{
+func DefaultWorkerOptions(interval time.Duration) *WorkerOptions {
+	return &WorkerOptions{
 		Interval:          interval,
 		RunImmediately:    true,
 		RunConsequently:   false,
@@ -22,12 +22,12 @@ func DefaultWorkerOptions(interval time.Duration) WorkerOptions {
 	}
 }
 
-func (o WorkerOptions) WithPerformanceMetric(metric metrics.PerformanceMetric) WorkerOptions {
+func (o *WorkerOptions) WithPerformanceMetric(metric metrics.PerformanceMetric) *WorkerOptions {
 	o.PerformanceMetric = metric
 	return o
 }
 
-func (o WorkerOptions) ShouldFinishBeforeNextStart() WorkerOptions {
+func (o *WorkerOptions) ShouldFinishBeforeNextStart() *WorkerOptions {
 	o.RunConsequently = true
 	return o
 }
