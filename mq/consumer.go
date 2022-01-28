@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/trustwallet/go-libs/metrics"
 	"github.com/trustwallet/go-libs/pkg/nullable"
 
 	log "github.com/sirupsen/logrus"
@@ -61,9 +62,7 @@ func (c *consumer) Reconnect(ctx context.Context) error {
 }
 
 func (c *consumer) consume(ctx context.Context) {
-	metric := c.options.PerformanceMetric
 	queueName := string(c.queue.Name())
-	lvs := []string{queueName}
 
 	for {
 		select {
@@ -78,15 +77,9 @@ func (c *consumer) consume(ctx context.Context) {
 				continue
 			}
 
-			t, _ := metric.Start(lvs)
-			err := c.fn(msg.Body)
-			metric.Duration(t, lvs)
-
+			err := c.process(queueName, msg.Body)
 			if err != nil {
-				metric.Failure(lvs)
 				log.Error(err)
-			} else {
-				metric.Success(lvs)
 			}
 
 			if err != nil && c.options.RetryOnError {
@@ -115,6 +108,25 @@ func (c *consumer) consume(ctx context.Context) {
 			}
 		}
 	}
+}
+
+func (c *consumer) process(queueName string, body []byte) error {
+	metric := c.options.PerformanceMetric
+	lvs := []string{queueName}
+	if metric == nil {
+		metric = &metrics.NullablePerformanceMetric{}
+	}
+	t, _ := metric.Start(lvs)
+	err := c.fn(body)
+	metric.Duration(t, lvs)
+
+	if err != nil {
+		metric.Failure(lvs)
+	} else {
+		metric.Success(lvs)
+	}
+
+	return err
 }
 
 func (c *consumer) messageChannel() (<-chan amqp.Delivery, error) {

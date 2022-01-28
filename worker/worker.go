@@ -6,6 +6,7 @@ import (
 	"time"
 
 	log "github.com/sirupsen/logrus"
+	"github.com/trustwallet/go-libs/metrics"
 )
 
 type Worker interface {
@@ -73,7 +74,11 @@ func (w *worker) Start(ctx context.Context, wg *sync.WaitGroup) {
 
 func (w *worker) invoke() {
 	metric := w.options.PerformanceMetric
-	lvs := []string{w.Name()}
+	if metric == nil {
+		metric = &metrics.NullablePerformanceMetric{}
+	}
+
+	lvs := []string{w.name}
 
 	t, _ := metric.Start(lvs)
 	err := w.workerFn()
