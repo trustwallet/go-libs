@@ -17,8 +17,8 @@ type ConsumerOptions struct {
 	MaxRetries int
 }
 
-func DefaultConsumerOptions(workers int) *ConsumerOptions {
-	return &ConsumerOptions{
+func DefaultConsumerOptions(workers int) ConsumerOptions {
+	return ConsumerOptions{
 		Workers:           workers,
 		RetryOnError:      true,
 		RetryDelay:        time.Second,
@@ -27,7 +27,7 @@ func DefaultConsumerOptions(workers int) *ConsumerOptions {
 	}
 }
 
-func (o *ConsumerOptions) WithPerformanceMetric(metric metrics.PerformanceMetric) *ConsumerOptions {
+func (o ConsumerOptions) WithPerformanceMetric(metric metrics.PerformanceMetric) ConsumerOptions {
 	o.PerformanceMetric = metric
 	return o
 }
