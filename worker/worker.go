@@ -118,7 +118,7 @@ func (w *worker) StartConsequently(ctx context.Context, wg *sync.WaitGroup) {
 
 // StartWithTicker executes the function with the provided interval
 // In case execution takes longer than interval, next iteration start immediately
-// Deprecated: User Start() method
+// Deprecated: Use Start() method
 func (w *worker) StartWithTicker(ctx context.Context, wg *sync.WaitGroup) {
 	wg.Add(1)
 	go func() {
