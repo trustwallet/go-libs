@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/trustwallet/go-libs/metrics"
 	"github.com/trustwallet/go-libs/pkg/nullable"
 
 	log "github.com/sirupsen/logrus"
@@ -18,7 +19,7 @@ type consumer struct {
 
 	queue   Queue
 	fn      func(Message) error
-	options ConsumerOptions
+	options *ConsumerOptions
 
 	messages <-chan amqp.Delivery
 	stopChan chan struct{}
@@ -27,6 +28,7 @@ type consumer struct {
 type Consumer interface {
 	Start(ctx context.Context) error
 	Reconnect(ctx context.Context) error
+	Options() *ConsumerOptions
 }
 
 func (c *consumer) Start(ctx context.Context) error {
@@ -60,21 +62,27 @@ func (c *consumer) Reconnect(ctx context.Context) error {
 	return nil
 }
 
+func (c *consumer) Options() *ConsumerOptions {
+	return c.options
+}
+
 func (c *consumer) consume(ctx context.Context) {
+	queueName := string(c.queue.Name())
+
 	for {
 		select {
 		case <-ctx.Done():
-			log.Infof("Finished consuming queue %s", c.queue.Name())
+			log.Infof("Finished consuming queue %s", queueName)
 			return
 		case <-c.stopChan:
-			log.Infof("Force stopped consuming queue %s", c.queue.Name())
+			log.Infof("Force stopped consuming queue %s", queueName)
 			return
 		case msg := <-c.messages:
 			if msg.Body == nil {
 				continue
 			}
 
-			err := c.fn(msg.Body)
+			err := c.process(queueName, msg.Body)
 			if err != nil {
 				log.Error(err)
 			}
@@ -105,6 +113,29 @@ func (c *consumer) consume(ctx context.Context) {
 			}
 		}
 	}
+}
+
+func (c *consumer) process(queueName string, body []byte) error {
+	metric := c.options.PerformanceMetric
+	if metric == nil {
+		metric = &metrics.NullablePerformanceMetric{}
+	}
+
+	lvs := []string{queueName}
+	if metric == nil {
+		metric = &metrics.NullablePerformanceMetric{}
+	}
+	t, _ := metric.Start(lvs)
+	err := c.fn(body)
+	metric.Duration(t, lvs)
+
+	if err != nil {
+		metric.Failure(lvs)
+	} else {
+		metric.Success(lvs)
+	}
+
+	return err
 }
 
 func (c *consumer) messageChannel() (<-chan amqp.Delivery, error) {
