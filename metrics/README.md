@@ -10,17 +10,18 @@ go get github.com/trustwallet/go-libs/metrics
 
 * The `handler.go` contains very simple method to register Prometheus middleware with `gin-gonic` engine.
 * The `metrics.go` is a place for the generic metric exporters.
-  * `JobPerformanceMetric` allows to track generic job performance, start time,
+  * `PerformanceMetric` allows to track generic job performance, start time,
      duration, success and failed executions.
 * The `register.go` contains another simple method to register Prometheus collectors 
   with the Default Registerer (which also includes golang specific metrics by default).
-* The `pusher.go` configures Prometheus Pushgateway client.
+* The `pusher.go` configures Prometheus Pushgateway client (see Push mode below).
+* The `go-libs/worker` and `go-libs/mq` packages integration for automatic job performance tracking.
 
 ## How it works?
 
 The application might have various exporters which are collecting system metrics
 as a background processes (in-process worker), standalone services or metric values
-updated by some code logic. 
+updated directly from code logic.
 
 <details> 
 <summary>Example of the API metrics (standalone service)</summary><p> 
@@ -73,40 +74,43 @@ The metric exporters should only care about registering the collectors
 that they manage internally with Prometheus registerer.
 
 ```go
+...
 for _, c := range s.collectors {
 	metrics.Register(c)
 }
+...
 ```
 
 ### Simple Worker
 
 The example `APIMetrics` (see above) is designed as standalone service,
-thus it should be periodically invoked by some in-process worker.
+thus it should be periodically invoked by some in-process worker to collect metric values.
 
-The _go-libs/worker_ package `SimpleWorker` was introduced which allows
-to simply configure interval and the calling method.
+New `go-libs/worker` design allows to define a simple worker for this purpose with 
+just a few lines.
 
 ```go
-exporter := NewAPIMetrics(tickersCache)
-exportWorker := worker.NewSimpleWorker(config.Default.Metrics.UpdateTime, exporter.Export)
-
+metrics := api.NewAPIMetrics(tickersCache)
+exportWorker := worker.InitWorker("metrics_exporter",
+			worker.DefaultWorkerOptions(config.Default.Metrics.UpdateTime),
+			metrics.Export)
+...
 exportWorker.Start(ctx, waitGroup)
 ```
-
 
 ### Scrape Mode
 
 The `web` applications that are hosted to serve incoming requests usually
 have the `/metrics` or similar endpoint exposed.
 
-It's only one extra line in the main application logic to expose the registered
+One extra line in the main application logic to expose the registered
 collectors for Prometheus scrapper.
 
 ```go
 engine := gin.New()
 // ...
 
-metrics.Handler(engine, config.Default.Metrics.Path)
+metrics.InitHandler(engine, config.Default.Metrics.Path)
 ```
 
 ### Push Mode
@@ -116,20 +120,25 @@ thus `/metrics` endpoint (Prometheus handler) cannot be utilized there. Instead,
 the Prometheus Pushgateway should be used, an intermediary service which allows to push metrics
 from jobs which cannot be scraped directly.
 
-Assuming, the example `APIMetrics` (see above) is launched as part of the worker application.
+Assuming, the example `APIMetrics` (see above) is launched as part of the worker app.
 
-It has been integrated with `SimpleWorker` already to export data from some underlying services
-(collect system metrics).
+It has been integrated with `metrics_exporter` worker already to periodically collect metrics
+data from some underlying services.
 
-Next, to make these collectors push their values to Prometheus Pushgateway server,
+Next, to make the metric collectors push the values to Prometheus Pushgateway server,
 need to initialize the Pushgateway client and set up another worker which pushes 
 registered collectors' values.
 
 ```go
-pusher := metrics.NewPusher(config.Default.Metrics.PushgatewayURL, "metrics_worker")
-pusherWorker := worker.NewSimpleWorker(config.Default.Metrics.UpdateTime, pusher.Push)
+jobName := "market_worker"
+pusher := metrics.NewPusher(config.Default.Metrics.PushgatewayURL, jobName)
+pusherWorker := worker.InitWorker(
+	"metrics_pusher",
+	worker.DefaultWorkerOptions(config.Default.Metrics.UpdateTime),
+	pusher.Push)
 
-pusherWorker.Start(ctx, waitGroup)
+...
+pusherWorker.Start(ctx, wg)
 ```
 
 📎 When pushing the collectors' values to Pushgateway the `instance` label is 
@@ -138,8 +147,8 @@ can be set easily) environment variables; otherwise instance is `local`.
 
 ### Job Performance Metrics
 
-The _go-libs/metrics_ package contains one very simple, but useful `JobPerformanceMetric`
-service to collect metrics about any background task (short-lived or long-running, doesn't matter).
+The _go-libs/metrics_ package contains one very simple, but useful `PerformanceMetric` 
+service to collect metrics about any task (short-lived or long-running, doesn't matter).
 
 Its initialization function accepts `namespace` as a first parameter, and any number of the
 optional `labelNames` parameters (later when executing exporter methods the same amount of the
@@ -149,30 +158,102 @@ In the following example the metrics will be prefixed with `market_worker_`
 (e.g. `market_worker_job_started`) and have `worker` label (e.g. `worker="tickers_cache"`)
 
 ```go
-metric := metrics.NewJobPerformanceMetric("market_worker", "worker")
+metric := metrics.NewPerformanceMetric("market_worker", "worker")
+// or shorter...
+metric := metrics.NewWorkerPerformanceMetric("market_worker")
 ```
 
-The metrics exporter is designed as a service that should be called from the code on
-job started and finished, and provides two relevant functions `Start(...)` and `Duration(...)`.
+This metric is designed as a service that should be called from the code on
+job started and finished (`Start` and `Duration` functions), and
+on success or failure job execution (`Success` and `Failure` functions).
 
-The elegant one-liner to track job performance. The trick here that arguments passed 
-to deferred code are resolved instantly, and then duration is calculated before
-returning from the function.
+### go-libs/worker integration
 
+The latest `worker` package has already integrated with `metrics` package 
+and tracks worker function performance automatically.
+
+Collected metrics from workers will have the `worker` label
+set automatically.
+
+The following code is already part of the `worker` package:
 ```go
-func (j *job) invokeJob() {
-	defer j.metric.Duration(j.metric.Start("tickers_cache"))
+func (w *worker) invoke() {
+	metric := w.options.PerformanceMetric
+	if metric == nil { 			// 1. dummy perf metric
+		metric = &metrics.NullablePerformanceMetric{}
+	}
 
-    // The rest of the job logic goes here
+	lvs := []string{w.name} 	// 2. worker name as label
+	t, _ := metric.Start(lvs) 	// 3. collect worker start time
+	err := w.workerFn()  		// 4. invoke worker function
+	metric.Duration(t, lvs) 	// 5. collect worker execution duration
+
+	if err != nil {
+		metric.Failure(lvs) 	// 6. increment failure counter on error
+		log.WithField("worker", w.name).Error(err)
+	} else {
+		metric.Success(lvs) 	// 7. increment success counter
+	}
 }
 ```
 
-📎 In some cases application runs multiple in-process workers that should share the 
-same `metric`; otherwise Prometheus will return an error while 
-attempting to register several exporters with the same collectors (by key). 
-For this reason there is a `GetJobPerformanceMetric(...)` function with the 
-same interface as `NewJobPerformanceMetric(...)` which acts as a Singleton
-providing pointer to the same exporter instance.
+As you see, if the `PerformanceMetric` option wasn't initialized it does no-op.
+
+To initialize the worker performance tracking use the following code:
+
+```go
+workers := make([]worker.Worker, 0)
+
+// init all workers 
+workers = append(workers, worker.InitWorker(...))
+
+
+// enable performance metric
+if config.Default.Metrics.Enabled {
+	metric := metrics.NewConsumerPerformanceMetric("market_worker")
+	for _, w := range workers {
+		w.Options().WithPerformanceMetric(metric)
+	}
+}
+
+// start all workers
+for _, w := range workers {
+	w.Start(ctx, waitGroup)
+}
+```
+
+For all workers for which `WithPerformanceMetric(metric)` was executed 
+the performance metrics will be collected (and pushed if `metrics_pusher` is configured).
+
+### go-libs/mq integration
+
+The latest `mq` package has already integrated with `metrics` package 
+and tracks functions processing incoming messages performance automatically.
+
+Collected metrics from consumers will have the `consumer_queue` label
+set automatically.
+
+It has similar (as worker above) code to wrap
+message processing function into performance metrics collector.
+
+The registration is also very similar:
+
+```go
+consumers := make([]mq.Consumer, 0)
+
+// init all consumers
+consumers = append(consumers, mqClient.InitConsumer(...))
+
+// enable performance metric
+if config.Default.Metrics.Enabled {
+	metric := metrics.NewConsumerPerformanceMetric("market_consumer")
+	for _, c := range consumers {
+		c.Options().WithPerformanceMetric(metric)
+	}
+}
+```
+
+If the `PerformanceMetric` option wasn't initialized it does no-op.
 
 ## Useful Readings
 
