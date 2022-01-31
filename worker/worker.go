@@ -93,7 +93,7 @@ func (w *worker) invoke() {
 }
 
 // StartConsequently waits for w.interval before each iteration
-// Deprecated: User Start() method
+// Deprecated: Use Start() method
 func (w *worker) StartConsequently(ctx context.Context, wg *sync.WaitGroup) {
 	wg.Add(1)
 	go func() {
