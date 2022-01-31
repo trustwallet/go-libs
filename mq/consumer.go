@@ -117,6 +117,10 @@ func (c *consumer) consume(ctx context.Context) {
 
 func (c *consumer) process(queueName string, body []byte) error {
 	metric := c.options.PerformanceMetric
+	if metric == nil {
+		metric = &metrics.NullablePerformanceMetric{}
+	}
+
 	lvs := []string{queueName}
 	if metric == nil {
 		metric = &metrics.NullablePerformanceMetric{}
