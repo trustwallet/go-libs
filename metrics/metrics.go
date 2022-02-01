@@ -98,10 +98,12 @@ func (s *performanceMetric) Duration(start time.Time, lvs []string) {
 
 func (s *performanceMetric) Success(lvs []string) {
 	s.collectors.CounterVec(executionSucceededTotalKey).WithLabelValues(lvs...).Inc()
+	s.collectors.CounterVec(executionFailedTotalKey).WithLabelValues(lvs...).Add(0)
 }
 
 func (s *performanceMetric) Failure(lvs []string) {
 	s.collectors.CounterVec(executionFailedTotalKey).WithLabelValues(lvs...).Inc()
+	s.collectors.CounterVec(executionSucceededTotalKey).WithLabelValues(lvs...).Add(0)
 }
 
 type NullablePerformanceMetric struct{}
