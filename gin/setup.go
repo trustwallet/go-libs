@@ -6,12 +6,67 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"sync"
 	"syscall"
 
 	"github.com/gin-gonic/gin"
 	log "github.com/sirupsen/logrus"
 )
 
+type api struct {
+	engine http.Handler
+	port   string
+}
+
+func NewAPI(router http.Handler, port string) *api {
+	return &api{
+		engine: router,
+		port:   port,
+	}
+}
+
+func (a *api) Run(ctx context.Context, wg *sync.WaitGroup) {
+	a.serve(ctx, wg)
+}
+
+func (a *api) serve(ctx context.Context, wg *sync.WaitGroup) {
+	wg.Add(1)
+
+	server := &http.Server{
+		Addr:    ":" + a.port,
+		Handler: a.engine,
+	}
+
+	serverStopped := make(chan struct{})
+
+	go func() {
+		if err := server.ListenAndServe(); err != nil {
+			log.Error("Server ListenAndServe: ", err)
+			serverStopped <- struct{}{}
+		}
+	}()
+
+	log.WithFields(log.Fields{"bind": a.port}).Info("Starting the API server")
+
+	go func() {
+		defer func() { wg.Done() }()
+
+		select {
+		case <-ctx.Done():
+			log.Info("Shutting down the server")
+
+			if err := server.Shutdown(context.Background()); err != nil {
+				log.Info("Server Shutdown: ", err)
+			}
+
+			return
+		case <-serverStopped:
+			return
+		}
+	}()
+}
+
+// Deprecated
 // SetupGracefulShutdown blocks execution until interruption command sent
 func SetupGracefulShutdown(ctx context.Context, port string, engine *gin.Engine) {
 	server := &http.Server{
