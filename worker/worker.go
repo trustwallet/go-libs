@@ -11,7 +11,6 @@ import (
 
 type Worker interface {
 	Name() string
-	Options() *WorkerOptions
 	Start(ctx context.Context, wg *sync.WaitGroup)
 }
 
@@ -31,10 +30,6 @@ func InitWorker(name string, options *WorkerOptions, workerFn func() error) Work
 
 func (w *worker) Name() string {
 	return w.name
-}
-
-func (w *worker) Options() *WorkerOptions {
-	return w.options
 }
 
 func (w *worker) Start(ctx context.Context, wg *sync.WaitGroup) {
@@ -78,68 +73,13 @@ func (w *worker) invoke() {
 		metric = &metrics.NullablePerformanceMetric{}
 	}
 
-	lvs := []string{w.name}
-
-	t, _ := metric.Start(lvs)
+	defer metric.Duration(metric.Start())
 	err := w.workerFn()
-	metric.Duration(t, lvs)
 
 	if err != nil {
-		metric.Failure(lvs)
+		metric.Failure()
 		log.WithField("worker", w.name).Error(err)
 	} else {
-		metric.Success(lvs)
+		metric.Success()
 	}
-}
-
-// StartConsequently waits for w.interval before each iteration
-// Deprecated: Use Start() method
-func (w *worker) StartConsequently(ctx context.Context, wg *sync.WaitGroup) {
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-
-		if w.options.RunImmediately {
-			w.invoke()
-		}
-
-		for {
-			select {
-			case <-ctx.Done():
-				log.WithField("worker", w.name).Info("stopped")
-				return
-			case <-time.After(w.options.Interval):
-				log.WithField("worker", w.name).Info("processing")
-				w.invoke()
-			}
-		}
-	}()
-}
-
-// StartWithTicker executes the function with the provided interval
-// In case execution takes longer than interval, next iteration start immediately
-// Deprecated: Use Start() method
-func (w *worker) StartWithTicker(ctx context.Context, wg *sync.WaitGroup) {
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-
-		ticker := time.NewTicker(w.options.Interval)
-		defer ticker.Stop()
-
-		if w.options.RunImmediately {
-			w.invoke()
-		}
-
-		for {
-			select {
-			case <-ctx.Done():
-				log.WithField("worker", w.name).Info("stopped")
-				return
-			case <-ticker.C:
-				log.WithField("worker", w.name).Info("processing")
-				w.invoke()
-			}
-		}
-	}()
 }

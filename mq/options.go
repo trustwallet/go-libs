@@ -27,11 +27,6 @@ func DefaultConsumerOptions(workers int) *ConsumerOptions {
 	}
 }
 
-func (o *ConsumerOptions) WithPerformanceMetric(metric metrics.PerformanceMetric) *ConsumerOptions {
-	o.PerformanceMetric = metric
-	return o
-}
-
 func OptionPrefetchLimit(limit int) Option {
 	return func(m *Client) error {
 		err := m.amqpChan.Qos(

@@ -21,13 +21,3 @@ func DefaultWorkerOptions(interval time.Duration) *WorkerOptions {
 		PerformanceMetric: &metrics.NullablePerformanceMetric{},
 	}
 }
-
-func (o *WorkerOptions) WithPerformanceMetric(metric metrics.PerformanceMetric) *WorkerOptions {
-	o.PerformanceMetric = metric
-	return o
-}
-
-func (o *WorkerOptions) ShouldFinishBeforeNextStart() *WorkerOptions {
-	o.RunConsequently = true
-	return o
-}
