@@ -177,7 +177,7 @@ need to initialize the Pushgateway client and set up the worker which pushes
 registered collectors' values.
 
 ```go
-func initMetrics() {
+func initMetrics() (worker.Worker, error) {
 	pusher := metrics.NewPusher(pushgatewayURL, "market_worker")
 
 	// check connection to pusher
