@@ -13,14 +13,18 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+type Server interface {
+	Run(ctx context.Context, wg *sync.WaitGroup)
+}
+
 type api struct {
-	engine http.Handler
+	router http.Handler
 	port   string
 }
 
-func NewAPI(router http.Handler, port string) *api {
+func NewHTTPServer(router http.Handler, port string) Server {
 	return &api{
-		engine: router,
+		router: router,
 		port:   port,
 	}
 }
@@ -34,7 +38,7 @@ func (a *api) serve(ctx context.Context, wg *sync.WaitGroup) {
 
 	server := &http.Server{
 		Addr:    ":" + a.port,
-		Handler: a.engine,
+		Handler: a.router,
 	}
 
 	serverStopped := make(chan struct{})
