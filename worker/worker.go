@@ -11,7 +11,6 @@ import (
 
 type Worker interface {
 	Name() string
-	Options() *WorkerOptions
 	Start(ctx context.Context, wg *sync.WaitGroup)
 }
 
@@ -31,10 +30,6 @@ func InitWorker(name string, options *WorkerOptions, workerFn func() error) Work
 
 func (w *worker) Name() string {
 	return w.name
-}
-
-func (w *worker) Options() *WorkerOptions {
-	return w.options
 }
 
 func (w *worker) Start(ctx context.Context, wg *sync.WaitGroup) {

@@ -64,25 +64,25 @@ func NewPerformanceMetric(namespace string, labels prometheus.Labels, reg promet
 	}
 }
 
-func (s *performanceMetric) Start() time.Time {
+func (m *performanceMetric) Start() time.Time {
 	start := time.Now()
-	s.executionStarted.WithLabelValues().SetToCurrentTime()
+	m.executionStarted.WithLabelValues().SetToCurrentTime()
 	return start
 }
 
-func (s *performanceMetric) Duration(start time.Time) {
+func (m *performanceMetric) Duration(start time.Time) {
 	duration := time.Since(start)
-	s.executionDurationSeconds.WithLabelValues().Set(duration.Seconds())
+	m.executionDurationSeconds.WithLabelValues().Set(duration.Seconds())
 }
 
-func (s *performanceMetric) Success() {
-	s.executionSucceededTotal.WithLabelValues().Inc()
-	s.executionFailedTotal.WithLabelValues().Add(0)
+func (m *performanceMetric) Success() {
+	m.executionSucceededTotal.WithLabelValues().Inc()
+	m.executionFailedTotal.WithLabelValues().Add(0)
 }
 
-func (s *performanceMetric) Failure() {
-	s.executionFailedTotal.WithLabelValues().Inc()
-	s.executionSucceededTotal.WithLabelValues().Add(0)
+func (m *performanceMetric) Failure() {
+	m.executionFailedTotal.WithLabelValues().Inc()
+	m.executionSucceededTotal.WithLabelValues().Add(0)
 }
 
 type NullablePerformanceMetric struct{}

@@ -28,7 +28,6 @@ type consumer struct {
 type Consumer interface {
 	Start(ctx context.Context) error
 	Reconnect(ctx context.Context) error
-	Options() *ConsumerOptions
 }
 
 func (c *consumer) Start(ctx context.Context) error {
@@ -60,10 +59,6 @@ func (c *consumer) Reconnect(ctx context.Context) error {
 	}
 
 	return nil
-}
-
-func (c *consumer) Options() *ConsumerOptions {
-	return c.options
 }
 
 func (c *consumer) consume(ctx context.Context) {
