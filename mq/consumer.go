@@ -121,18 +121,13 @@ func (c *consumer) process(queueName string, body []byte) error {
 		metric = &metrics.NullablePerformanceMetric{}
 	}
 
-	lvs := []string{queueName}
-	if metric == nil {
-		metric = &metrics.NullablePerformanceMetric{}
-	}
-	t, _ := metric.Start(lvs)
+	defer metric.Duration(metric.Start())
 	err := c.fn(body)
-	metric.Duration(t, lvs)
 
 	if err != nil {
-		metric.Failure(lvs)
+		metric.Failure()
 	} else {
-		metric.Success(lvs)
+		metric.Success()
 	}
 
 	return err
