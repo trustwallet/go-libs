@@ -31,8 +31,8 @@ func TestWorkerWithDefaultOptions(t *testing.T) {
 
 func TestWorkerStartsConsequently(t *testing.T) {
 	counter := 0
-	options := worker.DefaultWorkerOptions(100 * time.Millisecond).
-		ShouldFinishBeforeNextStart()
+	options := worker.DefaultWorkerOptions(100 * time.Millisecond)
+	options.RunConsequently = true
 
 	worker := worker.InitWorker("test", options, func() error {
 		time.Sleep(100 * time.Millisecond)
