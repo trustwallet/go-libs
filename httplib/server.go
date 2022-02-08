@@ -2,6 +2,7 @@ package httplib
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"sync"
 
@@ -39,7 +40,7 @@ func (a *api) serve(ctx context.Context, wg *sync.WaitGroup) {
 	serverStopped := make(chan struct{})
 
 	go func() {
-		if err := server.ListenAndServe(); err != nil {
+		if err := server.ListenAndServe(); err != nil && errors.Is(err, http.ErrServerClosed) {
 			log.Error("Server ListenAndServe: ", err)
 			serverStopped <- struct{}{}
 		}
