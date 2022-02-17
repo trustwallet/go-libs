@@ -41,7 +41,7 @@ func (a *api) serve(ctx context.Context, wg *sync.WaitGroup) {
 
 	go func() {
 		if err := server.ListenAndServe(); err != nil && errors.Is(err, http.ErrServerClosed) {
-			log.Error("Server ListenAndServe: ", err)
+			log.WithError(err).Debug("Server ListenAndServe")
 			serverStopped <- struct{}{}
 		}
 	}()
