@@ -310,6 +310,14 @@
   blockTime: 60000
   sampleAddress: 'QhceuaTdeCZtcxmVc6yyEDEJ7Riu5gWFoF'
 
+- id: 609
+  symbol: HYDRA
+  handle: hydra
+  name: Hydra
+  decimals: 8
+  blockTime: 60000
+  sampleAddress: 'H7FYCLijimtbYk7gdN1hmweftuWLQni3m5'
+
 - id: 19167
   symbol: ZEL
   handle: zelcash
