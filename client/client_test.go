@@ -1,8 +1,10 @@
 package client
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -149,4 +151,51 @@ func TestTimeoutOption(t *testing.T) {
 			assert.Equal(t, tc.expectedResponse, string(actual))
 		})
 	}
+}
+
+type jsonModel struct {
+	Name string `json:"name"`
+}
+
+func TestGetRaw(t *testing.T) {
+	m := jsonModel{Name: "testGetRaw"}
+	body, _ := json.Marshal(m)
+
+	r := Request{
+		HttpClient:       newMockJSONClient(body),
+		HttpErrorHandler: DefaultErrorHandler,
+	}
+
+	responseRaw, err := r.GetRaw("", nil)
+	assert.NoError(t, err)
+	assert.Equal(t, body, responseRaw)
+}
+
+func TestPostRaw(t *testing.T) {
+	m := jsonModel{Name: "testPostRaw"}
+	body, _ := json.Marshal(m)
+
+	r := Request{
+		HttpClient:       newMockJSONClient(body),
+		HttpErrorHandler: DefaultErrorHandler,
+	}
+
+	responseRaw, err := r.PostRaw("", nil)
+	assert.NoError(t, err)
+	assert.Equal(t, body, responseRaw)
+}
+
+type mockJSONClient struct {
+	body []byte
+}
+
+func newMockJSONClient(b []byte) *mockJSONClient {
+	return &mockJSONClient{body: b}
+}
+
+func (c *mockJSONClient) Do(_ *http.Request) (*http.Response, error) {
+	return &http.Response{
+		StatusCode: http.StatusOK,
+		Body:       io.NopCloser(bytes.NewBuffer(c.body)),
+	}, nil
 }
