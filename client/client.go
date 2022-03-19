@@ -18,8 +18,12 @@ import (
 type Request struct {
 	BaseURL          string
 	Headers          map[string]string
-	HttpClient       *http.Client
+	HttpClient       HTTPClient
 	HttpErrorHandler HttpErrorHandler
+}
+
+type HTTPClient interface {
+	Do(req *http.Request) (*http.Response, error)
 }
 
 type HttpError struct {
@@ -97,7 +101,7 @@ func ProxyOption(proxyURL string) Option {
 }
 
 func (r *Request) SetTimeout(seconds time.Duration) {
-	r.HttpClient.Timeout = time.Second * seconds
+	r.HttpClient.(*http.Client).Timeout = time.Second * seconds
 }
 
 func (r *Request) SetProxy(proxyUrl string) error {
@@ -108,7 +112,7 @@ func (r *Request) SetProxy(proxyUrl string) error {
 	if err != nil {
 		return err
 	}
-	r.HttpClient.Transport = &http.Transport{Proxy: http.ProxyURL(url)}
+	r.HttpClient.(*http.Client).Transport = &http.Transport{Proxy: http.ProxyURL(url)}
 	return nil
 }
 
@@ -143,7 +147,7 @@ func (r *Request) GetRaw(path string, query url.Values) ([]byte, error) {
 		return nil, err
 	}
 
-	return ExtractBody(result)
+	return json.Marshal(result)
 }
 
 func (r *Request) PostRaw(path string, body interface{}) ([]byte, error) {
@@ -154,7 +158,7 @@ func (r *Request) PostRaw(path string, body interface{}) ([]byte, error) {
 		return nil, err
 	}
 
-	return ExtractBody(result)
+	return json.Marshal(result)
 }
 
 func (r *Request) PostWithContext(result interface{}, path string, body interface{}, ctx context.Context) error {
@@ -238,18 +242,4 @@ func GetBody(body interface{}) (buf io.ReadWriter, err error) {
 		err = json.NewEncoder(buf).Encode(body)
 	}
 	return
-}
-
-func ExtractBody(body interface{}) ([]byte, error) {
-	if body == nil {
-		return nil, nil
-	}
-
-	buf := new(bytes.Buffer)
-	err := json.NewEncoder(buf).Encode(body)
-	if err != nil {
-		return nil, err
-	}
-
-	return ioutil.ReadAll(buf)
 }
