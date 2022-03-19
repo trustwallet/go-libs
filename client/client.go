@@ -135,6 +135,28 @@ func (r *Request) Post(result interface{}, path string, body interface{}) error 
 	return r.Execute("POST", uri, buf, result, context.Background())
 }
 
+func (r *Request) GetRaw(path string, query url.Values) ([]byte, error) {
+	var result interface{}
+
+	err := r.Get(&result, path, query)
+	if err != nil {
+		return nil, err
+	}
+
+	return ExtractBody(result)
+}
+
+func (r *Request) PostRaw(path string, body interface{}) ([]byte, error) {
+	var result interface{}
+
+	err := r.Post(&result, path, body)
+	if err != nil {
+		return nil, err
+	}
+
+	return ExtractBody(result)
+}
+
 func (r *Request) PostWithContext(result interface{}, path string, body interface{}, ctx context.Context) error {
 	buf, err := GetBody(body)
 	if err != nil {
@@ -216,4 +238,18 @@ func GetBody(body interface{}) (buf io.ReadWriter, err error) {
 		err = json.NewEncoder(buf).Encode(body)
 	}
 	return
+}
+
+func ExtractBody(body interface{}) ([]byte, error) {
+	if body == nil {
+		return nil, nil
+	}
+
+	buf := new(bytes.Buffer)
+	err := json.NewEncoder(buf).Encode(body)
+	if err != nil {
+		return nil, err
+	}
+
+	return ioutil.ReadAll(buf)
 }
