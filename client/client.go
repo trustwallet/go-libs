@@ -140,25 +140,18 @@ func (r *Request) Post(result interface{}, path string, body interface{}) error 
 }
 
 func (r *Request) GetRaw(path string, query url.Values) ([]byte, error) {
-	var result interface{}
-
-	err := r.Get(&result, path, query)
-	if err != nil {
-		return nil, err
-	}
-
-	return json.Marshal(result)
+	uri := r.GetURL(path, query)
+	return r.ExecuteRaw(context.Background(), "GET", uri, nil)
 }
 
 func (r *Request) PostRaw(path string, body interface{}) ([]byte, error) {
-	var result interface{}
-
-	err := r.Post(&result, path, body)
+	buf, err := GetBody(body)
 	if err != nil {
 		return nil, err
 	}
+	uri := r.GetBase(path)
 
-	return json.Marshal(result)
+	return r.ExecuteRaw(context.Background(), "POST", uri, buf)
 }
 
 func (r *Request) PostWithContext(result interface{}, path string, body interface{}, ctx context.Context) error {
@@ -180,26 +173,52 @@ func (r *Request) Execute(method string, url string, body io.Reader, result inte
 		req.Header.Set(key, value)
 	}
 
-	c := r.HttpClient
-
-	res, err := c.Do(req.WithContext(ctx))
+	b, err := r.execute(ctx, req)
 	if err != nil {
 		return err
 	}
 
-	err = r.HttpErrorHandler(res, url)
+	err = json.Unmarshal(b, result)
 	if err != nil {
 		return err
+	}
+
+	return nil
+}
+
+func (r *Request) ExecuteRaw(ctx context.Context, method string, url string, body io.Reader) ([]byte, error) {
+	req, err := http.NewRequest(method, url, body)
+	if err != nil {
+		return nil, err
+	}
+
+	for key, value := range r.Headers {
+		req.Header.Set(key, value)
+	}
+
+	return r.execute(ctx, req)
+}
+func (r *Request) execute(ctx context.Context, req *http.Request) ([]byte, error) {
+	c := r.HttpClient
+
+	res, err := c.Do(req.WithContext(ctx))
+	if err != nil {
+		return nil, err
+	}
+
+	err = r.HttpErrorHandler(res, req.URL.String())
+	if err != nil {
+		return nil, err
 	}
 
 	if res.StatusCode < http.StatusOK || res.StatusCode >= http.StatusBadRequest {
 		defer res.Body.Close()
 		body, err := ioutil.ReadAll(res.Body)
 		if err != nil {
-			return err
+			return nil, err
 		}
 
-		return &HttpError{
+		return nil, &HttpError{
 			StatusCode: res.StatusCode,
 			URL:        *res.Request.URL,
 			Body:       body,
@@ -209,13 +228,10 @@ func (r *Request) Execute(method string, url string, body io.Reader, result inte
 	defer res.Body.Close()
 	b, err := ioutil.ReadAll(res.Body)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	err = json.Unmarshal(b, result)
-	if err != nil {
-		return err
-	}
-	return err
+
+	return b, nil
 }
 
 func (r *Request) GetBase(path string) string {
