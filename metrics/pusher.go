@@ -5,6 +5,8 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/push"
+
+	"github.com/trustwallet/go-libs/client"
 )
 
 type Pusher interface {
@@ -20,6 +22,15 @@ func NewPusher(pushgatewayURL, jobName string) Pusher {
 		pusher: push.New(pushgatewayURL, jobName).
 			Grouping("instance", instanceID()).
 			Gatherer(prometheus.DefaultGatherer),
+	}
+}
+
+func NewPusherWithCustomClient(pushgatewayURL, jobName string, client client.HTTPClient) Pusher {
+	return &pusher{
+		pusher: push.New(pushgatewayURL, string(jobName)).
+			Grouping("instance", instanceID()).
+			Gatherer(prometheus.DefaultGatherer).
+			Client(client),
 	}
 }
 
