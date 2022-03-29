@@ -1,6 +1,7 @@
 package metrics
 
 import (
+	"net/http"
 	"os"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -8,6 +9,26 @@ import (
 
 	"github.com/trustwallet/go-libs/client"
 )
+
+type MetricsPusherClient struct {
+	client client.Request
+}
+
+func NewMetricsPusherClient(pushURL, key string, errorHandler client.HttpErrorHandler) *MetricsPusherClient {
+	client := client.InitClient(pushURL, errorHandler)
+	client.AddHeader("X-API-Key", key)
+
+	return &MetricsPusherClient{
+		client: client,
+	}
+}
+
+func (c *MetricsPusherClient) Do(req *http.Request) (*http.Response, error) {
+	for key, value := range c.client.Headers {
+		req.Header.Set(key, value)
+	}
+	return c.client.HttpClient.Do(req)
+}
 
 type Pusher interface {
 	Push() error
