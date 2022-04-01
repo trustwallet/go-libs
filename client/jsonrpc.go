@@ -45,6 +45,19 @@ func (r *Request) RpcCall(result interface{}, method string, params interface{})
 	return resp.GetObject(result)
 }
 
+func (r *Request) RpcCallRaw(method string, params interface{}) ([]byte, error) {
+	req := &RpcRequest{JsonRpc: JsonRpcVersion, Method: method, Params: params, Id: genID()}
+	var resp *RpcResponse
+	err := r.Post(&resp, "", req)
+	if err != nil {
+		return nil, err
+	}
+	if resp.Error != nil {
+		return nil, resp.Error
+	}
+	return resp.GetRawBody()
+}
+
 func (r *Request) RpcBatchCall(requests RpcRequests) ([]RpcResponse, error) {
 	var resp []RpcResponse
 	err := r.Post(&resp, "", requests.fillDefaultValues())
@@ -69,6 +82,15 @@ func (r *RpcResponse) GetObject(toType interface{}) error {
 		return err
 	}
 	return nil
+}
+
+func (r *RpcResponse) GetRawBody() ([]byte, error) {
+	result, err := json.Marshal(r.Result)
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
 }
 
 func (rs RpcRequests) fillDefaultValues() RpcRequests {
