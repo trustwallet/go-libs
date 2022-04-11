@@ -26,6 +26,13 @@ type (
 		Id      int64       `json:"id,omitempty"`
 	}
 
+	RpcResponseRaw struct {
+		JsonRpc string          `json:"jsonrpc"`
+		Error   *RpcError       `json:"error,omitempty"`
+		Result  json.RawMessage `json:"result,omitempty"`
+		Id      int64           `json:"id,omitempty"`
+	}
+
 	RpcError struct {
 		Code    int    `json:"code"`
 		Message string `json:"message"`
@@ -47,7 +54,7 @@ func (r *Request) RpcCall(result interface{}, method string, params interface{})
 
 func (r *Request) RpcCallRaw(method string, params interface{}) ([]byte, error) {
 	req := &RpcRequest{JsonRpc: JsonRpcVersion, Method: method, Params: params, Id: genID()}
-	var resp *RpcResponse
+	var resp *RpcResponseRaw
 	err := r.Post(&resp, "", req)
 	if err != nil {
 		return nil, err
@@ -55,7 +62,7 @@ func (r *Request) RpcCallRaw(method string, params interface{}) ([]byte, error) 
 	if resp.Error != nil {
 		return nil, resp.Error
 	}
-	return resp.GetRawBody()
+	return []byte(resp.Result), nil
 }
 
 func (r *Request) RpcBatchCall(requests RpcRequests) ([]RpcResponse, error) {
@@ -82,15 +89,6 @@ func (r *RpcResponse) GetObject(toType interface{}) error {
 		return err
 	}
 	return nil
-}
-
-func (r *RpcResponse) GetRawBody() ([]byte, error) {
-	result, err := json.Marshal(r.Result)
-	if err != nil {
-		return nil, err
-	}
-
-	return result, nil
 }
 
 func (rs RpcRequests) fillDefaultValues() RpcRequests {
