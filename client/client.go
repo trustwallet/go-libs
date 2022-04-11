@@ -8,11 +8,12 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"net/url"
 	"strings"
 	"time"
+
+	log "github.com/sirupsen/logrus"
 )
 
 type Request struct {
@@ -230,6 +231,11 @@ func (r *Request) execute(ctx context.Context, req *http.Request) ([]byte, error
 	if err != nil {
 		return nil, err
 	}
+
+	log.WithFields(log.Fields{
+		"url":          req.URL.String(),
+		"responseSize": len(b),
+	}).Debugf("Response stats")
 
 	return b, nil
 }
