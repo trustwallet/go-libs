@@ -54,3 +54,60 @@ func (c *ProducerConfig) ToKafkaWriterConfig() kafka.WriterConfig {
 
 	return config
 }
+
+type ConsumerConfig struct {
+	Brokers                []string
+	GroupID                string
+	GroupTopics            []string
+	Topic                  string
+	Partition              int
+	QueueCapacity          int
+	MinBytes               int
+	MaxBytes               int
+	MaxWait                time.Duration
+	ReadLagInterval        time.Duration
+	HeartbeatInterval      time.Duration
+	CommitInterval         time.Duration
+	PartitionWatchInterval time.Duration
+	WatchPartitionChanges  bool
+	SessionTimeout         time.Duration
+	RebalanceTimeout       time.Duration
+	JoinGroupBackoff       time.Duration
+	RetentionTime          time.Duration
+	StartOffset            int64
+	ReadBackoffMin         time.Duration
+	ReadBackoffMax         time.Duration
+	MaxAttempts            int
+	Log                    bool
+}
+
+func (c *ConsumerConfig) ToKafkaReaderConfig() kafka.ReaderConfig {
+	config := kafka.ReaderConfig{
+		Brokers:                c.Brokers,
+		Topic:                  c.Topic,
+		Partition:              c.Partition,
+		QueueCapacity:          c.QueueCapacity,
+		MinBytes:               c.MinBytes,
+		MaxBytes:               c.MaxBytes,
+		MaxWait:                c.MaxWait,
+		ReadLagInterval:        c.ReadLagInterval,
+		HeartbeatInterval:      c.HeartbeatInterval,
+		CommitInterval:         c.CommitInterval,
+		PartitionWatchInterval: c.PartitionWatchInterval,
+		WatchPartitionChanges:  c.WatchPartitionChanges,
+		SessionTimeout:         c.SessionTimeout,
+		RebalanceTimeout:       c.RebalanceTimeout,
+		JoinGroupBackoff:       c.JoinGroupBackoff,
+		RetentionTime:          c.RetentionTime,
+		StartOffset:            c.StartOffset,
+		ReadBackoffMin:         c.ReadBackoffMin,
+		ReadBackoffMax:         c.ReadBackoffMax,
+		MaxAttempts:            c.MaxAttempts,
+	}
+
+	if c.Log {
+		config.Logger = logging.GetLogger()
+	}
+
+	return config
+}

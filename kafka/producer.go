@@ -2,7 +2,6 @@ package kafka
 
 import (
 	"context"
-	"fmt"
 
 	kafka "github.com/segmentio/kafka-go"
 )
@@ -27,7 +26,7 @@ func (p *Producer) SendMessage(ctx context.Context, key, value []byte, topic str
 
 	err := p.writer.WriteMessages(ctx, message)
 	if err != nil {
-		return message.Partition, message.Offset, fmt.Errorf("failed to send message to kafka topic (%s): %w", topic, err)
+		return message.Partition, message.Offset, err
 	}
 
 	return message.Partition, message.Offset, nil
