@@ -19,7 +19,7 @@ func (c *Consumer) Close() error {
 }
 
 func (c *Consumer) ReadMessage(ctx context.Context) (kafka.Message, error) {
-	return c.reader.ReadMessage(context.Background())
+	return c.reader.ReadMessage(ctx)
 }
 
 func (c *Consumer) FetchMessage(ctx context.Context) (kafka.Message, error) {

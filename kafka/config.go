@@ -84,6 +84,8 @@ type ConsumerConfig struct {
 func (c *ConsumerConfig) ToKafkaReaderConfig() kafka.ReaderConfig {
 	config := kafka.ReaderConfig{
 		Brokers:                c.Brokers,
+		GroupID:                c.GroupID,
+		GroupTopics:            c.GroupTopics,
 		Topic:                  c.Topic,
 		Partition:              c.Partition,
 		QueueCapacity:          c.QueueCapacity,

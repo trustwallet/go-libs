@@ -18,7 +18,7 @@ func (p *Producer) Close() error {
 	return p.writer.Close()
 }
 
-func (p *Producer) SendMessage(ctx context.Context, key, value []byte, topic string) (int, int64, error) {
+func (p *Producer) SendMessage(ctx context.Context, key, value []byte, topic string) error {
 	message := kafka.Message{
 		Value: value,
 		Topic: topic,
@@ -26,8 +26,8 @@ func (p *Producer) SendMessage(ctx context.Context, key, value []byte, topic str
 
 	err := p.writer.WriteMessages(ctx, message)
 	if err != nil {
-		return message.Partition, message.Offset, err
+		return err
 	}
 
-	return message.Partition, message.Offset, nil
+	return nil
 }
