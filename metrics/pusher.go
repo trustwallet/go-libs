@@ -32,6 +32,7 @@ func (c *MetricsPusherClient) Do(req *http.Request) (*http.Response, error) {
 
 type Pusher interface {
 	Push() error
+	Close() error
 }
 
 type pusher struct {
@@ -57,6 +58,10 @@ func NewPusherWithCustomClient(pushgatewayURL, jobName string, client client.HTT
 
 func (p *pusher) Push() error {
 	return p.pusher.Push()
+}
+
+func (p *pusher) Close() error {
+	return p.pusher.Delete()
 }
 
 func instanceID() string {
