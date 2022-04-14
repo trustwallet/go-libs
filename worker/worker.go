@@ -12,11 +12,13 @@ import (
 type Worker interface {
 	Name() string
 	Start(ctx context.Context, wg *sync.WaitGroup)
+	WithStop(stopFn func() error) Worker
 }
 
 type worker struct {
 	name     string
 	workerFn func() error
+	stopFn   func() error
 	options  *WorkerOptions
 }
 
@@ -30,6 +32,11 @@ func InitWorker(name string, options *WorkerOptions, workerFn func() error) Work
 
 func (w *worker) Name() string {
 	return w.name
+}
+
+func (w *worker) WithStop(stopFn func() error) Worker {
+	w.stopFn = stopFn
+	return w
 }
 
 func (w *worker) Start(ctx context.Context, wg *sync.WaitGroup) {
@@ -49,6 +56,12 @@ func (w *worker) Start(ctx context.Context, wg *sync.WaitGroup) {
 		for {
 			select {
 			case <-ctx.Done():
+				if w.stopFn != nil {
+					log.WithField("worker", w.name).Info("stopping...")
+					if err := w.stopFn(); err != nil {
+						log.WithField("worker", w.name).WithError(err).Warn("error ocurred while stopping the worker")
+					}
+				}
 				log.WithField("worker", w.name).Info("stopped")
 				return
 			case <-ticker.C:
