@@ -14,9 +14,9 @@ type Worker interface {
 	Start(ctx context.Context, wg *sync.WaitGroup)
 }
 
-type DisposableWorker interface {
+type StoppableWorker interface {
 	Worker
-	WithStop(stopFn func() error) DisposableWorker
+	WithStop(stopFn func() error) StoppableWorker
 }
 
 type worker struct {
@@ -38,7 +38,7 @@ func (w *worker) Name() string {
 	return w.name
 }
 
-func (w *worker) WithStop(stopFn func() error) DisposableWorker {
+func (w *worker) WithStop(stopFn func() error) StoppableWorker {
 	w.stopFn = stopFn
 	return w
 }
