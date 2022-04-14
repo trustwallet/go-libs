@@ -12,7 +12,11 @@ import (
 type Worker interface {
 	Name() string
 	Start(ctx context.Context, wg *sync.WaitGroup)
-	WithStop(stopFn func() error) Worker
+}
+
+type DisposableWorker interface {
+	Worker
+	WithStop(stopFn func() error) DisposableWorker
 }
 
 type worker struct {
@@ -34,7 +38,7 @@ func (w *worker) Name() string {
 	return w.name
 }
 
-func (w *worker) WithStop(stopFn func() error) Worker {
+func (w *worker) WithStop(stopFn func() error) DisposableWorker {
 	w.stopFn = stopFn
 	return w
 }
