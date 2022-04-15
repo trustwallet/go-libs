@@ -12,11 +12,11 @@ import (
 
 func TestWorkerWithDefaultOptions(t *testing.T) {
 	counter := 0
-	options := worker.DefaultWorkerOptions(100 * time.Millisecond)
-	worker := worker.InitWorker("test", options, func() error {
+	worker := worker.NewBuilder("test", func() error {
 		counter++
 		return nil
-	})
+	}).WithOptions(worker.DefaultWorkerOptions(100 * time.Millisecond)).Build()
+
 	wg := &sync.WaitGroup{}
 	ctx, cancel := context.WithCancel(context.Background())
 
@@ -34,11 +34,12 @@ func TestWorkerStartsConsequently(t *testing.T) {
 	options := worker.DefaultWorkerOptions(100 * time.Millisecond)
 	options.RunConsequently = true
 
-	worker := worker.InitWorker("test", options, func() error {
+	worker := worker.NewBuilder("test", func() error {
 		time.Sleep(100 * time.Millisecond)
 		counter++
 		return nil
-	})
+	}).WithOptions(worker.DefaultWorkerOptions(100 * time.Millisecond)).Build()
+
 	wg := &sync.WaitGroup{}
 	ctx, cancel := context.WithCancel(context.Background())
 

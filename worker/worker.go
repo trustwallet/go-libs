@@ -9,32 +9,59 @@ import (
 	"github.com/trustwallet/go-libs/metrics"
 )
 
-type Worker struct {
+type Builder interface {
+	WithOptions(options *WorkerOptions) Builder
+	WithStop(func() error) Builder
+	Build() Worker
+}
+
+type builder struct {
+	worker *worker
+}
+
+func NewBuilder(name string, workerFn func() error) Builder {
+	return &builder{
+		worker: &worker{
+			name:     name,
+			workerFn: workerFn,
+			options:  DefaultWorkerOptions(1 * time.Minute),
+		},
+	}
+}
+
+func (b *builder) WithOptions(options *WorkerOptions) Builder {
+	b.worker.options = options
+	return b
+}
+
+func (b *builder) WithStop(stopFn func() error) Builder {
+	b.worker.stopFn = stopFn
+	return b
+}
+
+func (b *builder) Build() Worker {
+	return b.worker
+}
+
+// Worker interface can be constructed using worker.NewBuilder("worker_name", workerFn).Build()
+// or allows custom implementation (e.g. one-off jobs)
+type Worker interface {
+	Name() string
+	Start(ctx context.Context, wg *sync.WaitGroup)
+}
+
+type worker struct {
 	name     string
 	workerFn func() error
 	stopFn   func() error
 	options  *WorkerOptions
 }
 
-func InitWorker(name string, options *WorkerOptions, workerFn func() error) *Worker {
-	return &Worker{
-		name:     name,
-		options:  options,
-		workerFn: workerFn,
-	}
-}
-
-func (w *Worker) Name() string {
+func (w *worker) Name() string {
 	return w.name
 }
 
-func (w *Worker) WithStop(stopFn func() error) *Worker {
-	w.stopFn = stopFn
-	return w
-}
-
-func (w *Worker) Start(ctx context.Context, wg *sync.WaitGroup) {
-
+func (w *worker) Start(ctx context.Context, wg *sync.WaitGroup) {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
@@ -74,7 +101,7 @@ func (w *Worker) Start(ctx context.Context, wg *sync.WaitGroup) {
 	}()
 }
 
-func (w *Worker) invoke() {
+func (w *worker) invoke() {
 	metric := w.options.PerformanceMetric
 	if metric == nil {
 		metric = &metrics.NullablePerformanceMetric{}

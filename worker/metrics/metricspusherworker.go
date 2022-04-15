@@ -5,6 +5,9 @@ import (
 	"github.com/trustwallet/go-libs/worker"
 )
 
-func NewMetricsPusherWorker(options *worker.WorkerOptions, pusher metrics.Pusher) *worker.Worker {
-	return worker.InitWorker("metrics_pusher", options, pusher.Push).WithStop(pusher.Close)
+func NewMetricsPusherWorker(options *worker.WorkerOptions, pusher metrics.Pusher) worker.Worker {
+	return worker.NewBuilder("metrics_pusher", pusher.Push).
+		WithOptions(options).
+		WithStop(pusher.Close).
+		Build()
 }
