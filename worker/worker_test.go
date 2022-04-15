@@ -38,7 +38,7 @@ func TestWorkerStartsConsequently(t *testing.T) {
 		time.Sleep(100 * time.Millisecond)
 		counter++
 		return nil
-	}).WithOptions(worker.DefaultWorkerOptions(100 * time.Millisecond)).Build()
+	}).WithOptions(options).Build()
 
 	wg := &sync.WaitGroup{}
 	ctx, cancel := context.WithCancel(context.Background())
@@ -49,5 +49,5 @@ func TestWorkerStartsConsequently(t *testing.T) {
 	cancel()
 	wg.Wait()
 
-	assert.Equal(t, 3, counter, "Should execute 3 times - 1st immidietly, and 2 after with delat 2sec between runs")
+	assert.Equal(t, 3, counter, "Should execute 3 times - 1st immidietly, and 2 after with delay between runs")
 }
