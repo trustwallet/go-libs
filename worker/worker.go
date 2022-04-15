@@ -9,41 +9,31 @@ import (
 	"github.com/trustwallet/go-libs/metrics"
 )
 
-type Worker interface {
-	Name() string
-	Start(ctx context.Context, wg *sync.WaitGroup)
-}
-
-type StoppableWorker interface {
-	Worker
-	WithStop(stopFn func() error) StoppableWorker
-}
-
-type worker struct {
+type Worker struct {
 	name     string
 	workerFn func() error
 	stopFn   func() error
 	options  *WorkerOptions
 }
 
-func InitWorker(name string, options *WorkerOptions, workerFn func() error) Worker {
-	return &worker{
+func InitWorker(name string, options *WorkerOptions, workerFn func() error) *Worker {
+	return &Worker{
 		name:     name,
 		options:  options,
 		workerFn: workerFn,
 	}
 }
 
-func (w *worker) Name() string {
+func (w *Worker) Name() string {
 	return w.name
 }
 
-func (w *worker) WithStop(stopFn func() error) StoppableWorker {
+func (w *Worker) WithStop(stopFn func() error) *Worker {
 	w.stopFn = stopFn
 	return w
 }
 
-func (w *worker) Start(ctx context.Context, wg *sync.WaitGroup) {
+func (w *Worker) Start(ctx context.Context, wg *sync.WaitGroup) {
 
 	wg.Add(1)
 	go func() {
@@ -84,7 +74,7 @@ func (w *worker) Start(ctx context.Context, wg *sync.WaitGroup) {
 	}()
 }
 
-func (w *worker) invoke() {
+func (w *Worker) invoke() {
 	metric := w.options.PerformanceMetric
 	if metric == nil {
 		metric = &metrics.NullablePerformanceMetric{}
