@@ -12,7 +12,7 @@ import (
 
 func TestWorkerWithDefaultOptions(t *testing.T) {
 	counter := 0
-	worker := worker.NewBuilder("test", func() error {
+	worker := worker.NewWorkerBuilder("test", func() error {
 		counter++
 		return nil
 	}).WithOptions(worker.DefaultWorkerOptions(100 * time.Millisecond)).Build()
@@ -34,7 +34,7 @@ func TestWorkerStartsConsequently(t *testing.T) {
 	options := worker.DefaultWorkerOptions(100 * time.Millisecond)
 	options.RunConsequently = true
 
-	worker := worker.NewBuilder("test", func() error {
+	worker := worker.NewWorkerBuilder("test", func() error {
 		time.Sleep(100 * time.Millisecond)
 		counter++
 		return nil

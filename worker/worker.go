@@ -19,7 +19,7 @@ type builder struct {
 	worker *worker
 }
 
-func NewBuilder(name string, workerFn func() error) Builder {
+func NewWorkerBuilder(name string, workerFn func() error) Builder {
 	return &builder{
 		worker: &worker{
 			name:     name,
