@@ -9,6 +9,42 @@ import (
 	"github.com/trustwallet/go-libs/metrics"
 )
 
+type Builder interface {
+	WithOptions(options *WorkerOptions) Builder
+	WithStop(func() error) Builder
+	Build() Worker
+}
+
+type builder struct {
+	worker *worker
+}
+
+func NewWorkerBuilder(name string, workerFn func() error) Builder {
+	return &builder{
+		worker: &worker{
+			name:     name,
+			workerFn: workerFn,
+			options:  DefaultWorkerOptions(1 * time.Minute),
+		},
+	}
+}
+
+func (b *builder) WithOptions(options *WorkerOptions) Builder {
+	b.worker.options = options
+	return b
+}
+
+func (b *builder) WithStop(stopFn func() error) Builder {
+	b.worker.stopFn = stopFn
+	return b
+}
+
+func (b *builder) Build() Worker {
+	return b.worker
+}
+
+// Worker interface can be constructed using worker.NewBuilder("worker_name", workerFn).Build()
+// or allows custom implementation (e.g. one-off jobs)
 type Worker interface {
 	Name() string
 	Start(ctx context.Context, wg *sync.WaitGroup)
@@ -17,15 +53,8 @@ type Worker interface {
 type worker struct {
 	name     string
 	workerFn func() error
+	stopFn   func() error
 	options  *WorkerOptions
-}
-
-func InitWorker(name string, options *WorkerOptions, workerFn func() error) Worker {
-	return &worker{
-		name:     name,
-		options:  options,
-		workerFn: workerFn,
-	}
 }
 
 func (w *worker) Name() string {
@@ -33,7 +62,6 @@ func (w *worker) Name() string {
 }
 
 func (w *worker) Start(ctx context.Context, wg *sync.WaitGroup) {
-
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
@@ -49,6 +77,12 @@ func (w *worker) Start(ctx context.Context, wg *sync.WaitGroup) {
 		for {
 			select {
 			case <-ctx.Done():
+				if w.stopFn != nil {
+					log.WithField("worker", w.name).Info("stopping...")
+					if err := w.stopFn(); err != nil {
+						log.WithField("worker", w.name).WithError(err).Warn("error ocurred while stopping the worker")
+					}
+				}
 				log.WithField("worker", w.name).Info("stopped")
 				return
 			case <-ticker.C:
