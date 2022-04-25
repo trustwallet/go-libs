@@ -29,5 +29,11 @@ jobs:
     - name: Test
       run: go test -v ./...
 
-    - name: Lint
-      run: make lint
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: golangci/golangci-lint-action@v2
+        with:
+          version: v1.45.2
