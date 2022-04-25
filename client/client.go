@@ -77,9 +77,11 @@ var DefaultErrorHandler = func(res *http.Response, uri string) error {
 	return nil
 }
 
-func TimeoutOption(seconds time.Duration) Option {
+// TimeoutOption is an option to set timeout for the http client calls
+// value unit is nanoseconds
+func TimeoutOption(timeout time.Duration) Option {
 	return func(request *Request) error {
-		request.SetTimeout(seconds)
+		request.SetTimeout(timeout)
 
 		return nil
 	}
@@ -100,8 +102,8 @@ func ProxyOption(proxyURL string) Option {
 	}
 }
 
-func (r *Request) SetTimeout(seconds time.Duration) {
-	r.HttpClient.(*http.Client).Timeout = time.Second * seconds
+func (r *Request) SetTimeout(timeout time.Duration) {
+	r.HttpClient.(*http.Client).Timeout = timeout
 }
 
 func (r *Request) SetProxy(proxyUrl string) error {
