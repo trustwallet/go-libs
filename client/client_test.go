@@ -113,24 +113,24 @@ func TestRequest_GetURL(t *testing.T) {
 func TestTimeoutOption(t *testing.T) {
 	tests := []struct {
 		name             string
-		serverTimeout    int
+		serverTimeout    time.Duration
 		serverResponse   string
-		clientTimeout    int
+		clientTimeout    time.Duration
 		expectedResponse string
 		errExpected      assert.ErrorAssertionFunc
 	}{
 		{
 			name:           "client exits with timeout err",
-			serverTimeout:  2,
+			serverTimeout:  time.Millisecond * 5,
 			serverResponse: "ok",
-			clientTimeout:  1,
+			clientTimeout:  time.Millisecond * 2,
 			errExpected:    assert.Error,
 		},
 		{
 			name:             "response returned in time",
-			serverTimeout:    1,
+			serverTimeout:    time.Millisecond * 2,
 			serverResponse:   "{\"status\":\"ok\"}",
-			clientTimeout:    2,
+			clientTimeout:    time.Millisecond * 5,
 			expectedResponse: "{\"status\":\"ok\"}",
 			errExpected:      assert.NoError,
 		},
@@ -139,11 +139,11 @@ func TestTimeoutOption(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				time.Sleep(time.Second * time.Duration(tc.serverTimeout))
+				time.Sleep(tc.serverTimeout)
 				_, _ = fmt.Fprintf(w, tc.serverResponse)
 			}))
 
-			client := InitClient(srv.URL, nil, TimeoutOption(time.Duration(tc.clientTimeout)))
+			client := InitClient(srv.URL, nil, TimeoutOption(tc.clientTimeout))
 
 			var actual json.RawMessage
 			err := client.Get(&actual, "", nil)
