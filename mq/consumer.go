@@ -17,9 +17,9 @@ const headerRemainingRetries = "x-remaining-retries"
 type consumer struct {
 	client *Client
 
-	queue   Queue
-	fn      func(Message) error
-	options *ConsumerOptions
+	queue            Queue
+	messageProcessor MessageProcessor
+	options          *ConsumerOptions
 
 	messages <-chan amqp.Delivery
 	stopChan chan struct{}
@@ -28,6 +28,18 @@ type consumer struct {
 type Consumer interface {
 	Start(ctx context.Context) error
 	Reconnect(ctx context.Context) error
+}
+
+type MessageProcessor interface {
+	Process(Message) error
+}
+
+// MessageProcessorFunc is an adapter to allow to use
+// an ordinary functions as mq MessageProcessor.
+type MessageProcessorFunc func(message Message) error
+
+func (f MessageProcessorFunc) Process(m Message) error {
+	return f(m)
 }
 
 func (c *consumer) Start(ctx context.Context) error {
@@ -117,7 +129,7 @@ func (c *consumer) process(queueName string, body []byte) error {
 	}
 
 	defer metric.Duration(metric.Start())
-	err := c.fn(body)
+	err := c.messageProcessor.Process(body)
 
 	if err != nil {
 		metric.Failure()
