@@ -19,8 +19,8 @@ type Redis struct {
 
 type Option func(o *redis.Options)
 
-// WithTLS options allows to set TLS config to initiate
-// connection with Redis host with TLS transport protocol enabled.
+// WithTLS option allows to set TLS config to initiate
+// connection to Redis host with TLS transport protocol enabled.
 // Example configuration for tests, self-signed untrusted certs.
 //
 //	&tls.Config{
@@ -39,13 +39,12 @@ func WithTLS(cfg *tls.Config) Option {
 
 func Init(ctx context.Context, host string, opts ...Option) (*Redis, error) {
 	options, err := redis.ParseURL(host)
+	if err != nil {
+		return nil, err
+	}
 
 	for _, opt := range opts {
 		opt(options)
-	}
-
-	if err != nil {
-		return nil, err
 	}
 
 	client := redis.NewClient(options)
