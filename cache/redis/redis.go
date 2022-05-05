@@ -2,6 +2,7 @@ package redis
 
 import (
 	"context"
+	"crypto/tls"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -16,8 +17,27 @@ type Redis struct {
 	client *redis.Client
 }
 
-func Init(ctx context.Context, host string) (*Redis, error) {
+type Option func(o *redis.Options)
+
+// WithTLS options sets TLS config requirements to initiate
+// connection with Redis host with TLS transport protocol enabled.
+// Use WithTLS(false) to NOT skip TLS config verification for production usage.
+// Use WithTLS(true) to skip TLS config verification for testing usage (with self-signed untrusted certs).
+func WithTLS(insecureSkipVerify bool) Option {
+	return func(o *redis.Options) {
+		o.TLSConfig = &tls.Config{
+			InsecureSkipVerify: insecureSkipVerify,
+			MinVersion:         tls.VersionTLS12,
+		}
+	}
+}
+
+func Init(ctx context.Context, host string, opts ...Option) (*Redis, error) {
 	options, err := redis.ParseURL(host)
+
+	for _, opt := range opts {
+		opt(options)
+	}
 
 	if err != nil {
 		return nil, err
