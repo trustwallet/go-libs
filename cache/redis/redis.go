@@ -19,16 +19,21 @@ type Redis struct {
 
 type Option func(o *redis.Options)
 
-// WithTLS options sets TLS config requirements to initiate
+// WithTLS options allows to set TLS config to initiate
 // connection with Redis host with TLS transport protocol enabled.
-// Use WithTLS(false) to NOT skip TLS config verification for production usage.
-// Use WithTLS(true) to skip TLS config verification for testing usage (with self-signed untrusted certs).
-func WithTLS(insecureSkipVerify bool) Option {
+// Example configuration for tests, self-signed untrusted certs.
+//
+//	&tls.Config{
+// 		InsecureSkipVerify: true,
+//	}
+//
+// Example of configuration for production usage
+//	&tls.Config{
+//		MinVersion: tls.VersionTLS12,
+//	}
+func WithTLS(cfg *tls.Config) Option {
 	return func(o *redis.Options) {
-		o.TLSConfig = &tls.Config{
-			InsecureSkipVerify: insecureSkipVerify,
-			MinVersion:         tls.VersionTLS12,
-		}
+		o.TLSConfig = cfg
 	}
 }
 

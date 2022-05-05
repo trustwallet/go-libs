@@ -37,7 +37,7 @@ func TestInitWithTLS(t *testing.T) {
 	assert.NotNil(t, mr)
 	assert.Nil(t, err)
 
-	redis, err := Init(context.TODO(), fmt.Sprintf("rediss://%s", mr.Addr()), WithTLS(true))
+	redis, err := Init(context.TODO(), fmt.Sprintf("rediss://%s", mr.Addr()), WithTLS(&tls.Config{InsecureSkipVerify: true}))
 	assert.Nil(t, err)
 	assert.NotNil(t, redis)
 }
