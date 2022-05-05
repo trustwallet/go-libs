@@ -1,9 +1,19 @@
 package redis
 
 import (
+	"bytes"
 	"context"
+	"crypto/ecdsa"
+	"crypto/elliptic"
+	"crypto/rand"
+	"crypto/tls"
+	"crypto/x509"
+	"crypto/x509/pkix"
 	"encoding/json"
+	"encoding/pem"
 	"fmt"
+	"math/big"
+	"net"
 	"testing"
 	"time"
 
@@ -15,6 +25,21 @@ func TestInit(t *testing.T) {
 	i, err := redisInit(t)
 	assert.Nil(t, err)
 	assert.NotNil(t, i)
+}
+
+func TestInitWithTLS(t *testing.T) {
+	serverCert, err := generateCertificate()
+	assert.Nil(t, err)
+
+	mr, err := miniredis.RunTLS(&tls.Config{
+		Certificates: []tls.Certificate{*serverCert},
+	})
+	assert.NotNil(t, mr)
+	assert.Nil(t, err)
+
+	redis, err := Init(context.TODO(), fmt.Sprintf("rediss://%s", mr.Addr()), WithTLS(&tls.Config{InsecureSkipVerify: true}))
+	assert.Nil(t, err)
+	assert.NotNil(t, redis)
 }
 
 func TestRedis_Set(t *testing.T) {
@@ -146,4 +171,62 @@ func redisInit(t *testing.T) (*Redis, error) {
 	assert.NotNil(t, c)
 
 	return c, nil
+}
+
+// generateCertificate generates self-signed untrusted certificate.
+// WithTLS optiom should be used with insecureSkipVerify: true in tests.
+// In real world scenario, the certificate should be trusted (insecureSkipVerify: false).
+// See the proper and idiomatic way to generate a self signed certificate.
+// https://go.dev/src/crypto/tls/generate_cert.go
+func generateCertificate() (*tls.Certificate, error) {
+	priv, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+	if err != nil {
+		return nil, err
+	}
+
+	serialNumberLimit := new(big.Int).Lsh(big.NewInt(1), 128)
+	serialNumber, err := rand.Int(rand.Reader, serialNumberLimit)
+	if err != nil {
+		return nil, err
+	}
+
+	template := x509.Certificate{
+		SerialNumber: serialNumber,
+		Subject: pkix.Name{
+			Organization: []string{"Acme Co"},
+		},
+		IPAddresses:           []net.IP{net.IPv4(127, 0, 0, 1), net.IPv6loopback},
+		NotBefore:             time.Now(),
+		NotAfter:              time.Now().Add(1 * time.Hour),
+		KeyUsage:              x509.KeyUsageDigitalSignature,
+		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
+		BasicConstraintsValid: true,
+	}
+
+	derBytes, err := x509.CreateCertificate(rand.Reader, &template, &template, &priv.PublicKey, priv)
+	if err != nil {
+		return nil, err
+	}
+
+	certOut := new(bytes.Buffer)
+	if err := pem.Encode(certOut, &pem.Block{Type: "CERTIFICATE", Bytes: derBytes}); err != nil {
+		return nil, err
+	}
+
+	privBytes, err := x509.MarshalPKCS8PrivateKey(priv)
+	if err != nil {
+		return nil, err
+	}
+
+	keyOut := new(bytes.Buffer)
+	if err := pem.Encode(keyOut, &pem.Block{Type: "PRIVATE KEY", Bytes: privBytes}); err != nil {
+		return nil, err
+	}
+
+	serverCert, err := tls.X509KeyPair(certOut.Bytes(), keyOut.Bytes())
+	if err != nil {
+		return nil, err
+	}
+
+	return &serverCert, nil
 }
