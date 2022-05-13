@@ -36,6 +36,7 @@ type (
 	RpcError struct {
 		Code    int    `json:"code"`
 		Message string `json:"message"`
+		Data    string `json:"data"`
 	}
 )
 
