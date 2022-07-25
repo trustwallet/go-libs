@@ -107,6 +107,8 @@ func (w *worker) invoke() {
 		metric = &metrics.NullablePerformanceMetric{}
 	}
 
+	// test
+
 	defer metric.Duration(metric.Start())
 	err := w.workerFn()
 
