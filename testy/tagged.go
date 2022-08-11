@@ -28,25 +28,24 @@ var TaggedTestsEnvVar = "TEST_TAGS"
 // Run with:
 // 		env TEST_TAGS="unit,integration" go test ./...
 func TaggedTest(t *testing.T, testTag string) {
-	tags := getRuntimeTags()
-	if shouldRun := tags.empty() || tags.contains(testTag); !shouldRun {
-		t.SkipNow()
+	if !getRuntimeTags().contains(testTag) {
+		t.Skipf("skipping test '%s', requires '%s' tag", t.Name(), testTag)
 	}
 }
 
 // TaggedOrTest runs the test if any of the provided test tags matches one of the runtime tags.
 func TaggedOrTest(t *testing.T, testTags ...string) {
-	tags := getRuntimeTags()
-	if shouldRun := tags.empty() || tags.containsAny(testTags...); !shouldRun {
-		t.SkipNow()
+	if !getRuntimeTags().containsAny(testTags...) {
+		t.Skipf("skipping test '%s', requires at least one of the following tags: '%s'",
+			t.Name(), strings.Join(testTags, ", "))
 	}
 }
 
 // TaggedAndTest runs the test if all the provided test tags appear in runtime tags.
 func TaggedAndTest(t *testing.T, testTags ...string) {
-	tags := getRuntimeTags()
-	if shouldRun := tags.empty() || tags.containsAll(testTags...); !shouldRun {
-		t.SkipNow()
+	if !getRuntimeTags().containsAll(testTags...) {
+		t.Skipf("skipping test '%s', requires all of the following tags: '%s'",
+			t.Name(), strings.Join(testTags, ", "))
 	}
 }
 
@@ -89,8 +88,4 @@ func (rt runtimeTags) containsAll(targetTags ...string) bool {
 		}
 	}
 	return true
-}
-
-func (rt runtimeTags) empty() bool {
-	return len(rt) == 0
 }
