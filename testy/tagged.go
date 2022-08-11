@@ -19,30 +19,30 @@ const (
 //		env TEST_TAGS="unit" go test ./...
 var TaggedTestsEnvVar = "TEST_TAGS"
 
-// TaggedTest runs the test if the provided tag matches at least one runtime tag.
+// RequireTestTag runs the test if the provided tag matches at least one runtime tag.
 // Example:
 // 		func TestSomething(t *testing.T) {
-//    		TaggedTest(t, "unit")
+//    		RequireTestTag(t, "unit")
 //    		...
 // 		}
 // Run with:
 // 		env TEST_TAGS="unit,integration" go test ./...
-func TaggedTest(t *testing.T, testTag string) {
+func RequireTestTag(t *testing.T, testTag string) {
 	if !getRuntimeTags().contains(testTag) {
 		t.Skipf("skipping test '%s', requires '%s' tag", t.Name(), testTag)
 	}
 }
 
-// TaggedOrTest runs the test if any of the provided test tags matches one of the runtime tags.
-func TaggedOrTest(t *testing.T, testTags ...string) {
+// RequireOneOfTestTags runs the test if any of the provided test tags matches one of the runtime tags.
+func RequireOneOfTestTags(t *testing.T, testTags ...string) {
 	if !getRuntimeTags().containsAny(testTags...) {
 		t.Skipf("skipping test '%s', requires at least one of the following tags: '%s'",
 			t.Name(), strings.Join(testTags, ", "))
 	}
 }
 
-// TaggedAndTest runs the test if all the provided test tags appear in runtime tags.
-func TaggedAndTest(t *testing.T, testTags ...string) {
+// RequireAllTestTags runs the test if all the provided test tags appear in runtime tags.
+func RequireAllTestTags(t *testing.T, testTags ...string) {
 	if !getRuntimeTags().containsAll(testTags...) {
 		t.Skipf("skipping test '%s', requires all of the following tags: '%s'",
 			t.Name(), strings.Join(testTags, ", "))
