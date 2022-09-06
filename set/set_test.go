@@ -38,7 +38,7 @@ func TestSet(t *testing.T) {
 	assert.True(t, s.Contains("bar"))
 	assert.Equal(t, []string{"bar"}, s.ToSlice())
 
-	s.InitFromSlice([]string{"a", "b", "a", "c", "c", "c"})
+	s.ResetFromSlice([]string{"a", "b", "a", "c", "c", "c"})
 	assert.Equal(t, 3, s.Size())
 
 	s.Clear()

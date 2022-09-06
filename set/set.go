@@ -2,8 +2,6 @@ package set
 
 import (
 	"encoding/json"
-	"fmt"
-	"strconv"
 )
 
 type Set[T comparable] struct {
@@ -84,22 +82,8 @@ func (s *Set[T]) ToSlice() []T {
 	return sl
 }
 
-func (s *Set[T]) ToIntSlice() ([]int, error) {
-	sl := make([]int, 0, len(s.values))
-
-	for v := range s.values {
-		n, err := strconv.Atoi(fmt.Sprintf("%v", v))
-		if err != nil {
-			return nil, err
-		}
-
-		sl = append(sl, n)
-	}
-
-	return sl, nil
-}
-
-func (s *Set[T]) InitFromSlice(values []T) *Set[T] {
+// ResetFromSlice will clear all the set values and push all the provided values.
+func (s *Set[T]) ResetFromSlice(values []T) *Set[T] {
 	s.Clear()
 	for _, v := range values {
 		s.Add(v)
@@ -118,6 +102,6 @@ func (s *Set[T]) UnmarshalJSON(data []byte) error {
 	if err != nil {
 		return err
 	}
-	s.InitFromSlice(values)
+	s.ResetFromSlice(values)
 	return nil
 }

@@ -8,8 +8,8 @@ func Partition[T any](s []T, partitionSize int) [][]T {
 
 	partitions := make([][]T, 0, len(s)/partitionSize)
 
-	for partitionNumber := 0; ; partitionNumber++ {
-		left := partitionNumber * partitionSize
+	for {
+		left := len(partitions) * partitionSize
 		if left >= len(s) {
 			break
 		}
@@ -26,7 +26,6 @@ func Partition[T any](s []T, partitionSize int) [][]T {
 		if len(partition) == 0 {
 			continue
 		}
-
 		partitions = append(partitions, partition)
 	}
 
