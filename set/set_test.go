@@ -1,6 +1,7 @@
 package set
 
 import (
+	"encoding/json"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -38,11 +39,22 @@ func TestSet(t *testing.T) {
 	assert.True(t, s.Contains("bar"))
 	assert.Equal(t, []string{"bar"}, s.ToSlice())
 
-	s.ResetFromSlice([]string{"a", "b", "a", "c", "c", "c"})
-	assert.Equal(t, 3, s.Size())
-
 	s.Clear()
 	assert.False(t, s.Contains("bar"))
 	assert.Empty(t, s.ToSlice())
 	assert.Equal(t, 0, s.Size())
+
+	t.Run("unmarshal", func(t *testing.T) {
+		mySet := New[string]()
+		mySet.Add("whatever")
+
+		values := []string{"a", "b", "foo", "c", "b"}
+		jsb, _ := json.Marshal(values)
+		assert.NoError(t, json.Unmarshal(jsb, &mySet))
+		assert.Equal(t, 4, mySet.Size())
+		for _, v := range values {
+			assert.True(t, mySet.Contains(v))
+		}
+	})
+
 }

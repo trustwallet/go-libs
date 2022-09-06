@@ -82,15 +82,6 @@ func (s *Set[T]) ToSlice() []T {
 	return sl
 }
 
-// ResetFromSlice will clear all the set values and push all the provided values.
-func (s *Set[T]) ResetFromSlice(values []T) *Set[T] {
-	s.Clear()
-	for _, v := range values {
-		s.Add(v)
-	}
-	return s
-}
-
 func (s *Set[T]) MarshalJSON() ([]byte, error) {
 	return json.Marshal(s.ToSlice())
 }
@@ -102,6 +93,11 @@ func (s *Set[T]) UnmarshalJSON(data []byte) error {
 	if err != nil {
 		return err
 	}
-	s.ResetFromSlice(values)
+
+	s.Clear()
+	for _, v := range values {
+		s.Add(v)
+	}
+
 	return nil
 }

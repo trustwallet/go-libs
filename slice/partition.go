@@ -14,10 +14,7 @@ func Partition[T any](s []T, partitionSize int) [][]T {
 			break
 		}
 
-		right := left + partitionSize
-		if right > len(s) {
-			right = len(s)
-		}
+		right := Min(left+partitionSize, len(s))
 
 		part := s[left:right]
 		partition := make([]T, len(part))
