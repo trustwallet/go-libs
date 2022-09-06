@@ -1,4 +1,4 @@
-package slice
+package set
 
 import (
 	"testing"
@@ -8,7 +8,7 @@ import (
 
 func TestContains(t *testing.T) {
 	t.Run("int", func(t *testing.T) {
-		u := NewUnique[int]()
+		u := NewOrderedSet[int]()
 		u.Add(1)
 		u.Add(5)
 		u.Add(5)
@@ -17,7 +17,7 @@ func TestContains(t *testing.T) {
 	})
 
 	t.Run("str", func(t *testing.T) {
-		u := NewUnique[string]()
+		u := NewOrderedSet[string]()
 		u.Add("foo")
 		u.Add("bar")
 		u.Add("baz")
