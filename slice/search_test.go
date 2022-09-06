@@ -17,9 +17,9 @@ func TestSliceContains(t *testing.T) {
 func TestValueAt(t *testing.T) {
 	t.Run("logic", func(t *testing.T) {
 		type args struct {
-			idx      int
-			values   []string
-			fallback string
+			idx          int
+			values       []string
+			defaultValue string
 		}
 
 		tests := []struct {
@@ -29,39 +29,39 @@ func TestValueAt(t *testing.T) {
 		}{
 			{
 				name: "empty slice negative index",
-				args: args{idx: -1, values: nil, fallback: ""},
+				args: args{idx: -1, values: nil, defaultValue: ""},
 				want: "",
 			},
 			{
 				name: "empty slice zero index",
-				args: args{idx: 0, values: nil, fallback: ""},
+				args: args{idx: 0, values: nil, defaultValue: ""},
 				want: "",
 			},
 			{
 				name: "index above bounds",
-				args: args{idx: 4, values: []string{"a", "b", "c", "d"}, fallback: "not found"},
+				args: args{idx: 4, values: []string{"a", "b", "c", "d"}, defaultValue: "not found"},
 				want: "not found",
 			},
 			{
 				name: "negative index",
-				args: args{idx: -1, values: []string{"a", "b", "c", "d"}, fallback: "not found"},
+				args: args{idx: -1, values: []string{"a", "b", "c", "d"}, defaultValue: "not found"},
 				want: "not found",
 			},
 			{
 				name: "zero index",
-				args: args{idx: 0, values: []string{"a", "b", "c", "d"}, fallback: "not found"},
+				args: args{idx: 0, values: []string{"a", "b", "c", "d"}, defaultValue: "not found"},
 				want: "a",
 			},
 			{
 				name: "fourth element",
-				args: args{idx: 3, values: []string{"a", "b", "c", "d"}, fallback: "not found"},
+				args: args{idx: 3, values: []string{"a", "b", "c", "d"}, defaultValue: "not found"},
 				want: "d",
 			},
 		}
 
 		for _, tt := range tests {
 			t.Run(tt.name, func(t *testing.T) {
-				if got := ValueAt(tt.args.idx, tt.args.values, tt.args.fallback); got != tt.want {
+				if got := ValueAt(tt.args.idx, tt.args.values, tt.args.defaultValue); got != tt.want {
 					t.Errorf("StrSliceValueAt() = %v, want %v", got, tt.want)
 				}
 			})

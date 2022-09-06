@@ -13,10 +13,10 @@ func Contains[T comparable](sl []T, val T) bool {
 	return false
 }
 
-// ValueAt returns if exists values[idx] else the fallback value.
-func ValueAt[T any](idx int, values []T, fallback T) T {
+// ValueAt returns if exists values[idx] else the default value.
+func ValueAt[T any](idx int, values []T, defaultValue T) T {
 	if (idx < 0) || (idx >= len(values)) {
-		return fallback
+		return defaultValue
 	}
 
 	return values[idx]
