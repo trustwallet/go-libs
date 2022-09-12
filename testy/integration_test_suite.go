@@ -1,17 +1,24 @@
 package testy
 
 import (
+	"context"
+	"log"
+	"os"
+
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
-	"log"
-	"os"
+
+	"github.com/trustwallet/go-libs/cache/redis"
 )
 
-const testDbDsnEnvKey = "TEST_DB_DSN"
+const (
+	testDbDsnEnvKey    = "TEST_DB_DSN"
+	testRedisUrlEnvKey = "TEST_REDIS_URL"
+)
 
 // IntegrationTestSuite is an integration testing suite with methods
-// for retrieving the real database connection.
+// for retrieving the real database and redis connection.
 // Just absorb the built-in IntegrationTestSuite by defining your own suite,
 // you can also use it along with `testify`'s suite.
 // Example:
@@ -21,19 +28,32 @@ const testDbDsnEnvKey = "TEST_DB_DSN"
 //		IntegrationTestSuite
 //	}
 type IntegrationTestSuite struct {
-	db *gorm.DB
+	db    *gorm.DB
+	redis *redis.Redis
 }
 
 // GetDb retrieves the current *gorm.DB connection, and it's lazy loaded.
-func (b *IntegrationTestSuite) GetDb() *gorm.DB {
-	if b.db == nil {
+func (s *IntegrationTestSuite) GetDb() *gorm.DB {
+	if s.db == nil {
 		db, err := NewIntegrationTestDb()
 		if err != nil {
 			log.Fatalln("can not connect integration test db", err)
 		}
-		b.db = db
+		s.db = db
 	}
-	return b.db
+	return s.db
+}
+
+// GetRedis retrieves the current *redis.Redis connection, and it's lazy loaded.
+func (s *IntegrationTestSuite) GetRedis() *redis.Redis {
+	if s.redis == nil {
+		r, err := NewIntegrationTestRedis()
+		if err != nil {
+			log.Fatalln("can not connect integration redis db", err)
+		}
+		s.redis = r
+	}
+	return s.redis
 }
 
 // NewIntegrationTestDb creates a *gorm.DB connection to a real database which is only for integration test.
@@ -44,15 +64,21 @@ func NewIntegrationTestDb() (*gorm.DB, error) {
 		log.Fatalln(testDbDsnEnvKey, "env not found")
 	}
 
-	db, err := gorm.Open(
+	return gorm.Open(
 		postgres.Open(dsn),
 		&gorm.Config{
 			Logger:                 logger.Default.LogMode(logger.Info),
 			SkipDefaultTransaction: true,
 		},
 	)
-	if err != nil {
-		return nil, err
+}
+
+// NewIntegrationTestRedis creates a *redis.Redis connection to a real redis pool which is only for integration test.
+// The url for test redis connection should be set by defining the TEST_REDIS_URL env.
+func NewIntegrationTestRedis() (*redis.Redis, error) {
+	url, ok := os.LookupEnv(testRedisUrlEnvKey)
+	if !ok {
+		log.Fatalln(testRedisUrlEnvKey, "env not found")
 	}
-	return db, nil
+	return redis.Init(context.Background(), url)
 }
