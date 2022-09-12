@@ -14,6 +14,7 @@ import (
 
 // Deprecated
 // SetupGracefulShutdown blocks execution until interruption command sent
+// Use httplib.Server instead
 func SetupGracefulShutdown(ctx context.Context, port string, engine *gin.Engine) {
 	server := &http.Server{
 		Addr:    ":" + port,
