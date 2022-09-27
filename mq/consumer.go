@@ -28,6 +28,7 @@ type consumer struct {
 type Consumer interface {
 	Start(ctx context.Context) error
 	Reconnect(ctx context.Context) error
+	HealthCheck() error
 }
 
 type MessageProcessor interface {
