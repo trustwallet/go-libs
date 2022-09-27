@@ -170,3 +170,11 @@ func (c *consumer) getRemainingRetries(delivery amqp.Delivery) int32 {
 
 	return remainingRetries
 }
+
+func (c *consumer) HealthCheck() error {
+	if err := c.client.HealthCheck(); err != nil {
+		return fmt.Errorf("client health check: %v", err)
+	}
+
+	return nil
+}
