@@ -2,6 +2,7 @@ package mq
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"sync"
 	"time"
@@ -222,4 +223,12 @@ func publishWithConfig(amqpChan *amqp.Channel, exchange ExchangeName, key Exchan
 
 type ConnectionClient interface {
 	Reconnect(ctx context.Context) error
+}
+
+func (c *Client) HealthCheck() error {
+	if c.conn.IsClosed() {
+		return errors.New("connection is closed")
+	}
+
+	return nil
 }

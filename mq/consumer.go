@@ -28,6 +28,7 @@ type consumer struct {
 type Consumer interface {
 	Start(ctx context.Context) error
 	Reconnect(ctx context.Context) error
+	HealthCheck() error
 }
 
 type MessageProcessor interface {
@@ -169,4 +170,12 @@ func (c *consumer) getRemainingRetries(delivery amqp.Delivery) int32 {
 	}
 
 	return remainingRetries
+}
+
+func (c *consumer) HealthCheck() error {
+	if err := c.client.HealthCheck(); err != nil {
+		return fmt.Errorf("client health check: %v", err)
+	}
+
+	return nil
 }
