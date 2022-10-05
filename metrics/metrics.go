@@ -24,7 +24,7 @@ type PerformanceMetric interface {
 
 type performanceMetric struct {
 	executionStarted         *prometheus.GaugeVec
-	executionDurationSeconds *prometheus.GaugeVec
+	executionDurationSeconds *prometheus.HistogramVec
 	executionSucceededTotal  *prometheus.CounterVec
 	executionFailedTotal     *prometheus.CounterVec
 }
@@ -36,22 +36,22 @@ func NewPerformanceMetric(namespace string, labels prometheus.Labels, reg promet
 		Help:      "Last Unix time when execution started.",
 	}, nil)
 
-	executionDurationSeconds := prometheus.NewGaugeVec(prometheus.GaugeOpts{
+	executionDurationSeconds := prometheus.NewHistogramVec(prometheus.HistogramOpts{
 		Namespace: namespace,
 		Name:      executionDurationSecondsKey,
-		Help:      "Duration of the last execution.",
+		Help:      "Duration of the executions.",
 	}, nil)
 
 	executionSucceededTotal := prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: namespace,
 		Name:      executionSucceededTotalKey,
-		Help:      "Total number of the executions wich succeeded.",
+		Help:      "Total number of the executions which succeeded.",
 	}, nil)
 
 	executionFailedTotal := prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: namespace,
 		Name:      executionFailedTotalKey,
-		Help:      "Total number of the executions wich failed.",
+		Help:      "Total number of the executions which failed.",
 	}, nil)
 
 	Register(labels, reg, executionStarted, executionDurationSeconds, executionSucceededTotal, executionFailedTotal)
@@ -72,7 +72,7 @@ func (m *performanceMetric) Start() time.Time {
 
 func (m *performanceMetric) Duration(start time.Time) {
 	duration := time.Since(start)
-	m.executionDurationSeconds.WithLabelValues().Set(duration.Seconds())
+	m.executionDurationSeconds.WithLabelValues().Observe(duration.Seconds())
 }
 
 func (m *performanceMetric) Success() {
@@ -88,8 +88,8 @@ func (m *performanceMetric) Failure() {
 type NullablePerformanceMetric struct{}
 
 func (NullablePerformanceMetric) Start() time.Time {
-	return time.Now()
+	return time.Time{}
 }
-func (NullablePerformanceMetric) Duration(start time.Time) {}
-func (NullablePerformanceMetric) Success()                 {}
-func (NullablePerformanceMetric) Failure()                 {}
+func (NullablePerformanceMetric) Duration(_ time.Time) {}
+func (NullablePerformanceMetric) Success()             {}
+func (NullablePerformanceMetric) Failure()             {}
