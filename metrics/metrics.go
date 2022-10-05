@@ -88,6 +88,7 @@ func (m *performanceMetric) Failure() {
 type NullablePerformanceMetric struct{}
 
 func (NullablePerformanceMetric) Start() time.Time {
+	// NullablePerformanceMetric is a no-op, so returning empty value
 	return time.Time{}
 }
 func (NullablePerformanceMetric) Duration(_ time.Time) {}
