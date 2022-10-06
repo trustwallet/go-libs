@@ -65,17 +65,10 @@ func Connect(url string, options ...Option) (*Client, error) {
 }
 
 func (c *Client) Close() error {
-	if c.amqpChan != nil {
-		err := c.amqpChan.Close()
-		if err != nil {
-			log.Errorf("Close amqp channel: %v", err)
-		}
-	}
-
 	if c.conn != nil && !c.conn.IsClosed() {
 		err := c.conn.Close()
 		if err != nil {
-			return err
+			return fmt.Errorf("close connection: %v", err)
 		}
 	}
 
@@ -133,57 +126,89 @@ func (c *Client) ListenConnectionAsync(ctx context.Context, wg *sync.WaitGroup) 
 	}()
 }
 
+func (c *Client) initNotifyCloseListeners() (<-chan *amqp.Error, <-chan *amqp.Error) {
+	return c.conn.NotifyClose(make(chan *amqp.Error)),
+		c.amqpChan.NotifyClose(make(chan *amqp.Error))
+}
+
 func (c *Client) ListenConnection(ctx context.Context) error {
+	log.Info("start listen connection")
+
+	connErrCh, chanErrCh := c.initNotifyCloseListeners()
+
 	for {
 		select {
+
 		case <-ctx.Done():
 			err := c.Close()
 			if err != nil {
 				return fmt.Errorf("close mq: %v", err)
 			}
 			return nil
-		default:
-			err := c.checkConnection(ctx)
+
+		case err, ok := <-chanErrCh:
+			if !ok {
+				// stop receiving from this channel to avoid multiple reads from closed channel before reconnected
+				chanErrCh = nil
+			}
+
+			log.Info("received amqp channel close notification")
 			if err != nil {
+				log.Errorf("amqp channel closed with error: %v", err)
+			}
+
+			if c.conn.IsClosed() {
+				break
+			}
+
+			// close connection to trigger reconnect logic
+			// it will send notification to connErrCh
+			if err := c.conn.Close(); err != nil {
+				return fmt.Errorf("close connection: %v", err)
+			}
+
+		case err := <-connErrCh:
+			log.Info("received connection close notification")
+			if err != nil {
+				log.Errorf("connection closed with error: %v", err)
+			}
+
+			if err := c.reconnectWithRetry(ctx); err != nil {
 				return fmt.Errorf("check mq connection: %v", err)
 			}
 
-			time.Sleep(time.Second * 10)
+			// reassign listeners to new connection and channel
+			connErrCh, chanErrCh = c.initNotifyCloseListeners()
 		}
 	}
 }
 
-func (c *Client) checkConnection(ctx context.Context) error {
-	if c.conn.IsClosed() {
-		log.Warn("MQ connection lost")
+func (c *Client) reconnectWithRetry(ctx context.Context) error {
+	for i := 0; i < reconnectionAttemptsNum; i++ {
+		time.Sleep(reconnectionTimeout)
 
-		for i := 0; i < reconnectionAttemptsNum; i++ {
-			time.Sleep(reconnectionTimeout)
+		log.Info("Connecting to MQ... Attempt ", i+1)
 
-			log.Info("Connecting to MQ... Attempt ", i+1)
-
-			err := c.reconnect()
-			if err != nil {
-				log.Errorf("Reconnect: %v", err)
-				continue
-			}
-
-			for _, connClient := range c.connClients {
-				err = connClient.Reconnect(ctx)
-				if err != nil {
-					log.Errorf("Reconnect for %+v: %v", connClient, err)
-					continue
-				}
-			}
-
-			log.Info("MQ connection established")
-			return nil
+		err := c.reconnect()
+		if err != nil {
+			log.Errorf("Reconnect: %v", err)
+			continue
 		}
 
-		return fmt.Errorf("failed to establish MQ connection")
+		for _, connClient := range c.connClients {
+			err = connClient.Reconnect(ctx)
+			if err != nil {
+				log.Errorf("Reconnect for %+v: %v", connClient, err)
+				continue
+			}
+		}
+
+		log.Info("MQ connection established")
+		return nil
 	}
 
-	return nil
+	return fmt.Errorf("failed to establish MQ connection")
+
 }
 
 func (c *Client) reconnect() error {
