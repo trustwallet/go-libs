@@ -16,10 +16,10 @@ const (
 type Collectors map[string]prometheus.Collector
 
 type PerformanceMetric interface {
-	Start() time.Time
-	Duration(start time.Time)
-	Success()
-	Failure()
+	Start(labelValues ...string) time.Time
+	Duration(start time.Time, labelValues ...string)
+	Success(labelValues ...string)
+	Failure(labelValues ...string)
 }
 
 type performanceMetric struct {
@@ -29,32 +29,37 @@ type performanceMetric struct {
 	executionFailedTotal     *prometheus.CounterVec
 }
 
-func NewPerformanceMetric(namespace string, labels prometheus.Labels, reg prometheus.Registerer) PerformanceMetric {
+func NewPerformanceMetric(
+	namespace string,
+	labelNames []string,
+	staticLabels prometheus.Labels,
+	reg prometheus.Registerer,
+) PerformanceMetric {
 	executionStarted := prometheus.NewGaugeVec(prometheus.GaugeOpts{
 		Namespace: namespace,
 		Name:      executionStartedKey,
 		Help:      "Last Unix time when execution started.",
-	}, nil)
+	}, labelNames)
 
 	executionDurationSeconds := prometheus.NewHistogramVec(prometheus.HistogramOpts{
 		Namespace: namespace,
 		Name:      executionDurationSecondsKey,
 		Help:      "Duration of the executions.",
-	}, nil)
+	}, labelNames)
 
 	executionSucceededTotal := prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: namespace,
 		Name:      executionSucceededTotalKey,
 		Help:      "Total number of the executions which succeeded.",
-	}, nil)
+	}, labelNames)
 
 	executionFailedTotal := prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: namespace,
 		Name:      executionFailedTotalKey,
 		Help:      "Total number of the executions which failed.",
-	}, nil)
+	}, labelNames)
 
-	Register(labels, reg, executionStarted, executionDurationSeconds, executionSucceededTotal, executionFailedTotal)
+	Register(staticLabels, reg, executionStarted, executionDurationSeconds, executionSucceededTotal, executionFailedTotal)
 
 	return &performanceMetric{
 		executionStarted:         executionStarted,
@@ -64,33 +69,33 @@ func NewPerformanceMetric(namespace string, labels prometheus.Labels, reg promet
 	}
 }
 
-func (m *performanceMetric) Start() time.Time {
+func (m *performanceMetric) Start(labelValues ...string) time.Time {
 	start := time.Now()
-	m.executionStarted.WithLabelValues().SetToCurrentTime()
+	m.executionStarted.WithLabelValues(labelValues...).SetToCurrentTime()
 	return start
 }
 
-func (m *performanceMetric) Duration(start time.Time) {
+func (m *performanceMetric) Duration(start time.Time, labelValues ...string) {
 	duration := time.Since(start)
-	m.executionDurationSeconds.WithLabelValues().Observe(duration.Seconds())
+	m.executionDurationSeconds.WithLabelValues(labelValues...).Observe(duration.Seconds())
 }
 
-func (m *performanceMetric) Success() {
-	m.executionSucceededTotal.WithLabelValues().Inc()
-	m.executionFailedTotal.WithLabelValues().Add(0)
+func (m *performanceMetric) Success(labelValues ...string) {
+	m.executionSucceededTotal.WithLabelValues(labelValues...).Inc()
+	m.executionFailedTotal.WithLabelValues(labelValues...).Add(0)
 }
 
-func (m *performanceMetric) Failure() {
-	m.executionFailedTotal.WithLabelValues().Inc()
-	m.executionSucceededTotal.WithLabelValues().Add(0)
+func (m *performanceMetric) Failure(labelValues ...string) {
+	m.executionFailedTotal.WithLabelValues(labelValues...).Inc()
+	m.executionSucceededTotal.WithLabelValues(labelValues...).Add(0)
 }
 
 type NullablePerformanceMetric struct{}
 
-func (NullablePerformanceMetric) Start() time.Time {
+func (NullablePerformanceMetric) Start(_ ...string) time.Time {
 	// NullablePerformanceMetric is a no-op, so returning empty value
 	return time.Time{}
 }
-func (NullablePerformanceMetric) Duration(_ time.Time) {}
-func (NullablePerformanceMetric) Success()             {}
-func (NullablePerformanceMetric) Failure()             {}
+func (NullablePerformanceMetric) Duration(_ time.Time, _ ...string) {}
+func (NullablePerformanceMetric) Success(_ ...string)               {}
+func (NullablePerformanceMetric) Failure(_ ...string)               {}
