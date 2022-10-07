@@ -61,8 +61,15 @@ func TestMetricsMiddleware(t *testing.T) {
 
 		require.Len(t, metricFamily.Metric, len(expectedLabelCounterMap))
 		for _, metric := range metricFamily.Metric {
-			require.Len(t, metric.Label, 1)
-			require.Equal(t, float64(expectedLabelCounterMap[*metric.Label[0].Value]), *metric.Counter.Value)
+			require.Len(t, metric.Label, 2)
+			var chosenLabelIdx = -1
+			for idx, label := range metric.Label {
+				if *label.Name == labelPath {
+					chosenLabelIdx = idx
+				}
+			}
+			require.NotEqual(t, -1, chosenLabelIdx)
+			require.Equal(t, float64(expectedLabelCounterMap[*metric.Label[chosenLabelIdx].Value]), *metric.Counter.Value)
 		}
 	}
 }

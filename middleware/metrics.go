@@ -7,26 +7,32 @@ import (
 	"github.com/trustwallet/go-libs/metrics"
 )
 
-func MetricsMiddleware(namespace string, labels prometheus.Labels, reg prometheus.Registerer) gin.HandlerFunc {
-	perfMetric := metrics.NewPerformanceMetric(namespace, []string{"request_path"}, labels, reg)
-	return func(c *gin.Context) {
-		matchedRoute := c.FullPath()
+const labelPath = "path"
+const labelMethod = "method"
 
-		// if route not found call next and immediately return
-		if matchedRoute == "" {
+func MetricsMiddleware(namespace string, labels prometheus.Labels, reg prometheus.Registerer) gin.HandlerFunc {
+	perfMetric := metrics.NewPerformanceMetric(namespace, []string{labelPath, labelMethod}, labels, reg)
+	return func(c *gin.Context) {
+		path := c.FullPath()
+		method := c.Request.Method
+
+		// route not found, call next and immediately return
+		if path == "" {
 			c.Next()
 			return
 		}
 
-		startTime := perfMetric.Start(matchedRoute)
+		labelValues := []string{path, method}
+
+		startTime := perfMetric.Start(labelValues...)
 		c.Next()
-		perfMetric.Duration(startTime, matchedRoute)
+		perfMetric.Duration(startTime, labelValues...)
 
 		statusCode := c.Writer.Status()
 		if successfulHttpStatusCode(statusCode) {
-			perfMetric.Success(matchedRoute)
+			perfMetric.Success(labelValues...)
 		} else {
-			perfMetric.Failure(matchedRoute)
+			perfMetric.Failure(labelValues...)
 		}
 	}
 }
