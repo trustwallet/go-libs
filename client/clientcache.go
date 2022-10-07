@@ -24,28 +24,17 @@ type memCache struct {
 }
 
 func (r *Request) PostWithCache(result interface{}, path string, body interface{}, cache time.Duration) error {
-	key := r.generateKey(path, nil, body)
-	err := memoryCache.getCache(key, result)
-	if err == nil {
-		return nil
-	}
-
-	err = r.Post(result, path, body)
-	if err != nil {
-		return err
-	}
-
-	return memoryCache.setCache(key, result, cache)
+	return r.PostWithCacheAndContext(context.Background(), result, path, body, cache)
 }
 
-func (r *Request) PostWithCacheAndContext(result interface{}, path string, body interface{}, cache time.Duration, ctx context.Context) error {
+func (r *Request) PostWithCacheAndContext(ctx context.Context, result interface{}, path string, body interface{}, cache time.Duration) error {
 	key := r.generateKey(path, nil, body)
 	err := memoryCache.getCache(key, result)
 	if err == nil {
 		return nil
 	}
 
-	err = r.PostWithContext(result, path, body, ctx)
+	err = r.PostWithContext(ctx, result, path, body)
 	if err != nil {
 		return err
 	}
@@ -54,28 +43,17 @@ func (r *Request) PostWithCacheAndContext(result interface{}, path string, body 
 }
 
 func (r *Request) GetWithCache(result interface{}, path string, query url.Values, cache time.Duration) error {
-	key := r.generateKey(path, query, nil)
-	err := memoryCache.getCache(key, result)
-	if err == nil {
-		return nil
-	}
-
-	err = r.Get(result, path, query)
-	if err != nil {
-		return err
-	}
-
-	return memoryCache.setCache(key, result, cache)
+	return r.GetWithCacheAndContext(context.Background(), result, path, query, cache)
 }
 
-func (r *Request) GetWithCacheAndContext(result interface{}, path string, query url.Values, cache time.Duration, ctx context.Context) error {
+func (r *Request) GetWithCacheAndContext(ctx context.Context, result interface{}, path string, query url.Values, cache time.Duration) error {
 	key := r.generateKey(path, query, nil)
 	err := memoryCache.getCache(key, result)
 	if err == nil {
 		return nil
 	}
 
-	err = r.Get(result, path, query)
+	err = r.GetWithContext(ctx, result, path, query)
 	if err != nil {
 		return err
 	}

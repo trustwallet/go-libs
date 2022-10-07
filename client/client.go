@@ -122,23 +122,17 @@ func (r *Request) AddHeader(key, value string) {
 	r.Headers[key] = value
 }
 
-func (r *Request) GetWithContext(result interface{}, path string, query url.Values, ctx context.Context) error {
+func (r *Request) GetWithContext(ctx context.Context, result interface{}, path string, query url.Values) error {
 	uri := r.GetURL(path, query)
-	return r.Execute("GET", uri, nil, result, ctx)
+	return r.Execute(ctx, "GET", uri, nil, result)
 }
 
 func (r *Request) Get(result interface{}, path string, query url.Values) error {
-	uri := r.GetURL(path, query)
-	return r.Execute("GET", uri, nil, result, context.Background())
+	return r.GetWithContext(context.Background(), result, path, query)
 }
 
 func (r *Request) Post(result interface{}, path string, body interface{}) error {
-	buf, err := GetBody(body)
-	if err != nil {
-		return err
-	}
-	uri := r.GetBase(path)
-	return r.Execute("POST", uri, buf, result, context.Background())
+	return r.PostWithContext(context.Background(), result, path, body)
 }
 
 func (r *Request) GetRaw(path string, query url.Values) ([]byte, error) {
@@ -156,16 +150,16 @@ func (r *Request) PostRaw(path string, body interface{}) ([]byte, error) {
 	return r.ExecuteRaw(context.Background(), "POST", uri, buf)
 }
 
-func (r *Request) PostWithContext(result interface{}, path string, body interface{}, ctx context.Context) error {
+func (r *Request) PostWithContext(ctx context.Context, result interface{}, path string, body interface{}) error {
 	buf, err := GetBody(body)
 	if err != nil {
 		return err
 	}
 	uri := r.GetBase(path)
-	return r.Execute("POST", uri, buf, result, ctx)
+	return r.Execute(ctx, "POST", uri, buf, result)
 }
 
-func (r *Request) Execute(method string, url string, body io.Reader, result interface{}, ctx context.Context) error {
+func (r *Request) Execute(ctx context.Context, method string, url string, body io.Reader, result interface{}) error {
 	req, err := http.NewRequest(method, url, body)
 	if err != nil {
 		return err
@@ -200,6 +194,7 @@ func (r *Request) ExecuteRaw(ctx context.Context, method string, url string, bod
 
 	return r.execute(ctx, req)
 }
+
 func (r *Request) execute(ctx context.Context, req *http.Request) ([]byte, error) {
 	c := r.HttpClient
 
