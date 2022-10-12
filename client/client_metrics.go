@@ -6,19 +6,19 @@ import (
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 const (
+	namespaceHttpClient = "httpclient"
+
 	metricNameRequestDurationSeconds = "request_duration_seconds"
 	metricNameRequestTotal           = "request_total"
-	labelNameUrl                     = "url"
-	labelNameMethod                  = "method"
-	labelNameStatus                  = "status"
+
+	labelNameUrl    = "url"
+	labelNameMethod = "method"
+	labelNameStatus = "status"
 
 	labelValueErr = "error"
-
-	namespaceHttpClient = "httpclient"
 )
 
 type httpClientMetrics struct {
@@ -70,7 +70,6 @@ func (metric *httpClientMetrics) Describe(descs chan<- *prometheus.Desc) {
 func (metric *httpClientMetrics) Collect(metrics chan<- prometheus.Metric) {
 	metric.durationSeconds.Collect(metrics)
 	metric.requestTotal.Collect(metrics)
-	promhttp.Handler()
 }
 
 func getHttpReqMetricUrl(req *http.Request) string {
