@@ -37,7 +37,7 @@ func createTestContext(t *testing.T, w *httptest.ResponseRecorder, rawURL string
 
 func TestHmacVerifier(t *testing.T) {
 	verifier := NewHmacSha256Verifier(
-		[][]byte{[]byte("some-key"), []byte("some-other-key"), []byte("k")},
+		[]string{"some-key", "some-other-key", "k"},
 	)
 
 	someRouteHandler := func(c *gin.Context) { c.Status(http.StatusOK) }
@@ -85,7 +85,7 @@ func TestHmacVerifier(t *testing.T) {
 
 	t.Run("bad request when signature cannot be extracted", func(t *testing.T) {
 		h := NewHmacSha256Verifier(
-			[][]byte{[]byte("some-key"), []byte("some-other-key"), []byte("k")},
+			[]string{"some-key", "some-other-key", "k"},
 		).WithSigFunction(func(c *gin.Context) (string, error) {
 			return "", errors.New("some error")
 		}).SignedHandler(someRouteHandler, func(c *gin.Context) (string, error) {
@@ -100,7 +100,7 @@ func TestHmacVerifier(t *testing.T) {
 
 	t.Run("bad request when plaintext cannot be extracted", func(t *testing.T) {
 		h := NewHmacSha256Verifier(
-			[][]byte{[]byte("some-key"), []byte("some-other-key"), []byte("k")},
+			[]string{"some-key", "some-other-key", "k"},
 		).SignedHandler(someRouteHandler, func(c *gin.Context) (string, error) {
 			return "", errors.New("plaintext cannot be extracted")
 		})
@@ -113,7 +113,7 @@ func TestHmacVerifier(t *testing.T) {
 
 	t.Run("override signature encoder", func(t *testing.T) {
 		h := NewHmacSha256Verifier(
-			[][]byte{[]byte("some-key"), []byte("some-other-key"), []byte("k")},
+			[]string{"some-key", "some-other-key", "k"},
 		).WithSigEncoder(func(b []byte) string {
 			return "some-static-sig"
 		}).SignedHandler(someRouteHandler, func(c *gin.Context) (string, error) {
@@ -132,9 +132,9 @@ func TestHmacVerifier(t *testing.T) {
 func BenchmarkHmacVerifier_verifySignature(b *testing.B) {
 	const msgByteSize = 512
 	const numValidKeys = 100
-	validKeys := make([][]byte, numValidKeys)
+	validKeys := make([]string, numValidKeys)
 	for i := range validKeys {
-		validKeys[i] = []byte(fmt.Sprintf("key-%d", i))
+		validKeys[i] = fmt.Sprintf("key-%d", i)
 	}
 	verifier := NewHmacSha256Verifier(validKeys)
 

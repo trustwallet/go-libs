@@ -23,9 +23,14 @@ type HmacSha256Verifier struct {
 	sigEncoder func([]byte) string
 }
 
-func NewHmacSha256Verifier(keys [][]byte) *HmacSha256Verifier {
+func NewHmacSha256Verifier(keys []string) *HmacSha256Verifier {
+	keysB := make([][]byte, len(keys))
+	for i := range keys {
+		keysB[i] = []byte(keys[i])
+	}
+
 	return &HmacSha256Verifier{
-		keys: keys,
+		keys: keysB,
 		sigFN: func(c *gin.Context) (string, error) {
 			return c.GetHeader(HmacDefaultSignatureHeader), nil
 		},
