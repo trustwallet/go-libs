@@ -17,20 +17,14 @@ type StrFromCtx func(c *gin.Context) (string, error)
 // HmacDefaultSignatureHeader defines the default header name where clients should place the signature.
 const HmacDefaultSignatureHeader = "X-REQ-SIG"
 
-type HmacSha256Verifier struct {
+type HmacVerifier struct {
 	keys       [][]byte
 	sigFN      StrFromCtx
 	sigEncoder func([]byte) string
 }
 
-func NewHmacSha256Verifier(keys []string) *HmacSha256Verifier {
-	keysB := make([][]byte, len(keys))
-	for i := range keys {
-		keysB[i] = []byte(keys[i])
-	}
-
-	return &HmacSha256Verifier{
-		keys: keysB,
+func NewHmacVerifier(options ...func(verifier *HmacVerifier)) *HmacVerifier {
+	verifier := &HmacVerifier{
 		sigFN: func(c *gin.Context) (string, error) {
 			return c.GetHeader(HmacDefaultSignatureHeader), nil
 		},
@@ -38,23 +32,41 @@ func NewHmacSha256Verifier(keys []string) *HmacSha256Verifier {
 			return base64.StdEncoding.EncodeToString(b)
 		},
 	}
+
+	for _, o := range options {
+		o(verifier)
+	}
+	return verifier
 }
 
-// WithSigFunction can be used to override signature location.
+// WithHmacVerifierSigKeys is used to set the valid signature keys.
+func WithHmacVerifierSigKeys(keys ...string) func(*HmacVerifier) {
+	return func(v *HmacVerifier) {
+		keysB := make([][]byte, len(keys))
+		for i := range keys {
+			keysB[i] = []byte(keys[i])
+		}
+		v.keys = keysB
+	}
+}
+
+// WithHmacVerifierSigFunction can be used to override signature location.
 // As a query string param for example:
 //
-//	func(c *gin.Context) (string, error) {
+//	sigFn := func(c *gin.Context) (string, error) {
 //		return c.Query("sig"), nil
 //	}
-func (v *HmacSha256Verifier) WithSigFunction(sigFN StrFromCtx) *HmacSha256Verifier {
-	v.sigFN = sigFN
-	return v
+func WithHmacVerifierSigFunction(sigFN StrFromCtx) func(*HmacVerifier) {
+	return func(v *HmacVerifier) {
+		v.sigFN = sigFN
+	}
 }
 
-// WithSigEncoder can be used to override default signature encoder (base64).
-func (v *HmacSha256Verifier) WithSigEncoder(e func(b []byte) string) *HmacSha256Verifier {
-	v.sigEncoder = e
-	return v
+// WithHmacVerifierSigEncoder can be used to override default signature encoder (base64).
+func WithHmacVerifierSigEncoder(e func(b []byte) string) func(*HmacVerifier) {
+	return func(v *HmacVerifier) {
+		v.sigEncoder = e
+	}
 }
 
 // SignedHandler can be used to construct signed handlers.
@@ -64,7 +76,7 @@ func (v *HmacSha256Verifier) WithSigEncoder(e func(b []byte) string) *HmacSha256
 //	func(c *gin.Context) (string, error) {
 //		return c.Query("asset") + ":" + c.Query("coin"), nil
 //	}
-func (v *HmacSha256Verifier) SignedHandler(h gin.HandlerFunc, plaintextFN StrFromCtx) gin.HandlerFunc {
+func (v *HmacVerifier) SignedHandler(h gin.HandlerFunc, plaintextFN StrFromCtx) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		plaintext, err := plaintextFN(c)
 		if err != nil {
@@ -87,7 +99,7 @@ func (v *HmacSha256Verifier) SignedHandler(h gin.HandlerFunc, plaintextFN StrFro
 	}
 }
 
-func (v *HmacSha256Verifier) verifySignature(msg []byte, sig string) error {
+func (v *HmacVerifier) verifySignature(msg []byte, sig string) error {
 	for _, signatureKey := range v.keys {
 		h := hmac.New(sha256.New, signatureKey)
 		h.Write(msg)
