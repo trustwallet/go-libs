@@ -67,7 +67,7 @@ func InitClient(baseURL string, errorHandler HttpErrorHandler, options ...Option
 		}
 	}
 
-	if client.httpMetrics != nil {
+	if client.metricsEnabled() {
 		err := client.metricRegisterer.Register(client.httpMetrics)
 		if err != nil {
 			if _, ok := err.(*prometheus.AlreadyRegisteredError); !ok {
@@ -225,7 +225,7 @@ func (r *Request) execute(ctx context.Context, req *http.Request) ([]byte, error
 	startTime := time.Now()
 	res, err := c.Do(req.WithContext(ctx))
 
-	if r.httpMetrics != nil {
+	if r.metricsEnabled() {
 		r.httpMetrics.observeDuration(req, startTime)
 		r.httpMetrics.observeResult(req, res, err)
 	}
@@ -278,6 +278,10 @@ func (r *Request) GetURL(path string, query url.Values) string {
 	}
 	queryStr := query.Encode()
 	return fmt.Sprintf("%s?%s", baseURL, queryStr)
+}
+
+func (r *Request) metricsEnabled() bool {
+	return r.httpMetrics != nil
 }
 
 func GetBody(body interface{}) (buf io.ReadWriter, err error) {
