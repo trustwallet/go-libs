@@ -43,7 +43,7 @@ type (
 func (r *Request) RpcCall(result interface{}, method string, params interface{}) error {
 	req := &RpcRequest{JsonRpc: JsonRpcVersion, Method: method, Params: params, Id: genID()}
 	var resp *RpcResponse
-	err := r.Post(&resp, "", req)
+	err := r.Post(&resp, NewEmptyPath(), req)
 	if err != nil {
 		return err
 	}
@@ -56,7 +56,7 @@ func (r *Request) RpcCall(result interface{}, method string, params interface{})
 func (r *Request) RpcCallRaw(method string, params interface{}) ([]byte, error) {
 	req := &RpcRequest{JsonRpc: JsonRpcVersion, Method: method, Params: params, Id: genID()}
 	var resp *RpcResponseRaw
-	err := r.Post(&resp, "", req)
+	err := r.Post(&resp, NewEmptyPath(), req)
 	if err != nil {
 		return nil, err
 	}
@@ -68,7 +68,7 @@ func (r *Request) RpcCallRaw(method string, params interface{}) ([]byte, error) 
 
 func (r *Request) RpcBatchCall(requests RpcRequests) ([]RpcResponse, error) {
 	var resp []RpcResponse
-	err := r.Post(&resp, "", requests.fillDefaultValues())
+	err := r.Post(&resp, NewEmptyPath(), requests.fillDefaultValues())
 	if err != nil {
 		return nil, err
 	}

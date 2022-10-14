@@ -23,12 +23,12 @@ type memCache struct {
 	cache *cache.Cache
 }
 
-func (r *Request) PostWithCache(result interface{}, path string, body interface{}, cache time.Duration) error {
+func (r *Request) PostWithCache(result interface{}, path Path, body interface{}, cache time.Duration) error {
 	return r.PostWithCacheAndContext(context.Background(), result, path, body, cache)
 }
 
-func (r *Request) PostWithCacheAndContext(ctx context.Context, result interface{}, path string, body interface{}, cache time.Duration) error {
-	key := r.generateKey(path, nil, body)
+func (r *Request) PostWithCacheAndContext(ctx context.Context, result interface{}, path Path, body interface{}, cache time.Duration) error {
+	key := r.generateKey(path.String(), nil, body)
 	err := memoryCache.getCache(key, result)
 	if err == nil {
 		return nil
@@ -42,12 +42,12 @@ func (r *Request) PostWithCacheAndContext(ctx context.Context, result interface{
 	return memoryCache.setCache(key, result, cache)
 }
 
-func (r *Request) GetWithCache(result interface{}, path string, query url.Values, cache time.Duration) error {
+func (r *Request) GetWithCache(result interface{}, path Path, query url.Values, cache time.Duration) error {
 	return r.GetWithCacheAndContext(context.Background(), result, path, query, cache)
 }
 
-func (r *Request) GetWithCacheAndContext(ctx context.Context, result interface{}, path string, query url.Values, cache time.Duration) error {
-	key := r.generateKey(path, query, nil)
+func (r *Request) GetWithCacheAndContext(ctx context.Context, result interface{}, path Path, query url.Values, cache time.Duration) error {
+	key := r.generateKey(path.String(), query, nil)
 	err := memoryCache.getCache(key, result)
 	if err == nil {
 		return nil

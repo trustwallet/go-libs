@@ -146,44 +146,44 @@ func (r *Request) AddHeader(key, value string) {
 	r.Headers[key] = value
 }
 
-func (r *Request) GetWithContext(ctx context.Context, result interface{}, path string, query url.Values) error {
-	uri := r.GetURL(path, query)
-	return r.Execute(ctx, "GET", uri, nil, result)
+func (r *Request) GetWithContext(ctx context.Context, result interface{}, path Path, query url.Values) error {
+	uri := r.GetURL(path.String(), query)
+	return r.Execute(ctx, "GET", uri, path.template, nil, result)
 }
 
-func (r *Request) Get(result interface{}, path string, query url.Values) error {
+func (r *Request) Get(result interface{}, path Path, query url.Values) error {
 	return r.GetWithContext(context.Background(), result, path, query)
 }
 
-func (r *Request) Post(result interface{}, path string, body interface{}) error {
+func (r *Request) Post(result interface{}, path Path, body interface{}) error {
 	return r.PostWithContext(context.Background(), result, path, body)
 }
 
-func (r *Request) GetRaw(path string, query url.Values) ([]byte, error) {
-	uri := r.GetURL(path, query)
-	return r.ExecuteRaw(context.Background(), "GET", uri, nil)
+func (r *Request) GetRaw(path Path, query url.Values) ([]byte, error) {
+	uri := r.GetURL(path.String(), query)
+	return r.ExecuteRaw(context.Background(), "GET", uri, path.template, nil)
 }
 
-func (r *Request) PostRaw(path string, body interface{}) ([]byte, error) {
+func (r *Request) PostRaw(path Path, body interface{}) ([]byte, error) {
 	buf, err := GetBody(body)
 	if err != nil {
 		return nil, err
 	}
-	uri := r.GetBase(path)
+	uri := r.GetBase(path.String())
 
-	return r.ExecuteRaw(context.Background(), "POST", uri, buf)
+	return r.ExecuteRaw(context.Background(), "POST", uri, path.template, buf)
 }
 
-func (r *Request) PostWithContext(ctx context.Context, result interface{}, path string, body interface{}) error {
+func (r *Request) PostWithContext(ctx context.Context, result interface{}, path Path, body interface{}) error {
 	buf, err := GetBody(body)
 	if err != nil {
 		return err
 	}
-	uri := r.GetBase(path)
-	return r.Execute(ctx, "POST", uri, buf, result)
+	uri := r.GetBase(path.String())
+	return r.Execute(ctx, "POST", uri, path.template, buf, result)
 }
 
-func (r *Request) Execute(ctx context.Context, method string, url string, body io.Reader, result interface{}) error {
+func (r *Request) Execute(ctx context.Context, method string, url, pathTemplate string, body io.Reader, result interface{}) error {
 	req, err := http.NewRequest(method, url, body)
 	if err != nil {
 		return err
@@ -193,7 +193,7 @@ func (r *Request) Execute(ctx context.Context, method string, url string, body i
 		req.Header.Set(key, value)
 	}
 
-	b, err := r.execute(ctx, req)
+	b, err := r.execute(ctx, req, pathTemplate)
 	if err != nil {
 		return err
 	}
@@ -206,7 +206,7 @@ func (r *Request) Execute(ctx context.Context, method string, url string, body i
 	return nil
 }
 
-func (r *Request) ExecuteRaw(ctx context.Context, method string, url string, body io.Reader) ([]byte, error) {
+func (r *Request) ExecuteRaw(ctx context.Context, method string, url, pathTemplate string, body io.Reader) ([]byte, error) {
 	req, err := http.NewRequest(method, url, body)
 	if err != nil {
 		return nil, err
@@ -216,18 +216,18 @@ func (r *Request) ExecuteRaw(ctx context.Context, method string, url string, bod
 		req.Header.Set(key, value)
 	}
 
-	return r.execute(ctx, req)
+	return r.execute(ctx, req, pathTemplate)
 }
 
-func (r *Request) execute(ctx context.Context, req *http.Request) ([]byte, error) {
+func (r *Request) execute(ctx context.Context, req *http.Request, reqPathTemplate string) ([]byte, error) {
 	c := r.HttpClient
 
 	startTime := time.Now()
 	res, err := c.Do(req.WithContext(ctx))
 
 	if r.metricsEnabled() {
-		r.httpMetrics.observeDuration(req, startTime)
-		r.httpMetrics.observeResult(req, res, err)
+		r.httpMetrics.observeDuration(req, reqPathTemplate, startTime)
+		r.httpMetrics.observeResult(req, reqPathTemplate, res, err)
 	}
 
 	if err != nil {

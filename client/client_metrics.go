@@ -45,15 +45,15 @@ func newHttpClientMetrics(constLabels prometheus.Labels) *httpClientMetrics {
 	return m
 }
 
-func (metric *httpClientMetrics) observeDuration(req *http.Request, startTime time.Time) {
-	url := getHttpReqMetricUrl(req)
+func (metric *httpClientMetrics) observeDuration(req *http.Request, pathTemplate string, startTime time.Time) {
+	url := getHttpReqMetricUrl(req, pathTemplate)
 	method := req.Method
 
 	metric.durationSeconds.WithLabelValues(url, method).Observe(time.Since(startTime).Seconds())
 }
 
-func (metric *httpClientMetrics) observeResult(req *http.Request, resp *http.Response, err error) {
-	url := getHttpReqMetricUrl(req)
+func (metric *httpClientMetrics) observeResult(req *http.Request, pathTemplate string, resp *http.Response, err error) {
+	url := getHttpReqMetricUrl(req, pathTemplate)
 	method := req.Method
 	status := getHttpRespMetricStatus(resp, err)
 
@@ -72,8 +72,8 @@ func (metric *httpClientMetrics) Collect(metrics chan<- prometheus.Metric) {
 	metric.requestTotal.Collect(metrics)
 }
 
-func getHttpReqMetricUrl(req *http.Request) string {
-	return fmt.Sprintf("%s://%s%s", req.URL.Scheme, req.URL.Host, req.URL.Path)
+func getHttpReqMetricUrl(req *http.Request, pathTemplate string) string {
+	return fmt.Sprintf("%s://%s%s", req.URL.Scheme, req.URL.Host, pathTemplate)
 }
 
 func getHttpRespMetricStatus(resp *http.Response, err error) string {

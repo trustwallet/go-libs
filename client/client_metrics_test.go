@@ -56,14 +56,14 @@ func TestClientMetrics(t *testing.T) {
 		}))
 
 	var resp Response
-	_ = client.Get(&resp, pathOk, nil)
+	_ = client.Get(&resp, NewStaticPath(pathOk), nil)
 
-	_ = client.Post(&resp, path5xx, nil)
-	_ = client.Get(&resp, path5xx, nil)
+	_ = client.Post(&resp, NewStaticPath(path5xx), nil)
+	_ = client.Get(&resp, NewStaticPath(path5xx), nil)
 
-	_ = client.Post(&resp, pathErr, nil)
-	_ = client.Get(&resp, pathErr, nil)
-	_ = client.Get(&resp, pathErr, nil)
+	_ = client.Post(&resp, NewStaticPath(pathErr), nil)
+	_ = client.Get(&resp, NewStaticPath(pathErr), nil)
+	_ = client.Get(&resp, NewStaticPath(pathErr), nil)
 
 	mfs, err := reg.Gather()
 	require.NoError(t, err)
@@ -101,7 +101,8 @@ func TestClientMetrics(t *testing.T) {
 
 func Test_getHttpReqMetricUrl(t *testing.T) {
 	type args struct {
-		req *http.Request
+		req          *http.Request
+		pathTemplate Path
 	}
 	tests := []struct {
 		name string
@@ -115,8 +116,9 @@ func Test_getHttpReqMetricUrl(t *testing.T) {
 					req, _ := http.NewRequest("GET", "http://www.example.com/abc/def", nil)
 					return req
 				}(),
+				pathTemplate: NewStaticPath("/%s/def"),
 			},
-			want: "http://www.example.com/abc/def",
+			want: "http://www.example.com/%s/def",
 		},
 		{
 			name: "example.com with query params",
@@ -125,6 +127,7 @@ func Test_getHttpReqMetricUrl(t *testing.T) {
 					req, _ := http.NewRequest("GET", "http://www.example.com/abc?param1=a&param2=b", nil)
 					return req
 				}(),
+				pathTemplate: NewStaticPath("/abc"),
 			},
 			want: "http://www.example.com/abc",
 		},
@@ -135,13 +138,14 @@ func Test_getHttpReqMetricUrl(t *testing.T) {
 					req, _ := http.NewRequest("GET", "http://www.example.com?param1=a&param2=b#fragments", nil)
 					return req
 				}(),
+				pathTemplate: NewStaticPath(""),
 			},
 			want: "http://www.example.com",
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert.Equalf(t, tt.want, getHttpReqMetricUrl(tt.args.req), "getHttpReqMetricUrl(%v)", tt.args.req)
+			assert.Equalf(t, tt.want, getHttpReqMetricUrl(tt.args.req, tt.args.pathTemplate.template), "getHttpReqMetricUrl(%v)", tt.args.req)
 		})
 	}
 }
