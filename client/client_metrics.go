@@ -73,7 +73,7 @@ func (metric *httpClientMetrics) Collect(metrics chan<- prometheus.Metric) {
 }
 
 func getHttpReqMetricUrl(req *http.Request) string {
-	return fmt.Sprintf("%s://%s%s", req.URL.Scheme, req.URL.Host, req.URL.Path)
+	return fmt.Sprintf("%s://%s", req.URL.Scheme, req.URL.Host)
 }
 
 func getHttpRespMetricStatus(resp *http.Response, err error) string {
