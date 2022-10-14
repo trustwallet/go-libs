@@ -7,12 +7,14 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
-	"log"
 	"net/http"
 	"net/url"
 	"strings"
 	"time"
+
+	"github.com/prometheus/client_golang/prometheus"
+
+	log "github.com/sirupsen/logrus"
 )
 
 type Request struct {
@@ -20,6 +22,10 @@ type Request struct {
 	Headers          map[string]string
 	HttpClient       HTTPClient
 	HttpErrorHandler HttpErrorHandler
+
+	// Monitoring
+	metricRegisterer prometheus.Registerer
+	httpMetrics      *httpClientMetrics
 }
 
 type HTTPClient interface {
@@ -61,6 +67,17 @@ func InitClient(baseURL string, errorHandler HttpErrorHandler, options ...Option
 		}
 	}
 
+	if client.metricsEnabled() {
+		err := client.metricRegisterer.Register(client.httpMetrics)
+		if err != nil {
+			if _, ok := err.(*prometheus.AlreadyRegisteredError); !ok {
+				log.WithError(err).Warn("metric already registered")
+			} else {
+				log.WithError(err).Error("could not initialize http client metrics")
+			}
+		}
+	}
+
 	return client
 }
 
@@ -98,6 +115,13 @@ func ProxyOption(proxyURL string) Option {
 			return err
 		}
 
+		return nil
+	}
+}
+
+func WithHttpClient(httpClient HTTPClient) Option {
+	return func(request *Request) error {
+		request.HttpClient = httpClient
 		return nil
 	}
 }
@@ -198,7 +222,14 @@ func (r *Request) ExecuteRaw(ctx context.Context, method string, url string, bod
 func (r *Request) execute(ctx context.Context, req *http.Request) ([]byte, error) {
 	c := r.HttpClient
 
+	startTime := time.Now()
 	res, err := c.Do(req.WithContext(ctx))
+
+	if r.metricsEnabled() {
+		r.httpMetrics.observeDuration(req, startTime)
+		r.httpMetrics.observeResult(req, res, err)
+	}
+
 	if err != nil {
 		return nil, err
 	}
@@ -210,7 +241,7 @@ func (r *Request) execute(ctx context.Context, req *http.Request) ([]byte, error
 
 	if res.StatusCode < http.StatusOK || res.StatusCode >= http.StatusBadRequest {
 		defer res.Body.Close()
-		body, err := ioutil.ReadAll(res.Body)
+		body, err := io.ReadAll(res.Body)
 		if err != nil {
 			return nil, err
 		}
@@ -223,7 +254,7 @@ func (r *Request) execute(ctx context.Context, req *http.Request) ([]byte, error
 	}
 
 	defer res.Body.Close()
-	b, err := ioutil.ReadAll(res.Body)
+	b, err := io.ReadAll(res.Body)
 	if err != nil {
 		return nil, err
 	}
@@ -247,6 +278,10 @@ func (r *Request) GetURL(path string, query url.Values) string {
 	}
 	queryStr := query.Encode()
 	return fmt.Sprintf("%s?%s", baseURL, queryStr)
+}
+
+func (r *Request) metricsEnabled() bool {
+	return r.httpMetrics != nil
 }
 
 func GetBody(body interface{}) (buf io.ReadWriter, err error) {
