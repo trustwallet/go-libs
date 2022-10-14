@@ -116,7 +116,7 @@ func Test_getHttpReqMetricUrl(t *testing.T) {
 					return req
 				}(),
 			},
-			want: "http://www.example.com/abc/def",
+			want: "http://www.example.com",
 		},
 		{
 			name: "example.com with query params",
@@ -126,7 +126,7 @@ func Test_getHttpReqMetricUrl(t *testing.T) {
 					return req
 				}(),
 			},
-			want: "http://www.example.com/abc",
+			want: "http://www.example.com",
 		},
 		{
 			name: "example.com with query params and fragments",
