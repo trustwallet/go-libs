@@ -28,6 +28,6 @@ func Init(url string, limit int) {
 }
 
 func (c Client) SendBatch(events []Event) (status Status, err error) {
-	err = senderClient.Post(&status, "", events)
+	err = senderClient.Post(&status, client.NewEmptyPath(), events)
 	return
 }

@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+
 	"github.com/trustwallet/go-libs/client"
 )
 
@@ -26,10 +27,10 @@ func TestCreateMockedAPI(t *testing.T) {
 
 	server := httptest.NewServer(CreateMockedAPI(data))
 	defer server.Close()
-	client := client.InitClient(server.URL, nil)
+	c := client.InitClient(server.URL, nil)
 
 	var resp response
-	err := client.Get(&resp, "1", nil)
+	err := c.Get(&resp, client.NewStaticPath("1"), nil)
 
 	assert.Nil(t, err)
 	assert.True(t, resp.Status)
