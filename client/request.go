@@ -86,5 +86,6 @@ func (builder *ReqBuilder) pathMetricEnabled(enabled bool) *ReqBuilder {
 }
 
 func (builder *ReqBuilder) Build() *Req {
-	return &(*builder.req)
+	copiedReq := *builder.req
+	return &copiedReq
 }
