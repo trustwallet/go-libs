@@ -17,6 +17,9 @@ import (
 // If Req.WriteTo is specified, it will also populate the resultContainer
 func (r *Request) Execute(ctx context.Context, req *Req) ([]byte, error) {
 	request, err := r.constructHttpRequest(ctx, req)
+	if err != nil {
+		return nil, err
+	}
 
 	startTime := time.Now()
 	res, err := r.HttpClient.Do(request)
