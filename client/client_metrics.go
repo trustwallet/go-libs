@@ -14,9 +14,10 @@ const (
 	metricNameRequestDurationSeconds = "request_duration_seconds"
 	metricNameRequestTotal           = "request_total"
 
-	labelNameUrl    = "url"
-	labelNameMethod = "method"
-	labelNameStatus = "status"
+	labelUrl    = "url"
+	labelMethod = "method"
+	labelStatus = "status"
+	labelName   = "name"
 
 	labelValueErr = "error"
 )
@@ -33,31 +34,24 @@ func newHttpClientMetrics(constLabels prometheus.Labels) *httpClientMetrics {
 			Name:        metricNameRequestDurationSeconds,
 			Help:        "Histogram of duration of outgoing http requests",
 			ConstLabels: constLabels,
-		}, []string{labelNameUrl, labelNameMethod}),
+		}, []string{labelUrl, labelMethod, labelName}),
 		requestTotal: prometheus.NewCounterVec(prometheus.CounterOpts{
 			Namespace:   namespaceHttpClient,
 			Name:        metricNameRequestTotal,
 			Help:        "Count of total outgoing http requests, with its result status in labels",
 			ConstLabels: constLabels,
-		}, []string{labelNameUrl, labelNameMethod, labelNameStatus}),
+		}, []string{labelUrl, labelMethod, labelName, labelStatus}),
 	}
 
 	return m
 }
 
-func (metric *httpClientMetrics) observeDuration(req *http.Request, startTime time.Time) {
-	url := getHttpReqMetricUrl(req)
-	method := req.Method
-
-	metric.durationSeconds.WithLabelValues(url, method).Observe(time.Since(startTime).Seconds())
+func (metric *httpClientMetrics) observeDuration(url, method, name string, startTime time.Time) {
+	metric.durationSeconds.WithLabelValues(url, method, name).Observe(time.Since(startTime).Seconds())
 }
 
-func (metric *httpClientMetrics) observeResult(req *http.Request, resp *http.Response, err error) {
-	url := getHttpReqMetricUrl(req)
-	method := req.Method
-	status := getHttpRespMetricStatus(resp, err)
-
-	metric.requestTotal.WithLabelValues(url, method, status).Inc()
+func (metric *httpClientMetrics) observeResult(url, method, name, status string) {
+	metric.requestTotal.WithLabelValues(url, method, name, status).Inc()
 }
 
 // Describe implements prometheus.Collector interface
@@ -72,8 +66,8 @@ func (metric *httpClientMetrics) Collect(metrics chan<- prometheus.Metric) {
 	metric.requestTotal.Collect(metrics)
 }
 
-func getHttpReqMetricUrl(req *http.Request) string {
-	return fmt.Sprintf("%s://%s", req.URL.Scheme, req.URL.Host)
+func getHttpReqMetricUrl(req *http.Request, pathTemplate string) string {
+	return fmt.Sprintf("%s://%s%s", req.URL.Scheme, req.URL.Host, pathTemplate)
 }
 
 func getHttpRespMetricStatus(resp *http.Response, err error) string {
@@ -82,12 +76,4 @@ func getHttpRespMetricStatus(resp *http.Response, err error) string {
 	}
 	firstDigit := resp.StatusCode / 100
 	return fmt.Sprintf("%dxx", firstDigit)
-}
-
-func WithMetricsEnabled(reg prometheus.Registerer, constLabels prometheus.Labels) Option {
-	return func(request *Request) error {
-		request.httpMetrics = newHttpClientMetrics(constLabels)
-		request.metricRegisterer = reg
-		return nil
-	}
 }

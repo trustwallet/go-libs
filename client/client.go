@@ -1,21 +1,18 @@
 package client
 
 import (
-	"bytes"
-	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"net/http"
 	"net/url"
-	"strings"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 
 	log "github.com/sirupsen/logrus"
 )
+
+const defaultTimeout = 5 * time.Second
 
 type Request struct {
 	BaseURL          string
@@ -54,7 +51,7 @@ func InitClient(baseURL string, errorHandler HttpErrorHandler, options ...Option
 	client := Request{
 		Headers: make(map[string]string),
 		HttpClient: &http.Client{
-			Timeout: time.Second * 15,
+			Timeout: defaultTimeout,
 		},
 		HttpErrorHandler: errorHandler,
 		BaseURL:          baseURL,
@@ -82,11 +79,15 @@ func InitClient(baseURL string, errorHandler HttpErrorHandler, options ...Option
 }
 
 func InitJSONClient(baseUrl string, errorHandler HttpErrorHandler, options ...Option) Request {
-	client := InitClient(baseUrl, errorHandler, options...)
-	client.Headers = map[string]string{
+	jsonHeaders := map[string]string{
 		"Content-Type": "application/json",
 		"Accept":       "application/json",
 	}
+
+	client := InitClient(
+		baseUrl,
+		errorHandler,
+		append(options, WithExtraHeaders(jsonHeaders))...)
 	return client
 }
 
@@ -96,6 +97,8 @@ var DefaultErrorHandler = func(res *http.Response, uri string) error {
 
 // TimeoutOption is an option to set timeout for the http client calls
 // value unit is nanoseconds
+//
+// Deprecated: Internal http.Client shouldn't be modified after construction. Use WithHttpClient instead
 func TimeoutOption(timeout time.Duration) Option {
 	return func(request *Request) error {
 		request.SetTimeout(timeout)
@@ -104,6 +107,7 @@ func TimeoutOption(timeout time.Duration) Option {
 	}
 }
 
+// Deprecated: Internal http.Client shouldn't be modified after construction. Use WithHttpClient instead
 func ProxyOption(proxyURL string) Option {
 	return func(request *Request) error {
 		if proxyURL == "" {
@@ -126,10 +130,29 @@ func WithHttpClient(httpClient HTTPClient) Option {
 	}
 }
 
+func WithExtraHeaders(headers map[string]string) Option {
+	return func(request *Request) error {
+		for k, v := range headers {
+			request.Headers[k] = v
+		}
+		return nil
+	}
+}
+
+func WithMetricsEnabled(reg prometheus.Registerer, constLabels prometheus.Labels) Option {
+	return func(request *Request) error {
+		request.httpMetrics = newHttpClientMetrics(constLabels)
+		request.metricRegisterer = reg
+		return nil
+	}
+}
+
+// Deprecated: Internal http.Client shouldn't be modified after construction. Use WithHttpClient instead
 func (r *Request) SetTimeout(timeout time.Duration) {
 	r.HttpClient.(*http.Client).Timeout = timeout
 }
 
+// Deprecated: Internal http.Client shouldn't be modified after construction. Use WithHttpClient instead
 func (r *Request) SetProxy(proxyUrl string) error {
 	if proxyUrl == "" {
 		return errors.New("empty proxy url")
@@ -142,152 +165,7 @@ func (r *Request) SetProxy(proxyUrl string) error {
 	return nil
 }
 
+// Deprecated: Headers shouldn't be modified after construction. Use WithExtraHeaders instead
 func (r *Request) AddHeader(key, value string) {
 	r.Headers[key] = value
-}
-
-func (r *Request) GetWithContext(ctx context.Context, result interface{}, path string, query url.Values) error {
-	uri := r.GetURL(path, query)
-	return r.Execute(ctx, "GET", uri, nil, result)
-}
-
-func (r *Request) Get(result interface{}, path string, query url.Values) error {
-	return r.GetWithContext(context.Background(), result, path, query)
-}
-
-func (r *Request) Post(result interface{}, path string, body interface{}) error {
-	return r.PostWithContext(context.Background(), result, path, body)
-}
-
-func (r *Request) GetRaw(path string, query url.Values) ([]byte, error) {
-	uri := r.GetURL(path, query)
-	return r.ExecuteRaw(context.Background(), "GET", uri, nil)
-}
-
-func (r *Request) PostRaw(path string, body interface{}) ([]byte, error) {
-	buf, err := GetBody(body)
-	if err != nil {
-		return nil, err
-	}
-	uri := r.GetBase(path)
-
-	return r.ExecuteRaw(context.Background(), "POST", uri, buf)
-}
-
-func (r *Request) PostWithContext(ctx context.Context, result interface{}, path string, body interface{}) error {
-	buf, err := GetBody(body)
-	if err != nil {
-		return err
-	}
-	uri := r.GetBase(path)
-	return r.Execute(ctx, "POST", uri, buf, result)
-}
-
-func (r *Request) Execute(ctx context.Context, method string, url string, body io.Reader, result interface{}) error {
-	req, err := http.NewRequest(method, url, body)
-	if err != nil {
-		return err
-	}
-
-	for key, value := range r.Headers {
-		req.Header.Set(key, value)
-	}
-
-	b, err := r.execute(ctx, req)
-	if err != nil {
-		return err
-	}
-
-	err = json.Unmarshal(b, result)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (r *Request) ExecuteRaw(ctx context.Context, method string, url string, body io.Reader) ([]byte, error) {
-	req, err := http.NewRequest(method, url, body)
-	if err != nil {
-		return nil, err
-	}
-
-	for key, value := range r.Headers {
-		req.Header.Set(key, value)
-	}
-
-	return r.execute(ctx, req)
-}
-
-func (r *Request) execute(ctx context.Context, req *http.Request) ([]byte, error) {
-	c := r.HttpClient
-
-	startTime := time.Now()
-	res, err := c.Do(req.WithContext(ctx))
-
-	if r.metricsEnabled() {
-		r.httpMetrics.observeDuration(req, startTime)
-		r.httpMetrics.observeResult(req, res, err)
-	}
-
-	if err != nil {
-		return nil, err
-	}
-
-	err = r.HttpErrorHandler(res, req.URL.String())
-	if err != nil {
-		return nil, err
-	}
-
-	if res.StatusCode < http.StatusOK || res.StatusCode >= http.StatusBadRequest {
-		defer res.Body.Close()
-		body, err := io.ReadAll(res.Body)
-		if err != nil {
-			return nil, err
-		}
-
-		return nil, &HttpError{
-			StatusCode: res.StatusCode,
-			URL:        *res.Request.URL,
-			Body:       body,
-		}
-	}
-
-	defer res.Body.Close()
-	b, err := io.ReadAll(res.Body)
-	if err != nil {
-		return nil, err
-	}
-
-	return b, nil
-}
-
-func (r *Request) GetBase(path string) string {
-	baseURL := strings.TrimRight(r.BaseURL, "/")
-	if path == "" {
-		return baseURL
-	}
-	path = strings.TrimLeft(path, "/")
-	return fmt.Sprintf("%s/%s", baseURL, path)
-}
-
-func (r *Request) GetURL(path string, query url.Values) string {
-	baseURL := r.GetBase(path)
-	if query == nil {
-		return baseURL
-	}
-	queryStr := query.Encode()
-	return fmt.Sprintf("%s?%s", baseURL, queryStr)
-}
-
-func (r *Request) metricsEnabled() bool {
-	return r.httpMetrics != nil
-}
-
-func GetBody(body interface{}) (buf io.ReadWriter, err error) {
-	if body != nil {
-		buf = new(bytes.Buffer)
-		err = json.NewEncoder(buf).Encode(body)
-	}
-	return
 }
