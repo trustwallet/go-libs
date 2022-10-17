@@ -239,6 +239,26 @@ func TestInitClientOptions(t *testing.T) {
 				require.Equal(t, 3*time.Second, client.HttpClient.(*http.Client).Timeout)
 			},
 		},
+		{
+			name: "WithExtraHeader multiple times",
+			options: []Option{
+				WithExtraHeader("Content-Type", "application/json"),
+				WithExtraHeader("Accept", "application/json"),
+				WithExtraHeader("Server", "Apache"),
+				WithExtraHeaders(map[string]string{
+					"Authorization": "Basic <credentials>",
+					"Connection":    "Keep-Alive",
+					"Server":        "nginx",
+				}),
+			},
+			assertion: func(t *testing.T, client *Request) {
+				require.Equal(t, "application/json", client.Headers["Content-Type"])
+				require.Equal(t, "application/json", client.Headers["Accept"])
+				require.Equal(t, "Basic <credentials>", client.Headers["Authorization"])
+				require.Equal(t, "Keep-Alive", client.Headers["Connection"])
+				require.Equal(t, "nginx", client.Headers["Server"])
+			},
+		},
 	}
 
 	for _, test := range tests {

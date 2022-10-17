@@ -131,6 +131,13 @@ func WithHttpClient(httpClient HTTPClient) Option {
 	}
 }
 
+func WithExtraHeader(key, value string) Option {
+	return func(request *Request) error {
+		request.Headers[key] = value
+		return nil
+	}
+}
+
 func WithExtraHeaders(headers map[string]string) Option {
 	return func(request *Request) error {
 		for k, v := range headers {
