@@ -61,6 +61,12 @@ func TestClientMetrics(t *testing.T) {
 	_, _ = client.Execute(context.Background(), NewReqBuilder().Method(http.MethodPost).PathStatic(path5xx).Build())
 	_, _ = client.Execute(context.Background(), NewReqBuilder().Method(http.MethodPost).PathStatic(pathErr).Build())
 
+	_, _ = client.Execute(context.Background(), NewReqBuilder().
+		Method(http.MethodPost).
+		PathStatic(pathErr).
+		MetricName("postError").
+		Build())
+
 	type Resp struct {
 		Data string
 	}
@@ -88,6 +94,8 @@ func TestClientMetrics(t *testing.T) {
 
 			"app=test method=POST name= status=5xx url=http://www.example.com/5xx":   1,
 			"app=test method=POST name= status=error url=http://www.example.com/err": 1,
+
+			"app=test method=POST name=postError status=error url=http://www.example.com/err": 1,
 
 			"app=test method=GET name= status=2xx url=http://www.example.com":   1,
 			"app=test method=GET name= status=5xx url=http://www.example.com":   2,
