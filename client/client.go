@@ -97,29 +97,30 @@ var DefaultErrorHandler = func(res *http.Response, uri string) error {
 
 // TimeoutOption is an option to set timeout for the http client calls
 // value unit is nanoseconds
-//
-// Deprecated: Internal http.Client shouldn't be modified after construction. Use WithHttpClient instead
 func TimeoutOption(timeout time.Duration) Option {
 	return func(request *Request) error {
-		request.SetTimeout(timeout)
+		httpClient, ok := request.HttpClient.(*http.Client)
+		if !ok {
+			return errors.New("unable to set timeout: httpclient is not *http.Client")
+		}
 
+		setHttpClientTimeout(httpClient, timeout)
 		return nil
 	}
 }
 
-// Deprecated: Internal http.Client shouldn't be modified after construction. Use WithHttpClient instead
 func ProxyOption(proxyURL string) Option {
 	return func(request *Request) error {
 		if proxyURL == "" {
 			return nil
 		}
 
-		err := request.SetProxy(proxyURL)
-		if err != nil {
-			return err
+		httpClient, ok := request.HttpClient.(*http.Client)
+		if !ok {
+			return errors.New("unable to set proxy: httpclient is not *http.Client")
 		}
 
-		return nil
+		return setHttpClientTransportProxy(httpClient, proxyURL)
 	}
 }
 
@@ -168,4 +169,30 @@ func (r *Request) SetProxy(proxyUrl string) error {
 // Deprecated: Headers shouldn't be modified after construction. Use WithExtraHeaders instead
 func (r *Request) AddHeader(key, value string) {
 	r.Headers[key] = value
+}
+
+func setHttpClientTransportProxy(client *http.Client, proxyUrl string) error {
+	if proxyUrl == "" {
+		return errors.New("empty proxy url")
+	}
+	url, err := url.Parse(proxyUrl)
+	if err != nil {
+		return err
+	}
+
+	if client.Transport == nil {
+		client.Transport = &http.Transport{Proxy: http.ProxyURL(url)}
+		return nil
+	}
+
+	transport, ok := client.Transport.(*http.Transport)
+	if !ok {
+		return errors.New("http client transport is not *http.Transport")
+	}
+	transport.Proxy = http.ProxyURL(url)
+	return nil
+}
+
+func setHttpClientTimeout(client *http.Client, timeout time.Duration) {
+	client.Timeout = timeout
 }

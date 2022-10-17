@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestRequest_GetBase(t *testing.T) {
@@ -198,4 +199,52 @@ func (c *mockJSONClient) Do(_ *http.Request) (*http.Response, error) {
 		StatusCode: http.StatusOK,
 		Body:       io.NopCloser(bytes.NewBuffer(c.body)),
 	}, nil
+}
+
+func TestInitClientOptions(t *testing.T) {
+	const aBaseURL = "http://www.example.com/"
+	tests := []struct {
+		name      string
+		options   []Option
+		assertion func(t *testing.T, client *Request)
+	}{
+		{
+			name:    "set proxy",
+			options: []Option{ProxyOption("http://www.example.com")},
+			assertion: func(t *testing.T, client *Request) {
+				// checks that the proxy is set
+				url, err := client.HttpClient.(*http.Client).Transport.(*http.Transport).Proxy(&http.Request{})
+				require.NoError(t, err)
+				require.Equal(t, "http://www.example.com", url.String())
+			},
+		},
+		{
+			name:    "set timeout",
+			options: []Option{TimeoutOption(3 * time.Second)},
+			assertion: func(t *testing.T, client *Request) {
+				// checks that the timeout is set
+				require.Equal(t, 3*time.Second, client.HttpClient.(*http.Client).Timeout)
+			},
+		},
+		{
+			name:    "set proxy&timeout",
+			options: []Option{ProxyOption("http://www.example.com"), TimeoutOption(3 * time.Second)},
+			assertion: func(t *testing.T, client *Request) {
+				// checks that the proxy is set
+				url, err := client.HttpClient.(*http.Client).Transport.(*http.Transport).Proxy(&http.Request{})
+				require.NoError(t, err)
+				require.Equal(t, "http://www.example.com", url.String())
+
+				// checks that the timeout is set
+				require.Equal(t, 3*time.Second, client.HttpClient.(*http.Client).Timeout)
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			c := InitClient(aBaseURL, nil, test.options...)
+			test.assertion(t, &c)
+		})
+	}
 }
