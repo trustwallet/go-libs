@@ -79,7 +79,7 @@ func (builder *ReqBuilder) MetricName(name string) *ReqBuilder {
 }
 
 // pathMetricEnabled is only for internal use, where it is set to false
-// in deprecated helper functions such as Get, GetWithContext, Post, PostRaw
+// in deprecated wrapper functions such as Get, GetWithContext, Post, PostRaw
 func (builder *ReqBuilder) pathMetricEnabled(enabled bool) *ReqBuilder {
 	builder.req.pathMetricEnabled = enabled
 	return builder
