@@ -104,7 +104,7 @@ func TimeoutOption(timeout time.Duration) Option {
 			return errors.New("unable to set timeout: httpclient is not *http.Client")
 		}
 
-		setHttpClientTimeout(httpClient, timeout)
+		httpClient.Timeout = timeout
 		return nil
 	}
 }
@@ -198,8 +198,4 @@ func setHttpClientTransportProxy(client *http.Client, proxyUrl string) error {
 	}
 	transport.Proxy = http.ProxyURL(url)
 	return nil
-}
-
-func setHttpClientTimeout(client *http.Client, timeout time.Duration) {
-	client.Timeout = timeout
 }
