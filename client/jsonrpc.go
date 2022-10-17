@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
 )
 
 var requestID = int64(0)
@@ -45,6 +46,7 @@ func (r *Request) RpcCall(result interface{}, method string, params interface{})
 	req := &RpcRequest{JsonRpc: JsonRpcVersion, Method: method, Params: params, Id: genID()}
 	var resp *RpcResponse
 	_, err := r.Execute(context.Background(), NewReqBuilder().
+		Method(http.MethodPost).
 		WriteTo(&resp).
 		Body(req).
 		Build())
@@ -61,6 +63,7 @@ func (r *Request) RpcCallRaw(method string, params interface{}) ([]byte, error) 
 	req := &RpcRequest{JsonRpc: JsonRpcVersion, Method: method, Params: params, Id: genID()}
 	var resp *RpcResponseRaw
 	_, err := r.Execute(context.Background(), NewReqBuilder().
+		Method(http.MethodPost).
 		WriteTo(&resp).
 		Body(req).
 		Build())
@@ -76,6 +79,7 @@ func (r *Request) RpcCallRaw(method string, params interface{}) ([]byte, error) 
 func (r *Request) RpcBatchCall(requests RpcRequests) ([]RpcResponse, error) {
 	var resp []RpcResponse
 	_, err := r.Execute(context.Background(), NewReqBuilder().
+		Method(http.MethodPost).
 		WriteTo(&resp).
 		Body(requests.fillDefaultValues()).
 		Build())
