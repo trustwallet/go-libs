@@ -1,7 +1,9 @@
 package client
 
 import (
+	"context"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"strings"
@@ -24,10 +26,6 @@ func TestClientMetrics(t *testing.T) {
 		path5xx = "/5xx"
 		pathErr = "/err"
 	)
-
-	type Response struct {
-		Data string
-	}
 
 	reg := prometheus.NewPedanticRegistry()
 
@@ -55,53 +53,87 @@ func TestClientMetrics(t *testing.T) {
 			}),
 		}))
 
-	var resp Response
+	_, _ = client.Execute(context.Background(), NewReqBuilder().Method(http.MethodGet).PathStatic(pathOk).Build())
+	_, _ = client.Execute(context.Background(), NewReqBuilder().Method(http.MethodGet).PathStatic(path5xx).Build())
+	_, _ = client.Execute(context.Background(), NewReqBuilder().Method(http.MethodGet).PathStatic(pathErr).Build())
+	_, _ = client.Execute(context.Background(), NewReqBuilder().Method(http.MethodGet).PathStatic(pathErr).Build())
+
+	_, _ = client.Execute(context.Background(), NewReqBuilder().Method(http.MethodPost).PathStatic(path5xx).Build())
+	_, _ = client.Execute(context.Background(), NewReqBuilder().Method(http.MethodPost).PathStatic(pathErr).Build())
+
+	_, _ = client.Execute(context.Background(), NewReqBuilder().
+		Method(http.MethodPost).
+		PathStatic(pathErr).
+		MetricName("postError").
+		Build())
+
+	type Resp struct {
+		Data string
+	}
+	var resp Resp
+	_ = client.Get(&resp, path5xx, nil)
+	_ = client.Get(&resp, path5xx, nil)
 	_ = client.Get(&resp, pathOk, nil)
+	_ = client.Get(&resp, pathErr, nil)
 
 	_ = client.Post(&resp, path5xx, nil)
-	_ = client.Get(&resp, path5xx, nil)
-
+	_ = client.Post(&resp, path5xx, nil)
+	_ = client.Post(&resp, pathOk, nil)
 	_ = client.Post(&resp, pathErr, nil)
-	_ = client.Get(&resp, pathErr, nil)
-	_ = client.Get(&resp, pathErr, nil)
 
 	mfs, err := reg.Gather()
 	require.NoError(t, err)
 	require.NotNil(t, mfs)
 
-	// metricFamily.Name --> label --> counter value
+	// metricFamily.Name --> Concat(label_name=label_value) --> counter value
 	expected := map[string]map[string]int{
-		metricNameRequestTotal: {
-			"http://www.example.com/ok":  1,
-			"http://www.example.com/5xx": 2,
-			"http://www.example.com/err": 3,
+		namespaceHttpClient + "_" + metricNameRequestTotal: {
+			"app=test method=GET name= status=2xx url=http://www.example.com/ok":    1,
+			"app=test method=GET name= status=5xx url=http://www.example.com/5xx":   1,
+			"app=test method=GET name= status=error url=http://www.example.com/err": 2,
+
+			"app=test method=POST name= status=5xx url=http://www.example.com/5xx":   1,
+			"app=test method=POST name= status=error url=http://www.example.com/err": 1,
+
+			"app=test method=POST name=postError status=error url=http://www.example.com/err": 1,
+
+			"app=test method=GET name= status=2xx url=http://www.example.com":   1,
+			"app=test method=GET name= status=5xx url=http://www.example.com":   2,
+			"app=test method=GET name= status=error url=http://www.example.com": 1,
+
+			"app=test method=POST name= status=2xx url=http://www.example.com":   1,
+			"app=test method=POST name= status=5xx url=http://www.example.com":   2,
+			"app=test method=POST name= status=error url=http://www.example.com": 1,
 		},
 	}
 
+	testedMetricCount := 0
 	for _, mf := range mfs {
 		expectedLabelCounterMap, ok := expected[*mf.Name]
 		if !ok {
 			continue
 		}
+		testedMetricCount++
 
 		require.Len(t, mf.Metric, len(expectedLabelCounterMap))
 		for _, metric := range mf.Metric {
-			require.Len(t, metric.Label, 2)
-			var chosenLabelIdx = -1
+			labelNameValues := make([]string, len(metric.Label))
 			for idx, label := range metric.Label {
-				if *label.Name == labelNameUrl {
-					chosenLabelIdx = idx
-				}
+				labelNameValues[idx] = fmt.Sprintf("%s=%s", *label.Name, *label.Value)
 			}
-			require.NotEqual(t, -1, chosenLabelIdx)
-			require.Equal(t, float64(expectedLabelCounterMap[*metric.Label[chosenLabelIdx].Value]), *metric.Counter.Value)
+
+			joinedLabels := strings.Join(labelNameValues, " ")
+			expectedCounter := float64(expectedLabelCounterMap[joinedLabels])
+			require.Equal(t, expectedCounter, *metric.Counter.Value)
 		}
 	}
+	require.Equal(t, len(expected), testedMetricCount, "makes sure all expected metrics are tested")
 }
 
 func Test_getHttpReqMetricUrl(t *testing.T) {
 	type args struct {
-		req *http.Request
+		req          *http.Request
+		pathTemplate string
 	}
 	tests := []struct {
 		name string
@@ -109,14 +141,26 @@ func Test_getHttpReqMetricUrl(t *testing.T) {
 		want string
 	}{
 		{
-			name: "example.com",
+			name: "example.com without path template",
 			args: args{
 				req: func() *http.Request {
 					req, _ := http.NewRequest("GET", "http://www.example.com/abc/def", nil)
 					return req
 				}(),
+				pathTemplate: "",
 			},
 			want: "http://www.example.com",
+		},
+		{
+			name: "example.com with path template",
+			args: args{
+				req: func() *http.Request {
+					req, _ := http.NewRequest("GET", "http://www.example.com/abc/def", nil)
+					return req
+				}(),
+				pathTemplate: "/%s/def",
+			},
+			want: "http://www.example.com/%s/def",
 		},
 		{
 			name: "example.com with query params",
@@ -125,23 +169,26 @@ func Test_getHttpReqMetricUrl(t *testing.T) {
 					req, _ := http.NewRequest("GET", "http://www.example.com/abc?param1=a&param2=b", nil)
 					return req
 				}(),
+				pathTemplate: "/%s",
 			},
-			want: "http://www.example.com",
+			want: "http://www.example.com/%s",
 		},
 		{
-			name: "example.com with query params and fragments",
+			name: "example.com with query params and fragments but no pathTemplate",
 			args: args{
 				req: func() *http.Request {
 					req, _ := http.NewRequest("GET", "http://www.example.com?param1=a&param2=b#fragments", nil)
 					return req
 				}(),
+				pathTemplate: "",
 			},
 			want: "http://www.example.com",
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert.Equalf(t, tt.want, getHttpReqMetricUrl(tt.args.req), "getHttpReqMetricUrl(%v)", tt.args.req)
+			assert.Equalf(t, tt.want, getHttpReqMetricUrl(tt.args.req, tt.args.pathTemplate),
+				"getHttpReqMetricUrl(%v)", tt.args.req)
 		})
 	}
 }

@@ -1,6 +1,7 @@
 package client
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 )
@@ -43,7 +44,10 @@ type (
 func (r *Request) RpcCall(result interface{}, method string, params interface{}) error {
 	req := &RpcRequest{JsonRpc: JsonRpcVersion, Method: method, Params: params, Id: genID()}
 	var resp *RpcResponse
-	err := r.Post(&resp, "", req)
+	_, err := r.Execute(context.Background(), NewReqBuilder().
+		WriteTo(&resp).
+		Body(req).
+		Build())
 	if err != nil {
 		return err
 	}
@@ -56,7 +60,10 @@ func (r *Request) RpcCall(result interface{}, method string, params interface{})
 func (r *Request) RpcCallRaw(method string, params interface{}) ([]byte, error) {
 	req := &RpcRequest{JsonRpc: JsonRpcVersion, Method: method, Params: params, Id: genID()}
 	var resp *RpcResponseRaw
-	err := r.Post(&resp, "", req)
+	_, err := r.Execute(context.Background(), NewReqBuilder().
+		WriteTo(&resp).
+		Body(req).
+		Build())
 	if err != nil {
 		return nil, err
 	}
@@ -68,7 +75,10 @@ func (r *Request) RpcCallRaw(method string, params interface{}) ([]byte, error) 
 
 func (r *Request) RpcBatchCall(requests RpcRequests) ([]RpcResponse, error) {
 	var resp []RpcResponse
-	err := r.Post(&resp, "", requests.fillDefaultValues())
+	_, err := r.Execute(context.Background(), NewReqBuilder().
+		WriteTo(&resp).
+		Body(requests.fillDefaultValues()).
+		Build())
 	if err != nil {
 		return nil, err
 	}
