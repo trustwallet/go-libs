@@ -56,6 +56,14 @@ func TestPath_String(t *testing.T) {
 			},
 			want: "/nft/collections/123/tokens/%!d(MISSING)",
 		},
+		{
+			name: "multiple values",
+			fields: fields{
+				template: "/nft/collections/%s/tokens/%s",
+				values:   []any{"123", "bnb"},
+			},
+			want: "/nft/collections/123/tokens/bnb",
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

@@ -66,10 +66,6 @@ func (metric *httpClientMetrics) Collect(metrics chan<- prometheus.Metric) {
 	metric.requestTotal.Collect(metrics)
 }
 
-func getHttpReqMetricUrl(req *http.Request, pathTemplate string) string {
-	return fmt.Sprintf("%s://%s%s", req.URL.Scheme, req.URL.Host, pathTemplate)
-}
-
 func getHttpRespMetricStatus(resp *http.Response, err error) string {
 	if err != nil {
 		return labelValueErr

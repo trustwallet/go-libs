@@ -25,27 +25,29 @@ func TestClientMetrics(t *testing.T) {
 		pathOk  = "/ok"
 		path5xx = "/5xx"
 		pathErr = "/err"
+
+		basePath = "/api"
 	)
 
 	reg := prometheus.NewPedanticRegistry()
 
-	client := InitClient("http://www.example.com", nil,
+	client := InitClient("http://www.example.com"+basePath, nil,
 		WithMetricsEnabled(reg, prometheus.Labels{"app": "test"}),
 		WithHttpClient(&http.Client{
 			Transport: RoundTripperFunc(func(request *http.Request) (*http.Response, error) {
 				switch request.URL.Path {
-				case pathOk:
+				case basePath + pathOk:
 					return &http.Response{
 						StatusCode: http.StatusOK,
 						Body:       io.NopCloser(strings.NewReader(`{"Data": "ok"}`)),
 					}, nil
-				case path5xx:
+				case basePath + path5xx:
 					return &http.Response{
 						StatusCode: http.StatusInternalServerError,
 						Request:    request,
 						Body:       io.NopCloser(strings.NewReader(`{"Data": "5xx"}`)),
 					}, nil
-				case pathErr:
+				case basePath + pathErr:
 					return nil, errors.New("oops")
 				default:
 					return nil, nil
@@ -66,6 +68,16 @@ func TestClientMetrics(t *testing.T) {
 		PathStatic(pathErr).
 		MetricName("postError").
 		Build())
+
+	// using Pathf
+	_, _ = client.Execute(context.Background(), NewReqBuilder().
+		Method(http.MethodGet).Pathf("%s", pathErr).Build())
+	_, _ = client.Execute(context.Background(), NewReqBuilder().
+		Method(http.MethodGet).Pathf("%s", pathOk).Build())
+	_, _ = client.Execute(context.Background(), NewReqBuilder().
+		Method(http.MethodGet).Pathf("%s", pathOk).Build())
+	_, _ = client.Execute(context.Background(), NewReqBuilder().
+		Method(http.MethodGet).Pathf("%s", path5xx).Build())
 
 	type Resp struct {
 		Data string
@@ -88,22 +100,27 @@ func TestClientMetrics(t *testing.T) {
 	// metricFamily.Name --> Concat(label_name=label_value) --> counter value
 	expected := map[string]map[string]int{
 		namespaceHttpClient + "_" + metricNameRequestTotal: {
-			"app=test method=GET name= status=2xx url=http://www.example.com/ok":    1,
-			"app=test method=GET name= status=5xx url=http://www.example.com/5xx":   1,
-			"app=test method=GET name= status=error url=http://www.example.com/err": 2,
+			"app=test method=GET name= status=2xx url=http://www.example.com/api/ok":    1,
+			"app=test method=GET name= status=5xx url=http://www.example.com/api/5xx":   1,
+			"app=test method=GET name= status=error url=http://www.example.com/api/err": 2,
 
-			"app=test method=POST name= status=5xx url=http://www.example.com/5xx":   1,
-			"app=test method=POST name= status=error url=http://www.example.com/err": 1,
+			"app=test method=POST name= status=5xx url=http://www.example.com/api/5xx":   1,
+			"app=test method=POST name= status=error url=http://www.example.com/api/err": 1,
 
-			"app=test method=POST name=postError status=error url=http://www.example.com/err": 1,
+			"app=test method=POST name=postError status=error url=http://www.example.com/api/err": 1,
 
-			"app=test method=GET name= status=2xx url=http://www.example.com":   1,
-			"app=test method=GET name= status=5xx url=http://www.example.com":   2,
-			"app=test method=GET name= status=error url=http://www.example.com": 1,
+			"app=test method=GET name= status=2xx url=http://www.example.com/api":   1,
+			"app=test method=GET name= status=5xx url=http://www.example.com/api":   2,
+			"app=test method=GET name= status=error url=http://www.example.com/api": 1,
 
-			"app=test method=POST name= status=2xx url=http://www.example.com":   1,
-			"app=test method=POST name= status=5xx url=http://www.example.com":   2,
-			"app=test method=POST name= status=error url=http://www.example.com": 1,
+			"app=test method=POST name= status=2xx url=http://www.example.com/api":   1,
+			"app=test method=POST name= status=5xx url=http://www.example.com/api":   2,
+			"app=test method=POST name= status=error url=http://www.example.com/api": 1,
+
+			// Pathf metrics
+			"app=test method=GET name= status=2xx url=http://www.example.com/api/%s":   2,
+			"app=test method=GET name= status=5xx url=http://www.example.com/api/%s":   1,
+			"app=test method=GET name= status=error url=http://www.example.com/api/%s": 1,
 		},
 	}
 
@@ -128,69 +145,6 @@ func TestClientMetrics(t *testing.T) {
 		}
 	}
 	require.Equal(t, len(expected), testedMetricCount, "makes sure all expected metrics are tested")
-}
-
-func Test_getHttpReqMetricUrl(t *testing.T) {
-	type args struct {
-		req          *http.Request
-		pathTemplate string
-	}
-	tests := []struct {
-		name string
-		args args
-		want string
-	}{
-		{
-			name: "example.com without path template",
-			args: args{
-				req: func() *http.Request {
-					req, _ := http.NewRequest("GET", "http://www.example.com/abc/def", nil)
-					return req
-				}(),
-				pathTemplate: "",
-			},
-			want: "http://www.example.com",
-		},
-		{
-			name: "example.com with path template",
-			args: args{
-				req: func() *http.Request {
-					req, _ := http.NewRequest("GET", "http://www.example.com/abc/def", nil)
-					return req
-				}(),
-				pathTemplate: "/%s/def",
-			},
-			want: "http://www.example.com/%s/def",
-		},
-		{
-			name: "example.com with query params",
-			args: args{
-				req: func() *http.Request {
-					req, _ := http.NewRequest("GET", "http://www.example.com/abc?param1=a&param2=b", nil)
-					return req
-				}(),
-				pathTemplate: "/%s",
-			},
-			want: "http://www.example.com/%s",
-		},
-		{
-			name: "example.com with query params and fragments but no pathTemplate",
-			args: args{
-				req: func() *http.Request {
-					req, _ := http.NewRequest("GET", "http://www.example.com?param1=a&param2=b#fragments", nil)
-					return req
-				}(),
-				pathTemplate: "",
-			},
-			want: "http://www.example.com",
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			assert.Equalf(t, tt.want, getHttpReqMetricUrl(tt.args.req, tt.args.pathTemplate),
-				"getHttpReqMetricUrl(%v)", tt.args.req)
-		})
-	}
 }
 
 func Test_getHttpRespMetricStatus(t *testing.T) {
