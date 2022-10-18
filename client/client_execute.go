@@ -76,7 +76,7 @@ func (r *Request) reportMonitoringMetricsIfEnabled(
 	req *Req, res *http.Response, resErr error,
 ) {
 	if r.metricsEnabled() {
-		url := getHttpReqMetricUrl(request, getMonitoredPathTemplateIfEnabled(req))
+		url := r.GetURL(getMonitoredPathTemplateIfEnabled(req), nil)
 		method := request.Method
 		name := req.metricName
 		status := getHttpRespMetricStatus(res, resErr)
