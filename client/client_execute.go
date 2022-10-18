@@ -138,9 +138,16 @@ func (r *Request) metricsEnabled() bool {
 }
 
 func GetBody(body interface{}) (buf io.ReadWriter, err error) {
-	if body != nil {
-		buf = new(bytes.Buffer)
-		err = json.NewEncoder(buf).Encode(body)
+	if body == nil {
+		return
 	}
+
+	var bs []byte
+	bs, err = json.Marshal(body)
+	if err != nil {
+		return
+	}
+
+	buf = bytes.NewBuffer(bs)
 	return
 }
