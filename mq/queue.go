@@ -8,9 +8,25 @@ type queue struct {
 type Queue interface {
 	Declare() error
 	DeclareWithConfig(cfg DeclareConfig) error
+	Bind(exchangeName ExchangeName) error
+	BindWithKey(exchangeName ExchangeName, key ExchangeKey) error
 	Publish(body []byte) error
 	PublishWithConfig(body []byte, cfg PublishConfig) error
 	Name() QueueName
+}
+
+func (q *queue) Bind(exchangeName ExchangeName) error {
+	return q.BindWithKey(exchangeName, "")
+}
+
+func (q *queue) BindWithKey(exchangeName ExchangeName, key ExchangeKey) error {
+	return q.client.amqpChan.QueueBind(
+		string(q.name),
+		string(key),
+		string(exchangeName),
+		false,
+		nil,
+	)
 }
 
 func (q *queue) Name() QueueName {

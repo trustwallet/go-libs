@@ -7,7 +7,11 @@ type exchange struct {
 
 type Exchange interface {
 	Declare(kind string) error
+	// Deprecated: the binding of exchange and queue should happen on the queue side.
+	// Use Queue.Bind() instead.
 	Bind(queues []Queue) error
+	// Deprecated: the binding of exchange and queue should happen on the queue side.
+	// Use Queue.BindWithKey() instead.
 	BindWithKey(queues []Queue, key ExchangeKey) error
 	Publish(body []byte) error
 	PublishWithKey(body []byte, key ExchangeKey) error
@@ -17,6 +21,8 @@ func (e *exchange) Declare(kind string) error {
 	return e.client.amqpChan.ExchangeDeclare(string(e.name), kind, true, false, false, false, nil)
 }
 
+// Deprecated: the binding of exchange and queue should happen on the queue side.
+// Use Queue.Bind() instead.
 func (e *exchange) Bind(queues []Queue) error {
 	for _, q := range queues {
 		err := e.client.amqpChan.QueueBind(string(q.Name()), "", string(e.name), false, nil)
@@ -28,6 +34,8 @@ func (e *exchange) Bind(queues []Queue) error {
 	return nil
 }
 
+// Deprecated: the binding of exchange and queue should happen on the queue side.
+// Use Queue.BindWithKey() instead.
 func (e *exchange) BindWithKey(queues []Queue, key ExchangeKey) error {
 	for _, q := range queues {
 		err := e.client.amqpChan.QueueBind(string(q.Name()), string(key), string(e.name), false, nil)

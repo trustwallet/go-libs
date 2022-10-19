@@ -156,3 +156,7 @@ func (r *Redis) Reconnect(ctx context.Context, host string) error {
 
 	return nil
 }
+
+func (r *Redis) Close() error {
+	return r.client.Close()
+}
