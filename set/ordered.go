@@ -27,3 +27,15 @@ func (u *OrderedSet[T]) Contains(val T) bool {
 func (u *OrderedSet[T]) Values() []T {
 	return u.values
 }
+
+func (u *OrderedSet[T]) Size() int {
+	return len(u.valuesSet)
+}
+
+func (u *OrderedSet[T]) ValueAt(idx int, defaultValue T) T {
+	if (idx < 0) || (idx >= len(u.values)) {
+		return defaultValue
+	}
+
+	return u.values[idx]
+}
