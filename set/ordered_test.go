@@ -17,11 +17,9 @@ func TestContains(t *testing.T) {
 
 		assert.Equal(t, 3, u.Size())
 
-		assert.Equal(t, 1, u.ValueAt(0, 0))
-		assert.Equal(t, 5, u.ValueAt(1, 0))
-		assert.Equal(t, 8, u.ValueAt(2, 0))
-		assert.Equal(t, 0, u.ValueAt(256, 0))
-		assert.Equal(t, 0, u.ValueAt(-1, 0))
+		assert.Equal(t, 1, u.ValueAt(0))
+		assert.Equal(t, 5, u.ValueAt(1))
+		assert.Equal(t, 8, u.ValueAt(2))
 	})
 
 	t.Run("str", func(t *testing.T) {
@@ -34,9 +32,8 @@ func TestContains(t *testing.T) {
 
 		assert.Equal(t, 3, u.Size())
 
-		assert.Equal(t, "foo", u.ValueAt(0, ""))
-		assert.Equal(t, "bar", u.ValueAt(1, ""))
-		assert.Equal(t, "baz", u.ValueAt(2, ""))
-		assert.Equal(t, "", u.ValueAt(256, ""))
+		assert.Equal(t, "foo", u.ValueAt(0))
+		assert.Equal(t, "bar", u.ValueAt(1))
+		assert.Equal(t, "baz", u.ValueAt(2))
 	})
 }

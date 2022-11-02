@@ -32,10 +32,7 @@ func (u *OrderedSet[T]) Size() int {
 	return len(u.valuesSet)
 }
 
-func (u *OrderedSet[T]) ValueAt(idx int, defaultValue T) T {
-	if (idx < 0) || (idx >= len(u.values)) {
-		return defaultValue
-	}
-
+// ValueAt assumes the provided idx is inside bounds
+func (u *OrderedSet[T]) ValueAt(idx int) T {
 	return u.values[idx]
 }
