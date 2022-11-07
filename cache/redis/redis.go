@@ -38,11 +38,13 @@ func WithTLS(cfg *tls.Config) Option {
 	}
 }
 
-func InitWithTLS(url string, secure bool) (*Redis, error) {
+func InitWithTLS(url string, secure bool, opts ...Option) (*Redis, error) {
 	var options []Option
 	if secure {
 		options = append(options, WithTLS(&tls.Config{InsecureSkipVerify: true}))
 	}
+	options = append(options, opts...)
+
 	redis, err := Init(context.Background(), url, options...)
 	if err != nil {
 		return nil, err
