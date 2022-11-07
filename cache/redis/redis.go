@@ -24,10 +24,11 @@ type Option func(o *redis.Options)
 // Example configuration for tests, self-signed untrusted certs.
 //
 //	&tls.Config{
-// 		InsecureSkipVerify: true,
+//		InsecureSkipVerify: true,
 //	}
 //
 // Example of configuration for production usage
+//
 //	&tls.Config{
 //		MinVersion: tls.VersionTLS12,
 //	}
@@ -35,6 +36,18 @@ func WithTLS(cfg *tls.Config) Option {
 	return func(o *redis.Options) {
 		o.TLSConfig = cfg
 	}
+}
+
+func InitWithTLS(url string, secure bool) (*Redis, error) {
+	var options []Option
+	if secure {
+		options = append(options, WithTLS(&tls.Config{InsecureSkipVerify: true}))
+	}
+	redis, err := Init(context.Background(), url, options...)
+	if err != nil {
+		return nil, err
+	}
+	return redis, nil
 }
 
 func Init(ctx context.Context, host string, opts ...Option) (*Redis, error) {
@@ -155,4 +168,8 @@ func (r *Redis) Reconnect(ctx context.Context, host string) error {
 	}
 
 	return nil
+}
+
+func (r *Redis) Close() error {
+	return r.client.Close()
 }

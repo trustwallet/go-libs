@@ -8,6 +8,7 @@ require (
 	github.com/getsentry/raven-go v0.2.0
 	github.com/gin-gonic/gin v1.7.4
 	github.com/go-redis/redis/v8 v8.8.2
+	github.com/golang/mock v1.6.0
 	github.com/heirko/go-contrib v0.0.0-20200825160048-11fc5e2235fa
 	github.com/heralight/logrus_mate v1.0.1
 	github.com/patrickmn/go-cache v2.1.0+incompatible
