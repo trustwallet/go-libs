@@ -67,7 +67,7 @@ func InitClient(baseURL string, errorHandler HttpErrorHandler, options ...Option
 	if client.metricsEnabled() {
 		err := client.metricRegisterer.Register(client.httpMetrics)
 		if err != nil {
-			if _, ok := err.(*prometheus.AlreadyRegisteredError); !ok {
+			if _, ok := err.(*prometheus.AlreadyRegisteredError); ok {
 				log.WithError(err).Warn("metric already registered")
 			} else {
 				log.WithError(err).Error("could not initialize http client metrics")
