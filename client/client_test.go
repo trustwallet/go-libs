@@ -2,6 +2,7 @@ package client
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -147,7 +148,11 @@ func TestTimeoutOption(t *testing.T) {
 			client := InitClient(srv.URL, nil, TimeoutOption(tc.clientTimeout))
 
 			var actual json.RawMessage
-			err := client.Get(&actual, "", nil)
+			_, err := client.Execute(context.Background(), NewReqBuilder().
+				Method(http.MethodGet).
+				WriteTo(&actual).
+				PathStatic("").
+				Build())
 			tc.errExpected(t, err)
 			assert.Equal(t, tc.expectedResponse, string(actual))
 		})

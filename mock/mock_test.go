@@ -1,6 +1,7 @@
 package mock
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -26,10 +27,14 @@ func TestCreateMockedAPI(t *testing.T) {
 
 	server := httptest.NewServer(CreateMockedAPI(data))
 	defer server.Close()
-	client := client.InitClient(server.URL, nil)
+	cl := client.InitClient(server.URL, nil)
 
 	var resp response
-	err := client.Get(&resp, "1", nil)
+	_, err := cl.Execute(context.Background(), client.NewReqBuilder().
+		Method(http.MethodGet).
+		WriteTo(&resp).
+		PathStatic("1").
+		Build())
 
 	assert.Nil(t, err)
 	assert.True(t, resp.Status)

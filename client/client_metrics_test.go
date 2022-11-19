@@ -83,15 +83,48 @@ func TestClientMetrics(t *testing.T) {
 		Data string
 	}
 	var resp Resp
-	_ = client.Get(&resp, path5xx, nil)
-	_ = client.Get(&resp, path5xx, nil)
-	_ = client.Get(&resp, pathOk, nil)
-	_ = client.Get(&resp, pathErr, nil)
+	ctx := context.Background()
+	_, _ = client.Execute(ctx, NewReqBuilder().
+		Method(http.MethodGet).
+		WriteTo(&resp).
+		PathStatic(path5xx).
+		Build())
+	_, _ = client.Execute(ctx, NewReqBuilder().
+		Method(http.MethodGet).
+		WriteTo(&resp).
+		PathStatic(path5xx).
+		Build())
+	_, _ = client.Execute(ctx, NewReqBuilder().
+		Method(http.MethodGet).
+		WriteTo(&resp).
+		PathStatic(pathOk).
+		Build())
+	_, _ = client.Execute(ctx, NewReqBuilder().
+		Method(http.MethodGet).
+		WriteTo(&resp).
+		PathStatic(pathErr).
+		Build())
 
-	_ = client.Post(&resp, path5xx, nil)
-	_ = client.Post(&resp, path5xx, nil)
-	_ = client.Post(&resp, pathOk, nil)
-	_ = client.Post(&resp, pathErr, nil)
+	_, _ = client.Execute(ctx, NewReqBuilder().
+		Method(http.MethodPost).
+		WriteTo(&resp).
+		PathStatic(path5xx).
+		Build())
+	_, _ = client.Execute(ctx, NewReqBuilder().
+		Method(http.MethodPost).
+		WriteTo(&resp).
+		PathStatic(path5xx).
+		Build())
+	_, _ = client.Execute(ctx, NewReqBuilder().
+		Method(http.MethodPost).
+		WriteTo(&resp).
+		PathStatic(pathOk).
+		Build())
+	_, _ = client.Execute(ctx, NewReqBuilder().
+		Method(http.MethodPost).
+		WriteTo(&resp).
+		PathStatic(pathErr).
+		Build())
 
 	mfs, err := reg.Gather()
 	require.NoError(t, err)
