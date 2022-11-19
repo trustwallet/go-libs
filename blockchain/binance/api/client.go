@@ -1,6 +1,8 @@
 package api
 
 import (
+	"context"
+	"net/http"
 	"net/url"
 	"strconv"
 	"time"
@@ -33,6 +35,11 @@ func (c *Client) GetTransactionsByAddress(address string, limit int) ([]Tx, erro
 
 	var result TransactionsResponse
 
-	err := c.req.Get(&result, "bc/api/v1/txs", params)
+	_, err := c.req.Execute(context.Background(), client.NewReqBuilder().
+		Method(http.MethodGet).
+		WriteTo(&result).
+		PathStatic("bc/api/v1/txs").
+		Query(params).
+		Build())
 	return result.Tx, err
 }
