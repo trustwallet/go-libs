@@ -25,7 +25,7 @@ func InitClient(url, apiKey string, errorHandler client.HttpErrorHandler) Client
 }
 
 func (c Client) FetchNodeInfo() (result NodeInfoResponse, err error) {
-	_, err = c.req.Execute(context.Background(), client.NewReqBuilder().
+	_, err = c.req.Execute(context.TODO(), client.NewReqBuilder().
 		Method(http.MethodGet).
 		WriteTo(&result).
 		PathStatic("/api/v1/node-info").
@@ -34,7 +34,7 @@ func (c Client) FetchNodeInfo() (result NodeInfoResponse, err error) {
 }
 
 func (c Client) FetchTransactionsInBlock(blockNumber int64) (result TransactionsInBlockResponse, err error) {
-	_, err = c.req.Execute(context.Background(), client.NewReqBuilder().
+	_, err = c.req.Execute(context.TODO(), client.NewReqBuilder().
 		Method(http.MethodGet).
 		WriteTo(&result).
 		PathStatic(fmt.Sprintf("api/v2/transactions-in-block/%d", blockNumber)).
@@ -51,7 +51,7 @@ func (c Client) FetchTransactionsByAddressAndTokenID(address, tokenID string, li
 		"limit":     {strconv.Itoa(limit)},
 	}
 	var result TransactionsInBlockResponse
-	_, err := c.req.Execute(context.Background(), client.NewReqBuilder().
+	_, err := c.req.Execute(context.TODO(), client.NewReqBuilder().
 		Method(http.MethodGet).
 		WriteTo(&result).
 		PathStatic("/api/v1/transactions").
@@ -61,7 +61,7 @@ func (c Client) FetchTransactionsByAddressAndTokenID(address, tokenID string, li
 }
 
 func (c Client) FetchAccountMeta(address string) (result AccountMeta, err error) {
-	_, err = c.req.Execute(context.Background(), client.NewReqBuilder().
+	_, err = c.req.Execute(context.TODO(), client.NewReqBuilder().
 		Method(http.MethodGet).
 		WriteTo(&result).
 		PathStatic(fmt.Sprintf("/api/v1/account/%s", address)).
@@ -71,7 +71,7 @@ func (c Client) FetchAccountMeta(address string) (result AccountMeta, err error)
 
 func (c Client) FetchTokens(limit int) (result Tokens, err error) {
 	params := url.Values{"limit": {strconv.Itoa(limit)}}
-	_, err = c.req.Execute(context.Background(), client.NewReqBuilder().
+	_, err = c.req.Execute(context.TODO(), client.NewReqBuilder().
 		Method(http.MethodGet).
 		WriteTo(&result).
 		PathStatic("/api/v1/tokens").
@@ -82,7 +82,7 @@ func (c Client) FetchTokens(limit int) (result Tokens, err error) {
 
 func (c Client) FetchMarketPairs(limit int) (pairs []MarketPair, err error) {
 	params := url.Values{"limit": {strconv.Itoa(limit)}}
-	_, err = c.req.Execute(context.Background(), client.NewReqBuilder().
+	_, err = c.req.Execute(context.TODO(), client.NewReqBuilder().
 		Method(http.MethodGet).
 		WriteTo(&pairs).
 		PathStatic("/api/v1/markets").

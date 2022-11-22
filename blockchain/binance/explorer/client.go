@@ -27,7 +27,7 @@ func (c Client) FetchBep2Assets(page, rows int) (assets Bep2Assets, err error) {
 		"page": {strconv.Itoa(page)},
 		"rows": {strconv.Itoa(rows)},
 	}
-	_, err = c.req.Execute(context.Background(), client.NewReqBuilder().
+	_, err = c.req.Execute(context.TODO(), client.NewReqBuilder().
 		Method(http.MethodGet).
 		WriteTo(&assets).
 		PathStatic("/api/v1/assets").

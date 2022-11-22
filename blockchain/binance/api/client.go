@@ -35,7 +35,7 @@ func (c *Client) GetTransactionsByAddress(address string, limit int) ([]Tx, erro
 
 	var result TransactionsResponse
 
-	_, err := c.req.Execute(context.Background(), client.NewReqBuilder().
+	_, err := c.req.Execute(context.TODO(), client.NewReqBuilder().
 		Method(http.MethodGet).
 		WriteTo(&result).
 		PathStatic("bc/api/v1/txs").

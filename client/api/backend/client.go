@@ -19,7 +19,7 @@ func InitClient(url string, errorHandler client.HttpErrorHandler) Client {
 }
 
 func (c *Client) GetAssetInfo(assetID string) (result AssetInfoResp, err error) {
-	_, err = c.req.Execute(context.Background(), client.NewReqBuilder().
+	_, err = c.req.Execute(context.TODO(), client.NewReqBuilder().
 		Method(http.MethodGet).
 		WriteTo(&result).
 		PathStatic(fmt.Sprintf("/v1/assets/%s", assetID)).
