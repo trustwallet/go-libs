@@ -7,7 +7,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"sync"
 	"time"
@@ -140,9 +140,9 @@ func generateKey(c *gin.Context) string {
 	url := c.Request.URL.String()
 	var b []byte
 	if c.Request.Body != nil {
-		b, _ = ioutil.ReadAll(c.Request.Body)
+		b, _ = io.ReadAll(c.Request.Body)
 		// Restore the io.ReadCloser to its original state
-		c.Request.Body = ioutil.NopCloser(bytes.NewBuffer(b))
+		c.Request.Body = io.NopCloser(bytes.NewBuffer(b))
 	}
 	hash := sha1.Sum(append([]byte(url), b...))
 	return base64.URLEncoding.EncodeToString(hash[:])

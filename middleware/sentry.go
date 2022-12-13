@@ -2,7 +2,7 @@ package middleware
 
 import (
 	"bytes"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strconv"
 
@@ -154,9 +154,9 @@ func GetSentryErrorHandler(conditions ...SentryCondition) func(res *http.Respons
 }
 
 func getBody(res *http.Response) string {
-	bodyBytes, _ := ioutil.ReadAll(res.Body)
+	bodyBytes, _ := io.ReadAll(res.Body)
 	_ = res.Body.Close() //  must close
-	res.Body = ioutil.NopCloser(bytes.NewBuffer(bodyBytes))
+	res.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
 
 	return string(bodyBytes)
 }

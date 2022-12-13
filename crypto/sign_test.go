@@ -29,7 +29,7 @@ func testCompareKeys(t *testing.T, exp string, act *rsa.PrivateKey) {
 	var buf bytes.Buffer
 	assert.NoError(t, pem.Encode(&buf, &pem.Block{Type: "RSA PRIVATE KEY", Bytes: x509.MarshalPKCS1PrivateKey(act)}))
 
-	assert.Equal(t, exp, string(buf.Bytes()))
+	assert.Equal(t, exp, buf.String())
 }
 
 func TestGetRSAPrivateKey(t *testing.T) {

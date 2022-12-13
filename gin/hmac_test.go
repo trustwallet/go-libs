@@ -93,7 +93,7 @@ func TestHmacVerifier(t *testing.T) {
 			return "whatever", nil
 		})
 
-		rawURL := fmt.Sprintf("http://does.not.matter")
+		rawURL := "http://does.not.matter"
 		w := httptest.NewRecorder()
 		h(createTestContext(t, w, rawURL, map[string]string{}))
 		assert.Equal(t, http.StatusBadRequest, w.Code)
@@ -106,7 +106,7 @@ func TestHmacVerifier(t *testing.T) {
 			return "", errors.New("plaintext cannot be extracted")
 		})
 
-		rawURL := fmt.Sprintf("http://does.not.matter")
+		rawURL := "http://does.not.matter"
 		w := httptest.NewRecorder()
 		h(createTestContext(t, w, rawURL, map[string]string{}))
 		assert.Equal(t, http.StatusBadRequest, w.Code)
@@ -122,7 +122,7 @@ func TestHmacVerifier(t *testing.T) {
 			return "whatever", nil
 		})
 
-		rawURL := fmt.Sprintf("http://does.not.matter")
+		rawURL := "http://does.not.matter"
 		w := httptest.NewRecorder()
 		h(createTestContext(t, w, rawURL, map[string]string{
 			HmacDefaultSignatureHeader: "some-static-sig",

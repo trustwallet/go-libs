@@ -1,12 +1,14 @@
 package mock
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+
 	"github.com/trustwallet/go-libs/client"
 )
 
@@ -26,10 +28,14 @@ func TestCreateMockedAPI(t *testing.T) {
 
 	server := httptest.NewServer(CreateMockedAPI(data))
 	defer server.Close()
-	client := client.InitClient(server.URL, nil)
+	cli := client.InitClient(server.URL, nil)
 
 	var resp response
-	err := client.Get(&resp, "1", nil)
+	_, err := cli.Execute(context.TODO(), client.NewReqBuilder().
+		Method(http.MethodGet).
+		PathStatic("1").
+		WriteTo(&resp).
+		Build())
 
 	assert.Nil(t, err)
 	assert.True(t, resp.Status)
