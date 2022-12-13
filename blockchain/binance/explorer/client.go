@@ -1,6 +1,8 @@
 package explorer
 
 import (
+	"context"
+	"net/http"
 	"net/url"
 	"strconv"
 
@@ -25,7 +27,12 @@ func (c Client) FetchBep2Assets(page, rows int) (assets Bep2Assets, err error) {
 		"page": {strconv.Itoa(page)},
 		"rows": {strconv.Itoa(rows)},
 	}
-	err = c.req.Get(&assets, "/api/v1/assets", params)
+	_, err = c.req.Execute(context.TODO(), client.NewReqBuilder().
+		Method(http.MethodGet).
+		PathStatic("/api/v1/assets").
+		Query(params).
+		WriteTo(&assets).
+		Build())
 
 	return assets, err
 }

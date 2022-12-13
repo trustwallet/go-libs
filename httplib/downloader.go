@@ -3,7 +3,6 @@ package httplib
 import (
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 
 	log "github.com/sirupsen/logrus"
@@ -37,7 +36,7 @@ func (d *downloader) Download(url string) ([]byte, error) {
 		reader = &io.LimitedReader{R: resp.Body, N: d.bytesSizeLimit}
 	}
 
-	b, err := ioutil.ReadAll(reader)
+	b, err := io.ReadAll(reader)
 	if err != nil {
 		return nil, err
 	}

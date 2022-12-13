@@ -2,7 +2,7 @@ package mock
 
 import (
 	"encoding/json"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"os"
 )
@@ -14,7 +14,7 @@ func JsonModelFromFilePath(file string, intoStruct interface{}) error {
 	}
 	defer jsonFile.Close()
 
-	byteValue, err := ioutil.ReadAll(jsonFile)
+	byteValue, err := io.ReadAll(jsonFile)
 	if err != nil {
 		return err
 	}
@@ -32,7 +32,7 @@ func JsonStringFromFilePath(file string) (string, error) {
 	}
 	defer jsonFile.Close()
 
-	byteValue, err := ioutil.ReadAll(jsonFile)
+	byteValue, err := io.ReadAll(jsonFile)
 	if err != nil {
 		return "", err
 	}

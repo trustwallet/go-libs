@@ -15,8 +15,7 @@ type MetricsPusherClient struct {
 }
 
 func NewMetricsPusherClient(pushURL, key string, errorHandler client.HttpErrorHandler) *MetricsPusherClient {
-	client := client.InitClient(pushURL, errorHandler)
-	client.AddHeader("X-API-Key", key)
+	client := client.InitClient(pushURL, errorHandler, client.WithExtraHeader("X-API-Key", key))
 
 	return &MetricsPusherClient{
 		client: client,

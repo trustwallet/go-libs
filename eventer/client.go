@@ -1,6 +1,9 @@
 package eventer
 
 import (
+	"context"
+	"net/http"
+
 	"github.com/trustwallet/go-libs/client"
 	"github.com/trustwallet/go-libs/middleware"
 )
@@ -28,6 +31,11 @@ func Init(url string, limit int) {
 }
 
 func (c Client) SendBatch(events []Event) (status Status, err error) {
-	err = senderClient.Post(&status, "", events)
+	_, err = senderClient.Execute(context.TODO(), client.NewReqBuilder().
+		Method(http.MethodPost).
+		PathStatic("").
+		Body(events).
+		WriteTo(&status).
+		Build())
 	return
 }

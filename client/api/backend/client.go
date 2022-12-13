@@ -1,7 +1,8 @@
 package backend
 
 import (
-	"fmt"
+	"context"
+	"net/http"
 
 	"github.com/trustwallet/go-libs/client"
 )
@@ -17,6 +18,10 @@ func InitClient(url string, errorHandler client.HttpErrorHandler) Client {
 }
 
 func (c *Client) GetAssetInfo(assetID string) (result AssetInfoResp, err error) {
-	err = c.req.Get(&result, fmt.Sprintf("/v1/assets/%s", assetID), nil)
+	_, err = c.req.Execute(context.TODO(), client.NewReqBuilder().
+		Method(http.MethodGet).
+		Pathf("/v1/assets/%s", assetID).
+		WriteTo(&result).
+		Build())
 	return result, err
 }

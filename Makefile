@@ -9,11 +9,11 @@ test-network:
 lint: go-lint-install go-lint
 
 go-lint-install:
-ifeq (,$(wildcard test -f bin/golangci-lint))
+ifeq (,$(shell which golangci-lint))
 	@echo "  >  Installing golint"
-	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/v1.45.2/install.sh | sh -s
+	go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.48.0
 endif
 
 go-lint:
 	@echo "  >  Running golint"
-	bin/golangci-lint run --timeout=2m
+	golangci-lint run ./...

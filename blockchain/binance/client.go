@@ -1,7 +1,8 @@
 package binance
 
 import (
-	"fmt"
+	"context"
+	"net/http"
 	"net/url"
 	"strconv"
 	"time"
@@ -15,20 +16,27 @@ type Client struct {
 }
 
 func InitClient(url, apiKey string, errorHandler client.HttpErrorHandler) Client {
-	request := client.InitJSONClient(url, errorHandler)
-	request.AddHeader("apikey", apiKey)
+	request := client.InitJSONClient(url, errorHandler, client.WithExtraHeader("apikey", apiKey))
 	return Client{
 		req: request,
 	}
 }
 
 func (c Client) FetchNodeInfo() (result NodeInfoResponse, err error) {
-	err = c.req.Get(&result, "/api/v1/node-info", nil)
+	_, err = c.req.Execute(context.TODO(), client.NewReqBuilder().
+		Method(http.MethodGet).
+		PathStatic("/api/v1/node-info").
+		WriteTo(&result).
+		Build())
 	return result, err
 }
 
 func (c Client) FetchTransactionsInBlock(blockNumber int64) (result TransactionsInBlockResponse, err error) {
-	err = c.req.Get(&result, fmt.Sprintf("api/v2/transactions-in-block/%d", blockNumber), nil)
+	_, err = c.req.Execute(context.TODO(), client.NewReqBuilder().
+		Method(http.MethodGet).
+		Pathf("api/v2/transactions-in-block/%d", blockNumber).
+		WriteTo(&result).
+		Build())
 	return result, err
 }
 
@@ -41,23 +49,42 @@ func (c Client) FetchTransactionsByAddressAndTokenID(address, tokenID string, li
 		"limit":     {strconv.Itoa(limit)},
 	}
 	var result TransactionsInBlockResponse
-	err := c.req.Get(&result, "/api/v1/transactions", params)
+	_, err := c.req.Execute(context.TODO(), client.NewReqBuilder().
+		Method(http.MethodGet).
+		PathStatic("/api/v1/transactions").
+		Query(params).
+		WriteTo(&result).
+		Build())
 	return result.Tx, err
 }
 
 func (c Client) FetchAccountMeta(address string) (result AccountMeta, err error) {
-	err = c.req.Get(&result, fmt.Sprintf("/api/v1/account/%s", address), nil)
+	_, err = c.req.Execute(context.TODO(), client.NewReqBuilder().
+		Method(http.MethodGet).
+		Pathf("/api/v1/account/%s", address).
+		WriteTo(&result).
+		Build())
 	return result, err
 }
 
 func (c Client) FetchTokens(limit int) (result Tokens, err error) {
 	params := url.Values{"limit": {strconv.Itoa(limit)}}
-	err = c.req.Get(&result, "/api/v1/tokens", params)
+	_, err = c.req.Execute(context.TODO(), client.NewReqBuilder().
+		Method(http.MethodGet).
+		PathStatic("/api/v1/tokens").
+		Query(params).
+		WriteTo(&result).
+		Build())
 	return result, err
 }
 
 func (c Client) FetchMarketPairs(limit int) (pairs []MarketPair, err error) {
 	params := url.Values{"limit": {strconv.Itoa(limit)}}
-	err = c.req.Get(&pairs, "/api/v1/markets", params)
+	_, err = c.req.Execute(context.TODO(), client.NewReqBuilder().
+		Method(http.MethodGet).
+		PathStatic("/api/v1/markets").
+		Query(params).
+		WriteTo(&pairs).
+		Build())
 	return pairs, err
 }
