@@ -6,6 +6,7 @@ import (
 	"time"
 
 	log "github.com/sirupsen/logrus"
+
 	"github.com/trustwallet/go-libs/metrics"
 )
 
@@ -62,6 +63,14 @@ func (w *worker) Name() string {
 }
 
 func (w *worker) Start(ctx context.Context, wg *sync.WaitGroup) {
+	if w.options.Interval == -1 {
+		w.hold(ctx, wg)
+		return
+	}
+	w.start(ctx, wg)
+}
+
+func (w *worker) start(ctx context.Context, wg *sync.WaitGroup) {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
@@ -80,7 +89,7 @@ func (w *worker) Start(ctx context.Context, wg *sync.WaitGroup) {
 				if w.stopFn != nil {
 					log.WithField("worker", w.name).Info("stopping...")
 					if err := w.stopFn(); err != nil {
-						log.WithField("worker", w.name).WithError(err).Warn("error ocurred while stopping the worker")
+						log.WithField("worker", w.name).WithError(err).Warn("error occurred while stopping the worker")
 					}
 				}
 				log.WithField("worker", w.name).Info("stopped")
@@ -98,6 +107,27 @@ func (w *worker) Start(ctx context.Context, wg *sync.WaitGroup) {
 				}
 			}
 		}
+	}()
+}
+
+func (w *worker) hold(ctx context.Context, wg *sync.WaitGroup) {
+	wg.Add(1)
+
+	logger := log.WithField("worker", w.name)
+	logger.Info("worker started, but won't be executed")
+
+	go func() {
+		defer wg.Done()
+
+		_ = <-ctx.Done()
+
+		if w.stopFn != nil {
+			logger.Info("stopping...")
+			if err := w.stopFn(); err != nil {
+				logger.WithError(err).Warn("error occurred while stopping the worker")
+			}
+		}
+		logger.Info("stopped")
 	}()
 }
 
