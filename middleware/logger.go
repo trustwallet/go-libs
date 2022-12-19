@@ -5,8 +5,11 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func Logger() gin.HandlerFunc {
-	return gin.LoggerWithFormatter(LoggerFormatter())
+func Logger(skipPaths ...string) gin.HandlerFunc {
+	return gin.LoggerWithConfig(gin.LoggerConfig{
+		Formatter: LoggerFormatter(),
+		SkipPaths: skipPaths,
+	})
 }
 
 func LoggerFormatter() gin.LogFormatter {
