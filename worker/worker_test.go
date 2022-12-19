@@ -57,7 +57,6 @@ func TestWorkerStartsWithoutExecution(t *testing.T) {
 	options.Interval = -1
 
 	worker := worker.NewWorkerBuilder("test", func() error {
-		time.Sleep(100 * time.Millisecond)
 		counter++
 		return nil
 	}).WithOptions(options).Build()
