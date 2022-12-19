@@ -6,7 +6,11 @@ import (
 )
 
 func Logger() gin.HandlerFunc {
-	return gin.LoggerWithFormatter(func(param gin.LogFormatterParams) string {
+	return gin.LoggerWithFormatter(LoggerFormatter())
+}
+
+func LoggerFormatter() gin.LogFormatter {
+	return func(param gin.LogFormatterParams) string {
 		return fmt.Sprintf("%s - \"%s %s %s %d %s \"%s\" %s\"\n",
 			param.ClientIP,
 			param.Method,
@@ -17,5 +21,5 @@ func Logger() gin.HandlerFunc {
 			param.Request.UserAgent(),
 			param.ErrorMessage,
 		)
-	})
+	}
 }
