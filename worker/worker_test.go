@@ -19,12 +19,11 @@ func TestWorkerWithDefaultOptions(t *testing.T) {
 	}).WithOptions(worker.DefaultWorkerOptions(100 * time.Millisecond)).Build()
 
 	wg := &sync.WaitGroup{}
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithTimeout(context.Background(), 350*time.Millisecond)
+	defer cancel()
 
 	worker.Start(ctx, wg)
 
-	time.Sleep(350 * time.Millisecond)
-	cancel()
 	wg.Wait()
 
 	assert.Equal(t, 4, counter, "Should execute 4 times - 1st immediately, and 3 after")
@@ -42,12 +41,11 @@ func TestWorkerStartsConsequently(t *testing.T) {
 	}).WithOptions(options).Build()
 
 	wg := &sync.WaitGroup{}
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithTimeout(context.Background(), 350*time.Millisecond)
+	defer cancel()
 
 	worker.Start(ctx, wg)
 
-	time.Sleep(350 * time.Millisecond)
-	cancel()
 	wg.Wait()
 
 	assert.Equal(t, 3, counter, "Should execute 3 times - 1st immediately, and 2 after with delay between runs")
@@ -65,12 +63,11 @@ func TestWorkerStartsWithoutExecution(t *testing.T) {
 	}).WithOptions(options).Build()
 
 	wg := &sync.WaitGroup{}
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithTimeout(context.Background(), 50*time.Millisecond)
+	defer cancel()
 
 	worker.Start(ctx, wg)
 
-	time.Sleep(350 * time.Millisecond)
-	cancel()
 	wg.Wait()
 
 	assert.Equal(t, 0, counter, "Should never be executed")
