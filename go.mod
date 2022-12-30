@@ -18,6 +18,7 @@ require (
 	github.com/streadway/amqp v1.0.0
 	github.com/stretchr/testify v1.7.0
 	golang.org/x/exp v0.0.0-20220827204233-334a2380cb91
+	golang.org/x/sync v0.1.0
 	gorm.io/driver/postgres v1.2.3
 	gorm.io/gorm v1.22.4
 	gotest.tools v2.2.0+incompatible
