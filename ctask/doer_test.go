@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 )
@@ -13,10 +14,11 @@ func TestDo(t *testing.T) {
 	type R = int // result type
 
 	type args struct {
-		ctx      context.Context
-		tasks    []T
-		executor func(t T) (R, error)
-		opts     []DoOpt
+		ctx        context.Context
+		ctxTimeout time.Duration
+		tasks      []T
+		executor   func(ctx context.Context, t T) (R, error)
+		opts       []DoOpt
 	}
 	tests := []struct {
 		name       string
@@ -59,29 +61,62 @@ func TestDo(t *testing.T) {
 				require.Equal(t, errors.New("negative"), err)
 			},
 		},
+		{
+			name: "slow function with sleeps should run concurrently without context deadline error",
+			args: args{
+				ctx:        context.Background(),
+				ctxTimeout: 50 * time.Millisecond,
+				tasks: []T{
+					10, 10, 10, 10, 10, 10, 10, 10, 10, 10,
+					10, 10, 10, 10, 10, 10, 10, 10, 10, 10,
+					10, 10, 10, 10, 10, 10, 10, 10, 10, 10,
+					10, 10, 10, 10, 10, 10, 10, 10, 10, 10,
+					10, 10, 10, 10, 10, 10, 10, 10, 10, 10,
+				},
+				executor: func(ctx context.Context, t T) (R, error) {
+					time.Sleep(time.Duration(t) * time.Millisecond)
+					return 1, nil
+				},
+				opts: []DoOpt{WithWorkerNum(20)},
+			},
+			want: []R{
+				1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+				1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+				1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+				1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+				1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+			},
+			requireErr: require.NoError,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := Do(tt.args.ctx, tt.args.tasks, tt.args.executor, tt.args.opts...)
+			ctx := tt.args.ctx
+			if tt.args.ctxTimeout > 0 {
+				var cancel context.CancelFunc
+				ctx, cancel = context.WithTimeout(ctx, tt.args.ctxTimeout)
+				defer cancel()
+			}
+			got, err := Do(ctx, tt.args.tasks, tt.args.executor, tt.args.opts...)
 			tt.requireErr(t, err)
 			require.Equal(t, tt.want, got)
 		})
 	}
 }
 
-func fibonacci(n int) (int, error) {
+func fibonacci(ctx context.Context, n int) (int, error) {
 	if n < 0 {
 		return 0, errors.New("negative")
 	}
 	if n < 2 {
 		return 1, nil
 	}
-	r1, err := fibonacci(n - 1)
+	r1, err := fibonacci(ctx, n-1)
 	if err != nil {
 		return 0, err
 	}
 
-	r2, err := fibonacci(n - 2)
+	r2, err := fibonacci(ctx, n-2)
 	if err != nil {
 		return 0, err
 	}
