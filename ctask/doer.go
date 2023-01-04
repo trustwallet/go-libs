@@ -21,13 +21,13 @@ type DoConfig struct {
 func Do[Task any, Result any](
 	ctx context.Context,
 	tasks []Task,
-	executor func(t Task) (Result, error),
+	executor func(ctx context.Context, t Task) (Result, error),
 	opts ...DoOpt,
 ) ([]Result, error) {
 	cfg := getConfigWithOptions(opts...)
 
 	g, ctx := errgroup.WithContext(ctx)
-	g.SetLimit(int(cfg.WorkerNum))
+	g.SetLimit(cfg.WorkerNum)
 	results := make([]Result, len(tasks))
 	for idx, task := range tasks {
 		idx, task := idx, task // retain current loop values to be used in goroutine
@@ -36,7 +36,7 @@ func Do[Task any, Result any](
 			case <-ctx.Done():
 				return ctx.Err()
 			default:
-				res, err := executor(task)
+				res, err := executor(ctx, task)
 				if err != nil {
 					return err
 				}

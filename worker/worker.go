@@ -119,7 +119,7 @@ func (w *worker) hold(ctx context.Context, wg *sync.WaitGroup) {
 	go func() {
 		defer wg.Done()
 
-		_ = <-ctx.Done()
+		<-ctx.Done()
 
 		if w.stopFn != nil {
 			logger.Info("stopping...")
