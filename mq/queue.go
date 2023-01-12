@@ -1,5 +1,7 @@
 package mq
 
+import "fmt"
+
 type queue struct {
 	name   QueueName
 	client *Client
@@ -39,6 +41,14 @@ func (q *queue) Publish(body []byte) error {
 
 func (q *queue) PublishWithConfig(body []byte, cfg PublishConfig) error {
 	return publishWithConfig(q.client.amqpChan, "", ExchangeKey(q.name), body, cfg)
+}
+
+func (q *queue) HealthCheck() error {
+	if err := q.client.HealthCheck(); err != nil {
+		return fmt.Errorf("client health check: %v", err)
+	}
+
+	return nil
 }
 
 type DeclareConfig struct {

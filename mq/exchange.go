@@ -1,5 +1,7 @@
 package mq
 
+import "fmt"
+
 type exchange struct {
 	name   ExchangeName
 	client *Client
@@ -45,4 +47,12 @@ func (e *exchange) Publish(body []byte) error {
 
 func (e *exchange) PublishWithKey(body []byte, key ExchangeKey) error {
 	return publish(e.client.amqpChan, e.name, key, body)
+}
+
+func (e *exchange) HealthCheck() error {
+	if err := e.client.HealthCheck(); err != nil {
+		return fmt.Errorf("client health check: %v", err)
+	}
+
+	return nil
 }
