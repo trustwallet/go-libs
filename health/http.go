@@ -22,8 +22,8 @@ type server struct {
 	healthCheckRoute    string
 	readinessCheckRoute string
 	port                int
-	healthCheckFunc     CheckFunc
-	readinessCheckFunc  CheckFunc
+	healthChecks        []CheckFunc
+	readinessChecks     []CheckFunc
 }
 
 func WithHealthCheckRoute(route string) Option {
@@ -44,28 +44,25 @@ func WithPort(port int) Option {
 	}
 }
 
-func WithHealthCheckFunc(healthCheckFunc CheckFunc) Option {
+func WithHealthChecks(healthChecks ...CheckFunc) Option {
 	return func(s *server) {
-		s.healthCheckFunc = healthCheckFunc
+		s.healthChecks = healthChecks
 	}
 }
 
-func WithReadinessCheckFunc(readinessCheckFunc CheckFunc) Option {
+func WithReadinessChecks(readinessChecks ...CheckFunc) Option {
 	return func(s *server) {
-		s.readinessCheckFunc = readinessCheckFunc
+		s.readinessChecks = readinessChecks
 	}
 }
 
-func handle(handler *http.ServeMux, route string, handleFunc CheckFunc) {
+func handle(handler *http.ServeMux, route string, handleFuncs []CheckFunc) {
 	handler.HandleFunc(route, func(w http.ResponseWriter, r *http.Request) {
-		if handleFunc == nil {
-			w.WriteHeader(http.StatusOK)
-			return
-		}
-
-		if err := handleFunc(); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
+		for _, handleFunc := range handleFuncs {
+			if err := handleFunc(); err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
 		}
 
 		w.WriteHeader(http.StatusOK)
@@ -85,8 +82,8 @@ func StartHealthCheckServer(ctx context.Context, opts ...Option) error {
 	}
 
 	handler := http.NewServeMux()
-	handle(handler, hcServer.healthCheckRoute, hcServer.healthCheckFunc)
-	handle(handler, hcServer.readinessCheckRoute, hcServer.readinessCheckFunc)
+	handle(handler, hcServer.healthCheckRoute, hcServer.healthChecks)
+	handle(handler, hcServer.readinessCheckRoute, hcServer.readinessChecks)
 
 	srv := &http.Server{
 		Addr:    fmt.Sprintf(":%d", hcServer.port),

@@ -16,8 +16,8 @@ import (
 func TestStartHealthCheckServer(t *testing.T) {
 	tests := []struct {
 		name                string
-		healthCheckFunc     func() error
-		readinessCheckFunc  func() error
+		healthChecks        []CheckFunc
+		readinessChecks     []CheckFunc
 		healthCheckRoute    string
 		readinessCheckRoute string
 		port                int
@@ -30,25 +30,33 @@ func TestStartHealthCheckServer(t *testing.T) {
 			expReady:   true,
 		},
 		{
-			name:               "not healthy",
-			healthCheckFunc:    func() error { return errors.New("health check") },
-			readinessCheckFunc: func() error { return nil },
-			port:               1111,
-			expHealthy:         false,
-			expReady:           true,
+			name:            "not healthy",
+			healthChecks:    []CheckFunc{func() error { return errors.New("health check") }},
+			readinessChecks: []CheckFunc{func() error { return nil }},
+			port:            1111,
+			expHealthy:      false,
+			expReady:        true,
 		},
 		{
-			name:               "not ready",
-			healthCheckFunc:    func() error { return nil },
-			readinessCheckFunc: func() error { return errors.New("health check") },
-			port:               2222,
-			expHealthy:         true,
-			expReady:           false,
+			name:            "multiple functions",
+			healthChecks:    []CheckFunc{func() error { return errors.New("health check") }, func() error { return nil }},
+			readinessChecks: []CheckFunc{func() error { return nil }, func() error { return nil }},
+			port:            1111,
+			expHealthy:      false,
+			expReady:        true,
+		},
+		{
+			name:            "not ready",
+			healthChecks:    []CheckFunc{func() error { return nil }},
+			readinessChecks: []CheckFunc{func() error { return errors.New("health check") }},
+			port:            2222,
+			expHealthy:      true,
+			expReady:        false,
 		},
 		{
 			name:                "custom routes and port",
-			healthCheckFunc:     func() error { return nil },
-			readinessCheckFunc:  func() error { return nil },
+			healthChecks:        []CheckFunc{func() error { return nil }},
+			readinessChecks:     []CheckFunc{func() error { return nil }},
 			healthCheckRoute:    "/custom-health",
 			readinessCheckRoute: "/custom-ready",
 			port:                3333,
@@ -63,12 +71,12 @@ func TestStartHealthCheckServer(t *testing.T) {
 			defer cancel()
 
 			var opts []Option
-			if test.healthCheckFunc != nil {
-				opts = append(opts, WithHealthCheckFunc(test.healthCheckFunc))
+			if test.healthChecks != nil {
+				opts = append(opts, WithHealthChecks(test.healthChecks...))
 			}
 
-			if test.readinessCheckFunc != nil {
-				opts = append(opts, WithReadinessCheckFunc(test.readinessCheckFunc))
+			if test.readinessChecks != nil {
+				opts = append(opts, WithReadinessChecks(test.readinessChecks...))
 			}
 
 			if test.healthCheckRoute != "" {
