@@ -33,7 +33,6 @@ func TestStartHealthCheckServer(t *testing.T) {
 			name:            "not healthy",
 			healthChecks:    []CheckFunc{func() error { return errors.New("health check") }},
 			readinessChecks: []CheckFunc{func() error { return nil }},
-			port:            1111,
 			expHealthy:      false,
 			expReady:        true,
 		},
@@ -41,7 +40,6 @@ func TestStartHealthCheckServer(t *testing.T) {
 			name:            "multiple functions",
 			healthChecks:    []CheckFunc{func() error { return errors.New("health check") }, func() error { return nil }},
 			readinessChecks: []CheckFunc{func() error { return nil }, func() error { return nil }},
-			port:            1111,
 			expHealthy:      false,
 			expReady:        true,
 		},
@@ -49,7 +47,6 @@ func TestStartHealthCheckServer(t *testing.T) {
 			name:            "not ready",
 			healthChecks:    []CheckFunc{func() error { return nil }},
 			readinessChecks: []CheckFunc{func() error { return errors.New("health check") }},
-			port:            2222,
 			expHealthy:      true,
 			expReady:        false,
 		},
@@ -59,7 +56,7 @@ func TestStartHealthCheckServer(t *testing.T) {
 			readinessChecks:     []CheckFunc{func() error { return nil }},
 			healthCheckRoute:    "/custom-health",
 			readinessCheckRoute: "/custom-ready",
-			port:                3333,
+			port:                1111,
 			expHealthy:          true,
 			expReady:            true,
 		},
@@ -124,11 +121,27 @@ func TestStartHealthCheckServer(t *testing.T) {
 			assert.True(t, (test.expReady && resp.StatusCode == http.StatusOK) || (!test.expReady && resp.StatusCode != http.StatusOK))
 
 			cancel()
+
+			waitForServerToStop(t, healthURL, 20*time.Millisecond, 2*time.Second)
 		})
 	}
 }
 
 func waitForServerToStart(t *testing.T, url string, interval time.Duration, timeout time.Duration) {
+	waitForServer(t, func() bool {
+		_, err := http.Get(url)
+		return err == nil
+	}, interval, timeout)
+}
+
+func waitForServerToStop(t *testing.T, url string, interval time.Duration, timeout time.Duration) {
+	waitForServer(t, func() bool {
+		_, err := http.Get(url)
+		return err != nil
+	}, interval, timeout)
+}
+
+func waitForServer(t *testing.T, checkFn func() bool, interval time.Duration, timeout time.Duration) {
 	tick := time.NewTicker(interval)
 	defer tick.Stop()
 	now := time.Now()
@@ -139,7 +152,7 @@ func waitForServerToStart(t *testing.T, url string, interval time.Duration, time
 		}
 
 		<-tick.C
-		if _, err := http.Get(url); err == nil {
+		if checkFn() {
 			return
 		}
 	}
