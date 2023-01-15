@@ -13,6 +13,8 @@ import (
 
 var ErrNotFound = fmt.Errorf("not found")
 
+const healthCheckTimeout = 2 * time.Second
+
 type Redis struct {
 	client *redis.Client
 }
@@ -174,4 +176,19 @@ func (r *Redis) Reconnect(ctx context.Context, host string) error {
 
 func (r *Redis) Close() error {
 	return r.client.Close()
+}
+
+func (r *Redis) HealthCheck() error {
+	if r == nil {
+		return nil
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), healthCheckTimeout)
+	defer cancel()
+
+	if !r.IsAvailable(ctx) {
+		return errors.New("redis is not available")
+	}
+
+	return nil
 }
