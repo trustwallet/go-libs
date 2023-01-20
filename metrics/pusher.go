@@ -64,12 +64,12 @@ func (p *pusher) Close() error {
 }
 
 func instanceID() string {
-	instance := os.Getenv("DYNO")
-	if instance == "" {
-		instance = os.Getenv("INSTANCE_ID")
+	envKeysToTry := []string{"DYNO", "INSTANCE_ID", "HOSTNAME"}
+	for _, key := range envKeysToTry {
+		curr := os.Getenv(key)
+		if curr != "" {
+			return curr
+		}
 	}
-	if instance == "" {
-		instance = "local"
-	}
-	return instance
+	return "local"
 }
