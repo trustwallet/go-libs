@@ -11,7 +11,7 @@ const labelPath = "path"
 const labelMethod = "method"
 
 func MetricsMiddleware(namespace string, labels prometheus.Labels, reg prometheus.Registerer) gin.HandlerFunc {
-	perfMetric := metrics.NewPerformanceMetric(namespace, []string{labelPath, labelMethod}, labels, reg)
+	perfMetric := metrics.NewHttpServerMetric(namespace, []string{labelPath, labelMethod}, labels, reg)
 	return func(c *gin.Context) {
 		path := c.FullPath()
 		method := c.Request.Method
@@ -29,14 +29,13 @@ func MetricsMiddleware(namespace string, labels prometheus.Labels, reg prometheu
 		perfMetric.Duration(startTime, labelValues...)
 
 		statusCode := c.Writer.Status()
-		if successfulHttpStatusCode(statusCode) {
+		switch {
+		case 200 <= statusCode && statusCode <= 299:
 			perfMetric.Success(labelValues...)
-		} else {
-			perfMetric.Failure(labelValues...)
+		case 500 <= statusCode && statusCode <= 599:
+			perfMetric.ServerError(labelValues...)
+		case 400 <= statusCode && statusCode <= 499:
+			perfMetric.ClientError(labelValues...)
 		}
 	}
-}
-
-func successfulHttpStatusCode(statusCode int) bool {
-	return 200 <= statusCode && statusCode < 300
 }
