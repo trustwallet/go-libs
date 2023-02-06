@@ -33,7 +33,28 @@ func newLogLevelFromString(logLevel string) (logger.LogLevel, error) {
 	}
 }
 
+func ConnectReadWriteDB(writerDSN, readerDSN string, logLevel string) (*DBGetter, error) {
+	writer, err := connect(writerDSN, logLevel)
+	if err != nil {
+		return nil, err
+	}
+
+	reader, err := connect(readerDSN, logLevel)
+	if err != nil {
+		return nil, err
+	}
+	return NewReadWriteDbWrapper(reader, writer), nil
+}
+
 func Connect(dsn string, logLevel string) (*DBGetter, error) {
+	db, err := connect(dsn, logLevel)
+	if err != nil {
+		return nil, err
+	}
+	return NewDbWrapper(db), nil
+}
+
+func connect(dsn string, logLevel string) (*gorm.DB, error) {
 	level, err := newLogLevelFromString(logLevel)
 	if err != nil {
 		return nil, err
@@ -57,5 +78,5 @@ func Connect(dsn string, logLevel string) (*DBGetter, error) {
 	if err != nil {
 		return nil, err
 	}
-	return NewDbWrapper(db), nil
+	return db, nil
 }
