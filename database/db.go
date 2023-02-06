@@ -10,6 +10,7 @@ import (
 
 type DBContextGetter interface {
 	DBFrom(ctx context.Context) *gorm.DB
+	ReadOnlyDB() *gorm.DB
 }
 
 type TrxContextGetter interface {
@@ -21,18 +22,30 @@ type transactionKey struct{}
 var trxKey = &transactionKey{}
 
 type DBGetter struct {
-	globalDb *gorm.DB
+	readWriteDb *gorm.DB
+	readOnlyDb  *gorm.DB
 }
 
 func NewDbWrapper(db *gorm.DB) *DBGetter {
-	return &DBGetter{globalDb: db}
+	return &DBGetter{readWriteDb: db}
+}
+
+func NewReadWriteDbWrapper(reader, writer *gorm.DB) *DBGetter {
+	return &DBGetter{
+		readWriteDb: writer,
+		readOnlyDb:  reader,
+	}
 }
 
 func (wrapper *DBGetter) DBFrom(ctx context.Context) *gorm.DB {
 	if db, ok := ctx.Value(trxKey).(*gorm.DB); ok {
 		return db
 	}
-	return wrapper.globalDb
+	return wrapper.readWriteDb
+}
+
+func (wrapper *DBGetter) ReadOnlyDB() *gorm.DB {
+	return wrapper.readOnlyDb
 }
 
 func (wrapper *DBGetter) Transaction(ctx context.Context, fc func(ctx context.Context) error) error {
@@ -42,9 +55,18 @@ func (wrapper *DBGetter) Transaction(ctx context.Context, fc func(ctx context.Co
 }
 
 func (wrapper *DBGetter) Close() error {
-	sqlDB, err := wrapper.globalDb.DB()
+	if wrapper.readOnlyDb != nil {
+		readOnlyDb, err := wrapper.readOnlyDb.DB()
+		if err != nil {
+			return err
+		}
+		if err := readOnlyDb.Close(); err != nil {
+			return err
+		}
+	}
+	readWriteDb, err := wrapper.readWriteDb.DB()
 	if err != nil {
 		return err
 	}
-	return sqlDB.Close()
+	return readWriteDb.Close()
 }
