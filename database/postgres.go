@@ -42,14 +42,14 @@ func Connect(readerDSN, writerDSN string, logLevel string) (*DBGetter, error) {
 	}
 
 	if readerDSN == writerDSN {
-		return NewDbWrapper(writer, writer), nil
+		return NewDBGetter(writer, writer), nil
 	}
 
 	reader, err := connect(readerDSN, logLevel)
 	if err != nil {
 		return nil, err
 	}
-	return NewDbWrapper(reader, writer), nil
+	return NewDBGetter(reader, writer), nil
 }
 
 func connect(dsn string, logLevel string) (*gorm.DB, error) {
