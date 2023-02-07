@@ -21,42 +21,43 @@ type transactionKey struct{}
 
 var trxKey = &transactionKey{}
 
+// DBGetter implements the DBContextGetter interface, allowing retrieval of a read/write database connection.
 type DBGetter struct {
 	readWriteDb *gorm.DB
 	readOnlyDb  *gorm.DB
 }
 
-func NewDbWrapper(db *gorm.DB) *DBGetter {
-	return &DBGetter{readWriteDb: db}
-}
-
-func NewReadWriteDbWrapper(reader, writer *gorm.DB) *DBGetter {
+// NewDBGetter creates DBGetter instance.
+// Both of reader and writer should not be empty, they can be the same pointer pointing to the same database connection.
+// reader == writer, in which case they represent a shared read-write database connection.
+// reader != writer, then they represent separate read and write database connections for read-write splitting.
+func NewDBGetter(reader, writer *gorm.DB) *DBGetter {
 	return &DBGetter{
 		readWriteDb: writer,
 		readOnlyDb:  reader,
 	}
 }
 
-func (wrapper *DBGetter) DBFrom(ctx context.Context) *gorm.DB {
+func (getter *DBGetter) DBFrom(ctx context.Context) *gorm.DB {
 	if db, ok := ctx.Value(trxKey).(*gorm.DB); ok {
 		return db
 	}
-	return wrapper.readWriteDb
+	return getter.readWriteDb
 }
 
-func (wrapper *DBGetter) ReadOnlyDB() *gorm.DB {
-	return wrapper.readOnlyDb
+func (getter *DBGetter) ReadOnlyDB() *gorm.DB {
+	return getter.readOnlyDb
 }
 
-func (wrapper *DBGetter) Transaction(ctx context.Context, fc func(ctx context.Context) error) error {
-	return wrapper.DBFrom(ctx).Transaction(func(tx *gorm.DB) error {
+func (getter *DBGetter) Transaction(ctx context.Context, fc func(ctx context.Context) error) error {
+	return getter.DBFrom(ctx).Transaction(func(tx *gorm.DB) error {
 		return fc(context.WithValue(ctx, trxKey, tx))
 	})
 }
 
-func (wrapper *DBGetter) Close() error {
-	if wrapper.readOnlyDb != nil {
-		readOnlyDb, err := wrapper.readOnlyDb.DB()
+func (getter *DBGetter) Close() error {
+	if getter.readOnlyDb != getter.readWriteDb {
+		readOnlyDb, err := getter.readOnlyDb.DB()
 		if err != nil {
 			return err
 		}
@@ -64,7 +65,7 @@ func (wrapper *DBGetter) Close() error {
 			return err
 		}
 	}
-	readWriteDb, err := wrapper.readWriteDb.DB()
+	readWriteDb, err := getter.readWriteDb.DB()
 	if err != nil {
 		return err
 	}

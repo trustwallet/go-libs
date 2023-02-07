@@ -33,25 +33,23 @@ func newLogLevelFromString(logLevel string) (logger.LogLevel, error) {
 	}
 }
 
-func ConnectReadWriteDB(writerDSN, readerDSN string, logLevel string) (*DBGetter, error) {
+// Connect takes two parameters, representing the connection strings for read-write splitting databases.
+// In some cases read-write splitting is not necessary and the parameters can be identical.
+func Connect(readerDSN, writerDSN string, logLevel string) (*DBGetter, error) {
 	writer, err := connect(writerDSN, logLevel)
 	if err != nil {
 		return nil, err
+	}
+
+	if readerDSN == writerDSN {
+		return NewDBGetter(writer, writer), nil
 	}
 
 	reader, err := connect(readerDSN, logLevel)
 	if err != nil {
 		return nil, err
 	}
-	return NewReadWriteDbWrapper(reader, writer), nil
-}
-
-func Connect(dsn string, logLevel string) (*DBGetter, error) {
-	db, err := connect(dsn, logLevel)
-	if err != nil {
-		return nil, err
-	}
-	return NewDbWrapper(db), nil
+	return NewDBGetter(reader, writer), nil
 }
 
 func connect(dsn string, logLevel string) (*gorm.DB, error) {
