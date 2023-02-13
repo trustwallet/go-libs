@@ -6,7 +6,7 @@ require (
 	github.com/alicebob/miniredis/v2 v2.14.3
 	github.com/evalphobia/logrus_sentry v0.8.2
 	github.com/getsentry/raven-go v0.2.0
-	github.com/gin-gonic/gin v1.7.4
+	github.com/gin-gonic/gin v1.7.7
 	github.com/go-redis/redis/v8 v8.8.2
 	github.com/golang/mock v1.6.0
 	github.com/heirko/go-contrib v0.0.0-20200825160048-11fc5e2235fa
