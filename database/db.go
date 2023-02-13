@@ -39,22 +39,14 @@ func NewDBGetter(reader, writer *gorm.DB) *DBGetter {
 }
 
 func (getter *DBGetter) HealthCheck() error {
-	if getter.readOnlyDb != getter.readWriteDb {
-		readOnlySqlDb, err := getter.readOnlyDb.DB()
+	for _, db := range getter.allDBs() {
+		sqlDB, err := db.DB()
 		if err != nil {
 			return err
 		}
-		if err := readOnlySqlDb.Ping(); err != nil {
+		if err := sqlDB.Ping(); err != nil {
 			return err
 		}
-	}
-
-	readWriteSqlDb, err := getter.readWriteDb.DB()
-	if err != nil {
-		return err
-	}
-	if err := readWriteSqlDb.Ping(); err != nil {
-		return err
 	}
 	return nil
 }
@@ -77,18 +69,22 @@ func (getter *DBGetter) Transaction(ctx context.Context, fc func(ctx context.Con
 }
 
 func (getter *DBGetter) Close() error {
-	if getter.readOnlyDb != getter.readWriteDb {
-		readOnlyDb, err := getter.readOnlyDb.DB()
+	for _, db := range getter.allDBs() {
+		sqlDB, err := db.DB()
 		if err != nil {
 			return err
 		}
-		if err := readOnlyDb.Close(); err != nil {
+		if err := sqlDB.Close(); err != nil {
 			return err
 		}
 	}
-	readWriteDb, err := getter.readWriteDb.DB()
-	if err != nil {
-		return err
+	return nil
+}
+
+func (getter *DBGetter) allDBs() []*gorm.DB {
+	result := []*gorm.DB{getter.readWriteDb}
+	if getter.readOnlyDb != getter.readWriteDb {
+		result = append(result, getter.readOnlyDb)
 	}
-	return readWriteDb.Close()
+	return result
 }
