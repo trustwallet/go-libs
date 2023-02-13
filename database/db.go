@@ -38,6 +38,27 @@ func NewDBGetter(reader, writer *gorm.DB) *DBGetter {
 	}
 }
 
+func (getter *DBGetter) HealthCheck() error {
+	if getter.readOnlyDb != getter.readWriteDb {
+		readOnlySqlDb, err := getter.readOnlyDb.DB()
+		if err != nil {
+			return err
+		}
+		if err := readOnlySqlDb.Ping(); err != nil {
+			return err
+		}
+	}
+
+	readWriteSqlDb, err := getter.readWriteDb.DB()
+	if err != nil {
+		return err
+	}
+	if err := readWriteSqlDb.Ping(); err != nil {
+		return err
+	}
+	return nil
+}
+
 func (getter *DBGetter) DBFrom(ctx context.Context) *gorm.DB {
 	if db, ok := ctx.Value(trxKey).(*gorm.DB); ok {
 		return db
