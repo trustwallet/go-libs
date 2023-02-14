@@ -2,12 +2,13 @@ package database
 
 import (
 	"context"
-	"gorm.io/driver/postgres"
-	"gorm.io/gorm/logger"
-	"gorm.io/plugin/dbresolver"
 	"log"
 	"os"
 	"time"
+
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm/logger"
+	"gorm.io/plugin/dbresolver"
 
 	"gorm.io/gorm"
 )

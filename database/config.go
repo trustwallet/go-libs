@@ -2,8 +2,9 @@ package database
 
 import (
 	"fmt"
-	"gorm.io/gorm/logger"
 	"time"
+
+	"gorm.io/gorm/logger"
 )
 
 type LogLevel string
