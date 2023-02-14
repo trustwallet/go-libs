@@ -17,7 +17,6 @@ import (
 
 type DBContextGetter interface {
 	DBFrom(ctx context.Context) *gorm.DB
-	ReadOnlyDB() *gorm.DB
 }
 
 type TrxContextGetter interface {
@@ -41,6 +40,7 @@ type DBGetter struct {
 // ```
 //
 //	getter.DBFrom(ctx).Clauses(dbresolver.Write/dbresolver.Read)
+//	getter.GetSourceDB().Clauses(dbresolver.Write/dbresolver.Read)
 //
 // ```
 // For more information, read https://gorm.io/docs/dbresolver.html#Read-x2F-Write-Splitting
