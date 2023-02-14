@@ -59,13 +59,8 @@ func (s *IntegrationTestSuite) GetRedis() *redis.Redis {
 // NewIntegrationTestDb creates a *gorm.DB connection to a real database which is only for integration test.
 // The DSN for test database connection should be set by defining the TEST_DB_DSN env.
 func NewIntegrationTestDb() (*gorm.DB, error) {
-	dsn, ok := os.LookupEnv(testDbDsnEnvKey)
-	if !ok {
-		log.Fatalln(testDbDsnEnvKey, "env not found")
-	}
-
 	return gorm.Open(
-		postgres.Open(dsn),
+		postgres.Open(MustGetTestDbDSN()),
 		&gorm.Config{
 			Logger:                 logger.Default.LogMode(logger.Info),
 			SkipDefaultTransaction: true,
@@ -81,4 +76,12 @@ func NewIntegrationTestRedis() (*redis.Redis, error) {
 		log.Fatalln(testRedisUrlEnvKey, "env not found")
 	}
 	return redis.Init(context.Background(), url)
+}
+
+func MustGetTestDbDSN() string {
+	dsn, ok := os.LookupEnv(testDbDsnEnvKey)
+	if !ok {
+		log.Fatal(testDbDsnEnvKey, "env not found")
+	}
+	return dsn
 }
