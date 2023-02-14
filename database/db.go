@@ -44,6 +44,9 @@ type DBGetter struct {
 //
 // ```
 // For more information, read https://gorm.io/docs/dbresolver.html#Read-x2F-Write-Splitting
+// *Note* that when using read-write splitting, there is a potential issue where a read operation immediately
+// following a write operation may not see the updated data if it is executed on a different read-only replica
+// that has not yet been updated with the new data.
 func NewDBGetter(cfg DBConfig) (*DBGetter, error) {
 	cfg.applyDefaultValue()
 
