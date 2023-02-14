@@ -81,7 +81,9 @@ func NewDBGetter(cfg DBConfig) (*DBGetter, error) {
 		SetConnMaxLifetime(cfg.ConnPool.ConnMaxLifetime).
 		SetMaxIdleConns(cfg.ConnPool.MaxIdleConns).
 		SetMaxOpenConns(cfg.ConnPool.MaxOpenConns)
-	db.Use(resolver)
+	if err := db.Use(resolver); err != nil {
+		return nil, err
+	}
 	return &DBGetter{db: db}, nil
 }
 
