@@ -87,6 +87,10 @@ func NewDBGetter(cfg DBConfig) (*DBGetter, error) {
 	return &DBGetter{db: db}, nil
 }
 
+func (getter *DBGetter) GetSourceDB() *gorm.DB {
+	return getter.db
+}
+
 func (getter *DBGetter) HealthCheck() error {
 	// gorm dbresolver doesn't support getting replica connection
 	// https://github.com/go-gorm/dbresolver/issues/45
