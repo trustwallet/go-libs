@@ -49,20 +49,6 @@ func (mr *MockDBContextGetterMockRecorder) DBFrom(arg0 interface{}) *gomock.Call
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DBFrom", reflect.TypeOf((*MockDBContextGetter)(nil).DBFrom), arg0)
 }
 
-// ReadOnlyDB mocks base method.
-func (m *MockDBContextGetter) ReadOnlyDB() *gorm.DB {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ReadOnlyDB")
-	ret0, _ := ret[0].(*gorm.DB)
-	return ret0
-}
-
-// ReadOnlyDB indicates an expected call of ReadOnlyDB.
-func (mr *MockDBContextGetterMockRecorder) ReadOnlyDB() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReadOnlyDB", reflect.TypeOf((*MockDBContextGetter)(nil).ReadOnlyDB))
-}
-
 // MockTrxContextGetter is a mock of TrxContextGetter interface.
 type MockTrxContextGetter struct {
 	ctrl     *gomock.Controller
