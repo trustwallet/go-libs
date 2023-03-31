@@ -7,7 +7,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
 	"github.com/trustwallet/go-libs/httplib"
-	"github.com/trustwallet/go-libs/middleware"
 )
 
 func InitHandler(engine *gin.Engine, path string) {
@@ -15,8 +14,7 @@ func InitHandler(engine *gin.Engine, path string) {
 }
 
 func NewMetricsServer(appName string, port string, path string) httplib.Server {
-	router := gin.New()
-	router.Use(middleware.Logger())
+	router := gin.Default()
 
 	prometheus.DefaultRegisterer.Unregister(collectors.NewGoCollector())
 	prometheus.DefaultRegisterer.Unregister(collectors.NewProcessCollector(collectors.ProcessCollectorOpts{}))
