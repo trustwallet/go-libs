@@ -139,7 +139,7 @@ func WithExtraHeader(key, value string) Option {
 	}
 }
 
-func HostOption(host string) Option {
+func WithHost(host string) Option {
 	return func(request *Request) error {
 		request.Host = host
 		return nil
