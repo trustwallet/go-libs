@@ -17,6 +17,7 @@ const defaultTimeout = 5 * time.Second
 type Request struct {
 	BaseURL          string
 	Headers          map[string]string
+	Host             string
 	HttpClient       HTTPClient
 	HttpErrorHandler HttpErrorHandler
 

@@ -69,8 +69,8 @@ func (r *Request) constructHttpRequest(ctx context.Context, req *Req) (*http.Req
 
 	r.setRequestHeaders(request, req)
 
-	if req.host != "" {
-		request.Host = req.host
+	if r.Host != "" {
+		request.Host = r.Host
 	}
 	return request, nil
 }
