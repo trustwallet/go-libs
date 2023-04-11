@@ -17,6 +17,7 @@ const defaultTimeout = 5 * time.Second
 type Request struct {
 	BaseURL          string
 	Headers          map[string]string
+	Host             string
 	HttpClient       HTTPClient
 	HttpErrorHandler HttpErrorHandler
 
@@ -134,6 +135,13 @@ func WithHttpClient(httpClient HTTPClient) Option {
 func WithExtraHeader(key, value string) Option {
 	return func(request *Request) error {
 		request.Headers[key] = value
+		return nil
+	}
+}
+
+func WithHost(host string) Option {
+	return func(request *Request) error {
+		request.Host = host
 		return nil
 	}
 }
