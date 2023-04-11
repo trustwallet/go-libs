@@ -15,7 +15,6 @@ type Req struct {
 	path            Path
 	query           url.Values
 	body            any
-	host            string
 
 	metricName        string
 	pathMetricEnabled bool
