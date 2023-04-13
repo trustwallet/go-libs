@@ -45,6 +45,7 @@ type MigrationRunner struct {
 type Option func(runner *MigrationRunner)
 
 // WithLogger sets a custom logger for the MigrationRunner.
+// If not provided, a noopLogger will be used by default.
 func WithLogger(logger logger) Option {
 	return func(runner *MigrationRunner) {
 		runner.logger = logger
@@ -52,6 +53,7 @@ func WithLogger(logger logger) Option {
 }
 
 // WithFilesDir sets a custom directory containing migration files for the MigrationRunner.
+// If not provided, the default directory "dbmigrations" will be used.
 func WithFilesDir(filesDir string) Option {
 	return func(runner *MigrationRunner) {
 		runner.filesDir = filesDir

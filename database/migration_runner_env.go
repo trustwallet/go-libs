@@ -33,9 +33,9 @@ func readForceVersion() (int, error) {
 	return forceVersion, nil
 }
 
-// RunFromEnv reads migration configuration from environment variables,
+// RunMigrationsFromEnv reads migration configuration from environment variables,
 // creates a MigrationRunner, and runs the specified migration operation.
-func RunFromEnv(logger logger) error {
+func RunMigrationsFromEnv(logger logger) error {
 	dsn, ok := os.LookupEnv(envKey(envKeyDsn))
 	if !ok {
 		return fmt.Errorf("missing env: %s", envKey(envKeyDsn))
