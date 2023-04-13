@@ -185,7 +185,7 @@ type migrationsLogger struct {
 
 // Printf is like fmt.Printf
 func (m *migrationsLogger) Printf(format string, v ...interface{}) {
-	m.logger.Info(format, v)
+	m.logger.Printf(format, v)
 }
 
 // Verbose should return true when verbose logging output is wanted
