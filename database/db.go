@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"gorm.io/driver/postgres"
-	"gorm.io/gorm/logger"
+	gormLogger "gorm.io/gorm/logger"
 	"gorm.io/plugin/dbresolver"
 
 	"gorm.io/gorm"
@@ -57,9 +57,9 @@ func NewDBGetter(cfg DBConfig) (*DBGetter, error) {
 
 	db, err := gorm.Open(postgres.Open(cfg.Url), &gorm.Config{
 		SkipDefaultTransaction: true,
-		Logger: logger.New(
+		Logger: gormLogger.New(
 			log.New(os.Stdout, "\r\n", log.LstdFlags),
-			logger.Config{
+			gormLogger.Config{
 				SlowThreshold:             time.Second,
 				LogLevel:                  logLevel,
 				IgnoreRecordNotFoundError: true,
@@ -79,7 +79,7 @@ func NewDBGetter(cfg DBConfig) (*DBGetter, error) {
 		dbresolver.Config{
 			Sources:           []gorm.Dialector{postgres.Open(cfg.Url)},
 			Replicas:          replicas,
-			TraceResolverMode: logLevel == logger.Info,
+			TraceResolverMode: logLevel == gormLogger.Info,
 		}).SetConnMaxIdleTime(cfg.ConnPool.ConnMaxIdleTime).
 		SetConnMaxLifetime(cfg.ConnPool.ConnMaxLifetime).
 		SetMaxIdleConns(cfg.ConnPool.MaxIdleConns).
