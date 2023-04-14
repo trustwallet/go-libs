@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"gorm.io/gorm/logger"
+	gormLogger "gorm.io/gorm/logger"
 )
 
 type LogLevel string
@@ -16,16 +16,16 @@ const (
 	LogLevelInfo   LogLevel = "info"
 )
 
-func newLogLevelFromString(logLevel LogLevel) (logger.LogLevel, error) {
+func newLogLevelFromString(logLevel LogLevel) (gormLogger.LogLevel, error) {
 	switch logLevel {
 	case LogLevelSilent:
-		return logger.Silent, nil
+		return gormLogger.Silent, nil
 	case LogLevelError:
-		return logger.Error, nil
+		return gormLogger.Error, nil
 	case LogLevelWarn:
-		return logger.Warn, nil
+		return gormLogger.Warn, nil
 	case LogLevelInfo:
-		return logger.Info, nil
+		return gormLogger.Info, nil
 	default:
 		return 0, fmt.Errorf("invalid log level")
 	}
