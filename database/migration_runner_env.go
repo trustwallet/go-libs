@@ -8,19 +8,14 @@ import (
 
 // Constants representing environment variable keys for migration configuration.
 const (
-	envKeyPrefix       = "MIGRATION"
-	envKeyDsn          = "DSN"
-	envKeyOp           = "OPERATION"
-	envKeyForceVersion = "FORCE_VERSION"
-	envKeyFilesDir     = "FILES_DIR"
+	envKeyDsn          = "MIGRATION_DSN"
+	envKeyOp           = "MIGRATION_OPERATION"
+	envKeyForceVersion = "MIGRATION_FORCE_VERSION"
+	envKeyFilesDir     = "MIGRATION_FILES_DIR"
 )
 
-func envKey(key string) string {
-	return fmt.Sprintf("%s_%s", envKeyPrefix, key)
-}
-
 func readForceVersion() (int, error) {
-	forceVersionRaw, ok := os.LookupEnv(envKey(envKeyForceVersion))
+	forceVersionRaw, ok := os.LookupEnv(envKeyForceVersion)
 	if !ok {
 		return 0, nil
 	}
@@ -36,14 +31,14 @@ func readForceVersion() (int, error) {
 // RunMigrationsFromEnv reads migration configuration from environment variables,
 // creates a MigrationRunner, and runs the specified migration operation.
 func RunMigrationsFromEnv(logger logger) error {
-	dsn, ok := os.LookupEnv(envKey(envKeyDsn))
+	dsn, ok := os.LookupEnv(envKeyDsn)
 	if !ok {
-		return fmt.Errorf("missing env: %s", envKey(envKeyDsn))
+		return fmt.Errorf("missing env: %s", envKeyDsn)
 	}
 
-	operation, ok := os.LookupEnv(envKey(envKeyOp))
+	operation, ok := os.LookupEnv(envKeyOp)
 	if !ok {
-		return fmt.Errorf("missing env: %s", envKey(envKeyOp))
+		return fmt.Errorf("missing env: %s", envKeyOp)
 	}
 
 	forceVersion, err := readForceVersion()
@@ -51,9 +46,12 @@ func RunMigrationsFromEnv(logger logger) error {
 		return fmt.Errorf("read forceVersion: %v", err)
 	}
 
-	filesDir := os.Getenv(envKey(envKeyFilesDir))
+	opts := []Option{WithLogger(logger)}
+	if filesDir, ok := os.LookupEnv(envKeyFilesDir); ok {
+		opts = append(opts, WithFilesDir(filesDir))
+	}
 
-	runner, err := NewMigrationRunner(dsn, WithFilesDir(filesDir), WithLogger(logger))
+	runner, err := NewMigrationRunner(dsn, opts...)
 	if err != nil {
 		return fmt.Errorf("new migrations runner: %v", err)
 	}

@@ -1,7 +1,6 @@
 package database
 
 import (
-	"database/sql"
 	"errors"
 	"fmt"
 
@@ -9,7 +8,7 @@ import (
 	// required by migrate.New... to parse migration files directory
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 
-	migratepg "github.com/golang-migrate/migrate/v4/database/postgres"
+	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 )
 
 // supported migrate operations
@@ -62,35 +61,16 @@ func WithFilesDir(filesDir string) Option {
 
 // NewMigrationRunner creates a new MigrationRunner with the given database connection string (dsn) and options.
 func NewMigrationRunner(dsn string, opts ...Option) (*MigrationRunner, error) {
-	db, err := sql.Open("postgres", dsn)
-	if err != nil {
-		return nil, fmt.Errorf("sql open dsn: %v", err)
+	runner := &MigrationRunner{
+		filesDir: defaultFilesDir,
+		logger:   &noopLogger{},
 	}
-
-	driver, err := migratepg.WithInstance(db, &migratepg.Config{})
-	if err != nil {
-		return nil, fmt.Errorf("building postgres driver for db migrations: %w", err)
-	}
-
-	runner := &MigrationRunner{}
 
 	for _, opt := range opts {
 		opt(runner)
 	}
 
-	if runner.filesDir == "" {
-		runner.filesDir = defaultFilesDir
-	}
-
-	if runner.logger == nil {
-		runner.logger = &noopLogger{}
-	}
-
-	mgr, err := migrate.NewWithDatabaseInstance(
-		"file://"+runner.filesDir,
-		"postgres",
-		driver,
-	)
+	mgr, err := migrate.New("file://"+runner.filesDir, dsn)
 	if err != nil {
 		return nil, fmt.Errorf("creating Migrate object: %w", err)
 	}
