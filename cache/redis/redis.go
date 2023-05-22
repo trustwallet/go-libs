@@ -88,6 +88,17 @@ func (r *Redis) Get(ctx context.Context, key string, receiver interface{}) error
 	return nil
 }
 
+func (r *Redis) GetBytes(ctx context.Context, key string) ([]byte, error) {
+	cmd := r.client.Get(ctx, key)
+	if errors.Is(cmd.Err(), redis.Nil) {
+		return nil, ErrNotFound
+	} else if cmd.Err() != nil {
+		return nil, cmd.Err()
+	}
+
+	return cmd.Bytes()
+}
+
 // MGet returns slice with length == len(key)
 // Resulting slice's item is nil if there is no value in cache
 func (r *Redis) MGet(ctx context.Context, key ...string) ([][]byte, error) {
@@ -113,6 +124,15 @@ func (r *Redis) Set(ctx context.Context, key string, value interface{}, expirati
 	}
 
 	cmd := r.client.Set(ctx, key, data, expiration)
+	if cmd.Err() != nil {
+		return cmd.Err()
+	}
+
+	return nil
+}
+
+func (r *Redis) SetBytes(ctx context.Context, key string, value []byte, expiration time.Duration) error {
+	cmd := r.client.Set(ctx, key, value, expiration)
 	if cmd.Err() != nil {
 		return cmd.Err()
 	}

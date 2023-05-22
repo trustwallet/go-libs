@@ -19,6 +19,7 @@ import (
 
 	"github.com/alicebob/miniredis/v2"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestInit(t *testing.T) {
@@ -64,6 +65,44 @@ func TestRedis_Set(t *testing.T) {
 
 	ttl := r.client.TTL(context.TODO(), "test")
 	assert.Equal(t, time.Second, ttl.Val())
+}
+
+func TestRedis_SetBytes_GetBytes(t *testing.T) {
+	r, err := redisInit(t)
+	assert.Nil(t, err)
+
+	tests := []struct {
+		key  string
+		data []byte
+	}{
+		{
+			key:  "empty_bytes",
+			data: []byte{},
+		},
+		{
+			key:  "nil_bytes",
+			data: nil,
+		},
+		{
+			key:  "random_bytes",
+			data: []byte("348ufksj@#$@agh$$!"),
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.key, func(t *testing.T) {
+			err := r.SetBytes(context.Background(), test.key, test.data, time.Minute)
+			assert.NoError(t, err)
+
+			got, err := r.GetBytes(context.Background(), test.key)
+			assert.NoError(t, err)
+			if len(test.data) == 0 { // the client returns []byte{} when we expecte []byte(nil) so we compare by len
+				require.Equal(t, 0, len(got))
+			} else {
+				assert.Equal(t, test.data, got)
+			}
+		})
+	}
 }
 
 func TestRedis_MSet_MGet(t *testing.T) {
