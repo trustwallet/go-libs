@@ -59,8 +59,16 @@ type DeclareConfig struct {
 	Args       map[string]interface{}
 }
 
+type DeliveryMode uint8
+
+const (
+	DeliveryModeTransient  DeliveryMode = 1
+	DeliveryModePersistent DeliveryMode = 2
+)
+
 type PublishConfig struct {
 	// MaxRetries defines the maximum number of retries after processing failures.
 	// Overrides the value of consumer's config.
-	MaxRetries *int
+	MaxRetries   *int
+	DeliveryMode DeliveryMode
 }
