@@ -238,8 +238,15 @@ func publishWithConfig(amqpChan *amqp.Channel, exchange ExchangeName, key Exchan
 		headers[headerRemainingRetries] = *cfg.MaxRetries
 	}
 
+	var deliveryMode uint8
+	if cfg.DeliveryMode == DeliveryModeTransient {
+		deliveryMode = amqp.Transient
+	} else {
+		deliveryMode = amqp.Persistent
+	}
+
 	return amqpChan.Publish(string(exchange), string(key), false, false, amqp.Publishing{
-		DeliveryMode: amqp.Persistent,
+		DeliveryMode: deliveryMode,
 		ContentType:  "text/plain",
 		Body:         body,
 		Headers:      headers,
