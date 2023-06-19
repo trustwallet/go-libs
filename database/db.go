@@ -90,6 +90,10 @@ func NewDBGetter(cfg DBConfig) (*DBGetter, error) {
 	return &DBGetter{db: db}, nil
 }
 
+func NewDBGetterFromGormInstance(db *gorm.DB) *DBGetter {
+	return &DBGetter{db: db}
+}
+
 func (getter *DBGetter) GetSourceDB() *gorm.DB {
 	return getter.db
 }
