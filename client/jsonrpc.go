@@ -49,6 +49,7 @@ func (r *Request) RpcCall(result interface{}, method string, params interface{})
 		Method(http.MethodPost).
 		WriteTo(&resp).
 		Body(req).
+		MetricName(method).
 		Build())
 	if err != nil {
 		return err
@@ -66,6 +67,7 @@ func (r *Request) RpcCallRaw(method string, params interface{}) ([]byte, error) 
 		Method(http.MethodPost).
 		WriteTo(&resp).
 		Body(req).
+		MetricName(method).
 		Build())
 	if err != nil {
 		return nil, err
