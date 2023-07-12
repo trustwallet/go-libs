@@ -51,9 +51,7 @@ func DoAll[Task any, Result any](
 			}
 		})
 	}
-	if err := g.Wait(); err != nil {
-		panic(err) // impossible to have error here
-	}
+	_ = g.Wait() // impossible to have error here
 	return results
 }
 
