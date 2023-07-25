@@ -1,6 +1,7 @@
 package client
 
 import (
+	"net/http"
 	"net/url"
 )
 
@@ -9,12 +10,13 @@ import (
 //
 // To build this struct, use NewReqBuilder.
 type Req struct {
-	headers         map[string]string
-	resultContainer any
-	method          string
-	path            Path
-	query           url.Values
-	body            any
+	headers              map[string]string
+	resultContainer      any
+	method               string
+	path                 Path
+	query                url.Values
+	body                 any
+	rawResponseContainer *http.Response
 
 	metricName        string
 	pathMetricEnabled bool
@@ -43,6 +45,11 @@ func (builder *ReqBuilder) Headers(headers map[string]string) *ReqBuilder {
 
 func (builder *ReqBuilder) WriteTo(resultContainer any) *ReqBuilder {
 	builder.req.resultContainer = resultContainer
+	return builder
+}
+
+func (builder *ReqBuilder) WriteRawResponseTo(resp *http.Response) *ReqBuilder {
+	builder.req.rawResponseContainer = resp
 	return builder
 }
 
