@@ -14,8 +14,6 @@ func TestRequest_WriteRawResponseTo(t *testing.T) {
 	const (
 		pathOk  = "/ok"
 		path5xx = "/5xx"
-
-		basePath = "/api"
 	)
 
 	tests := []struct {
