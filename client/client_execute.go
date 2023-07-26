@@ -28,6 +28,10 @@ func (r *Request) Execute(ctx context.Context, req *Req) ([]byte, error) {
 		return nil, err
 	}
 
+	if req.rawResponseContainer != nil && res != nil {
+		*req.rawResponseContainer = *res
+	}
+
 	err = r.HttpErrorHandler(res, request.URL.String())
 	if err != nil {
 		return nil, err
