@@ -6,6 +6,9 @@ import (
 	"net/http"
 	"sync"
 
+	"golang.org/x/net/http2"
+	"golang.org/x/net/http2/h2c"
+
 	log "github.com/sirupsen/logrus"
 )
 
@@ -16,12 +19,22 @@ type Server interface {
 type api struct {
 	router http.Handler
 	port   string
+	h2c    bool
 }
 
 func NewHTTPServer(router http.Handler, port string) Server {
 	return &api{
 		router: router,
 		port:   port,
+		h2c:    false,
+	}
+}
+
+func NewH2CServer(router http.Handler, port string) Server {
+	return &api{
+		router: router,
+		port:   port,
+		h2c:    true,
 	}
 }
 
@@ -32,9 +45,15 @@ func (a *api) Run(ctx context.Context, wg *sync.WaitGroup) {
 func (a *api) serve(ctx context.Context, wg *sync.WaitGroup) {
 	wg.Add(1)
 
+	h2s := &http2.Server{}
+	h1d, h2d := a.router, h2c.NewHandler(a.router, h2s)
+
 	server := &http.Server{
 		Addr:    ":" + a.port,
-		Handler: a.router,
+		Handler: h1d,
+	}
+	if a.h2c {
+		server.Handler = h2d
 	}
 
 	serverStopped := make(chan struct{})
