@@ -117,6 +117,18 @@ func (r *Redis) MGet(ctx context.Context, key ...string) ([][]byte, error) {
 	return result, nil
 }
 
+// Scan return keys by pattern
+func (r *Redis) Scan(ctx context.Context, cursor uint64, match string, count int64) ([]string, error) {
+	iter := r.client.Scan(ctx, cursor, match, count).Iterator()
+
+	res := make([]string, 0)
+	for iter.Next(ctx) {
+		res = append(res, iter.Val())
+	}
+
+	return res, iter.Err()
+}
+
 func (r *Redis) Set(ctx context.Context, key string, value interface{}, expiration time.Duration) error {
 	data, err := json.Marshal(value)
 	if err != nil {
