@@ -37,7 +37,7 @@ func Load(confPath string, receiver interface{}) {
 
 // viper supports unmarshaling from env vars if the keys are known
 //
-// bindEnvs is a hack to let viper know in advance what keys exists
+// bindEnvs is a hack to let viper know in advance what keys exists, even if it doesn't exist in config.yml
 func bindEnvs(v reflect.Value, parts ...string) {
 	if v.Kind() == reflect.Ptr {
 		if v.IsNil() {
