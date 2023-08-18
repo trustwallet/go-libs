@@ -11,7 +11,7 @@ require (
 	github.com/golang-migrate/migrate/v4 v4.15.2
 	github.com/golang/mock v1.6.0
 	github.com/heirko/go-contrib v0.0.0-20200825160048-11fc5e2235fa
-	github.com/heralight/logrus_mate v1.0.1
+	github.com/heralight/logrus_mate v1.0.1-0.20170807195635-969b6efb860e
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/prometheus/client_golang v1.12.0
 	github.com/sirupsen/logrus v1.8.1
@@ -19,6 +19,7 @@ require (
 	github.com/streadway/amqp v1.0.0
 	github.com/stretchr/testify v1.8.3
 	golang.org/x/exp v0.0.0-20220827204233-334a2380cb91
+	golang.org/x/net v0.10.0
 	golang.org/x/sync v0.1.0
 	gorm.io/driver/postgres v1.4.7
 	gorm.io/gorm v1.24.3
@@ -89,7 +90,6 @@ require (
 	go.uber.org/atomic v1.10.0 // indirect
 	golang.org/x/arch v0.3.0 // indirect
 	golang.org/x/crypto v0.9.0 // indirect
-	golang.org/x/net v0.10.0 // indirect
 	golang.org/x/sys v0.8.0 // indirect
 	golang.org/x/text v0.9.0 // indirect
 	google.golang.org/protobuf v1.30.0 // indirect
