@@ -27,6 +27,13 @@ func DefaultConsumerOptions(workers int) *ConsumerOptions {
 	}
 }
 
+// Deprecated: We should not put prefetch limit at channel level. We need to set limit at consumer level
+// This option no longer works to limit QoS globally.
+//
+// From rabbitMQ doc https://www.rabbitmq.com/consumer-prefetch.html
+// Unfortunately the channel is not the ideal scope for this - since a single channel may consume from multiple queues,
+// the channel and the queue(s) need to coordinate with each other for every message sent to ensure they don't go over
+// the limit. This is slow on a single machine, and very slow when consuming across a cluster.
 func OptionPrefetchLimit(limit int) Option {
 	return func(m *Client) error {
 		err := m.amqpChan.Qos(

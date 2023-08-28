@@ -24,8 +24,10 @@ const (
 )
 
 type Client struct {
-	url      string
-	conn     *amqp.Connection
+	url  string
+	conn *amqp.Connection
+
+	// This channel should only be used for management related operations, like declaring queues & exchanges
 	amqpChan *amqp.Channel
 
 	connClients []ConnectionClient

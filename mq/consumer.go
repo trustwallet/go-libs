@@ -47,7 +47,7 @@ func (c *consumer) Start(ctx context.Context) error {
 	c.stopChan = make(chan struct{})
 
 	var err error
-	c.messages, err = c.messageChannel()
+	c.messages, err = c.messageChannel(c.options.Workers)
 	if err != nil {
 		return fmt.Errorf("get message channel: %v", err)
 	}
@@ -141,8 +141,19 @@ func (c *consumer) process(queueName string, body []byte) error {
 	return err
 }
 
-func (c *consumer) messageChannel() (<-chan amqp.Delivery, error) {
-	messageChannel, err := c.client.amqpChan.Consume(
+// messageChannel will create a new dedicated channel for this consumer to use
+func (c *consumer) messageChannel(prefetchCount int) (<-chan amqp.Delivery, error) {
+	mqChan, err := c.client.conn.Channel()
+	if err != nil {
+		return nil, fmt.Errorf("MQ issue. queue: %s, err: %w", string(c.queue.Name()), err)
+	}
+
+	err = mqChan.Qos(prefetchCount, 0, true)
+	if err != nil {
+		return nil, fmt.Errorf("MQ issue. queue: %s, err: %w", string(c.queue.Name()), err)
+	}
+
+	messageChannel, err := mqChan.Consume(
 		string(c.queue.Name()),
 		"",
 		false,
