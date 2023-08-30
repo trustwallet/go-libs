@@ -47,7 +47,7 @@ func (c *consumer) Start(ctx context.Context) error {
 	c.stopChan = make(chan struct{})
 
 	var err error
-	c.messages, err = c.messageChannel(c.options.Workers)
+	c.messages, err = c.messageChannel()
 	if err != nil {
 		return fmt.Errorf("get message channel: %v", err)
 	}
@@ -142,13 +142,13 @@ func (c *consumer) process(queueName string, body []byte) error {
 }
 
 // messageChannel will create a new dedicated channel for this consumer to use
-func (c *consumer) messageChannel(prefetchCount int) (<-chan amqp.Delivery, error) {
+func (c *consumer) messageChannel() (<-chan amqp.Delivery, error) {
 	mqChan, err := c.client.conn.Channel()
 	if err != nil {
 		return nil, fmt.Errorf("MQ issue. queue: %s, err: %w", string(c.queue.Name()), err)
 	}
 
-	err = mqChan.Qos(prefetchCount, 0, true)
+	err = mqChan.Qos(c.getSanitizedPrefetchCount(), 0, true)
 	if err != nil {
 		return nil, fmt.Errorf("MQ issue. queue: %s, err: %w", string(c.queue.Name()), err)
 	}
@@ -167,6 +167,14 @@ func (c *consumer) messageChannel(prefetchCount int) (<-chan amqp.Delivery, erro
 	}
 
 	return messageChannel, nil
+}
+
+func (c *consumer) getSanitizedPrefetchCount() int {
+	if c.options.Prefetch < c.options.Workers {
+		return c.options.Workers
+	}
+
+	return c.options.Prefetch
 }
 
 func (c *consumer) getRemainingRetries(delivery amqp.Delivery) int32 {
