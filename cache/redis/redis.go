@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/go-redis/redis/v8"
+	"github.com/redis/go-redis/v9"
 )
 
 var ErrNotFound = fmt.Errorf("not found")
@@ -16,10 +16,12 @@ var ErrNotFound = fmt.Errorf("not found")
 const healthCheckTimeout = 2 * time.Second
 
 type Redis struct {
-	client *redis.Client
+	client    redisClient
+	isCluster bool
 }
 
 type Option func(o *redis.Options)
+type ClusterOption func(o *redis.ClusterOptions)
 
 // WithTLS option allows to set TLS config to initiate
 // connection to Redis host with TLS transport protocol enabled.
@@ -36,6 +38,12 @@ type Option func(o *redis.Options)
 //	}
 func WithTLS(cfg *tls.Config) Option {
 	return func(o *redis.Options) {
+		o.TLSConfig = cfg
+	}
+}
+
+func WithClusterTLS(cfg *tls.Config) ClusterOption {
+	return func(o *redis.ClusterOptions) {
 		o.TLSConfig = cfg
 	}
 }
@@ -70,6 +78,49 @@ func Init(ctx context.Context, host string, opts ...Option) (*Redis, error) {
 	}
 
 	return &Redis{client: client}, nil
+}
+
+func InitClusterWithTLS(url string, secure bool, opts ...ClusterOption) (*Redis, error) {
+	var options []ClusterOption
+	if secure {
+		options = append(options, WithClusterTLS(&tls.Config{InsecureSkipVerify: true}))
+	}
+	options = append(options, opts...)
+
+	redis, err := InitCluster(context.Background(), url, options...)
+	if err != nil {
+		return nil, err
+	}
+	return redis, nil
+}
+
+// InitCluster inits redis connection with cluster mode
+//
+// In cluster mode, redisURL supports multiple addresses. Example:
+//
+//	redis://user:password@localhost:6789?dial_timeout=3&read_timeout=6s&addr=localhost:6790&addr=localhost:6791
+//	is equivalent to:
+//	&ClusterOptions{
+//		Addr:        ["localhost:6789", "localhost:6790", "localhost:6791"]
+//		DialTimeout: 3 * time.Second, // no time unit = seconds
+//		ReadTimeout: 6 * time.Second,
+//	}
+func InitCluster(ctx context.Context, redisURL string, opts ...ClusterOption) (*Redis, error) {
+	options, err := redis.ParseClusterURL(redisURL)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, opt := range opts {
+		opt(options)
+	}
+
+	client := redis.NewClusterClient(options)
+	if err := client.Ping(ctx).Err(); err != nil {
+		return nil, err
+	}
+
+	return &Redis{client: client, isCluster: true}, nil
 }
 
 func (r *Redis) Get(ctx context.Context, key string, receiver interface{}) error {
@@ -188,12 +239,35 @@ func (r *Redis) IsAvailable(ctx context.Context) bool {
 }
 
 func (r *Redis) Reconnect(ctx context.Context, host string) error {
+	if r.isCluster {
+		return r.reconnectCluster(ctx, host)
+	}
+
 	options, err := redis.ParseURL(host)
 	if err != nil {
 		return err
 	}
 
 	client := redis.NewClient(options)
+	if err := client.Ping(ctx).Err(); err != nil {
+		return err
+	}
+
+	r.client = client
+	if err := r.client.Ping(ctx).Err(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (r *Redis) reconnectCluster(ctx context.Context, redisURL string) error {
+	options, err := redis.ParseClusterURL(redisURL)
+	if err != nil {
+		return err
+	}
+
+	client := redis.NewClusterClient(options)
 	if err := client.Ping(ctx).Err(); err != nil {
 		return err
 	}
