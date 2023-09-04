@@ -245,6 +245,29 @@ func TestRedis_Reconnect(t *testing.T) {
 
 }
 
+func TestRedis_SetNX(t *testing.T) {
+	redisInitFns := []redisInitFn{redisInit}
+	for _, redisInit := range redisInitFns {
+		t.Run("", func(t *testing.T) {
+			r, err := redisInit(t)
+			assert.Nil(t, err)
+
+			b1, err := r.SetNX(context.TODO(), "test", 1, time.Second)
+			assert.Nil(t, err)
+			assert.Equal(t, true, b1)
+
+			b2, err := r.SetNX(context.TODO(), "test", 1, time.Second)
+			assert.Nil(t, err)
+			assert.Equal(t, false, b2)
+
+			var v []byte
+			err = r.Get(context.TODO(), "test", &v)
+			assert.NotNil(t, err)
+			assert.Equal(t, 1, 1)
+		})
+	}
+}
+
 func redisInit(t *testing.T) (*Redis, error) {
 	mr, err := miniredis.Run()
 	assert.NotNil(t, mr)
