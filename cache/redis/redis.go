@@ -234,6 +234,10 @@ func (r *Redis) Delete(ctx context.Context, key string) error {
 	return nil
 }
 
+func (r *Redis) Watch(ctx context.Context, fn func(tx *redis.Tx) error, keys ...string) error {
+	return r.client.Watch(ctx, fn, keys...)
+}
+
 func (r *Redis) IsAvailable(ctx context.Context) bool {
 	return r.client.Ping(ctx).Err() == nil
 }

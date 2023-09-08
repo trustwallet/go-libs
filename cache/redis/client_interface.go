@@ -15,6 +15,7 @@ type redisClient interface {
 	Set(ctx context.Context, key string, value interface{}, expiration time.Duration) *redis.StatusCmd
 	Del(ctx context.Context, keys ...string) *redis.IntCmd
 	Pipeline() redis.Pipeliner
+	Watch(ctx context.Context, fn func(tx *redis.Tx) error, keys ...string) error
 	SetNX(ctx context.Context, key string, value interface{}, expiration time.Duration) *redis.BoolCmd
 	SetXX(ctx context.Context, key string, value interface{}, expiration time.Duration) *redis.BoolCmd
 

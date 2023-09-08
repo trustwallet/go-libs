@@ -18,6 +18,7 @@ import (
 	"time"
 
 	"github.com/alicebob/miniredis/v2"
+	"github.com/redis/go-redis/v9"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -210,6 +211,40 @@ func TestRedis_Delete(t *testing.T) {
 			err = r.Get(context.TODO(), "test", &v)
 			assert.NotNil(t, err)
 			assert.Equal(t, string([]byte{}), string(v))
+		})
+	}
+}
+
+func TestRedis_Watch(t *testing.T) {
+	redisInitFns := []redisInitFn{redisInit, redisClusterInit}
+	for _, redisInit := range redisInitFns {
+		t.Run("", func(t *testing.T) {
+			r, err := redisInit(t)
+			assert.Nil(t, err)
+
+			ctx := context.TODO()
+			key := "test"
+			err = r.Watch(ctx, func(tx *redis.Tx) error {
+				n, err := tx.Get(ctx, key).Int()
+				if err != nil && err != redis.Nil {
+					return err
+				}
+
+				// Actual operation (local in optimistic lock).
+				n++
+
+				// Operation is commited only if the watched keys remain unchanged.
+				_, err = tx.TxPipelined(ctx, func(pipe redis.Pipeliner) error {
+					pipe.Set(ctx, key, fmt.Sprintf("%d", n), 0)
+					return nil
+				})
+				return err
+			}, key)
+			assert.Nil(t, err)
+
+			newValue, err := r.GetBytes(context.TODO(), key)
+			assert.Nil(t, err)
+			assert.Equal(t, "1", string(newValue))
 		})
 	}
 }
