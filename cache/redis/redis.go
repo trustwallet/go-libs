@@ -275,6 +275,20 @@ func (r *Redis) SetNX(ctx context.Context, key string, value interface{}, expira
 	return cmd.Val(), nil
 }
 
+func (r *Redis) SetXX(ctx context.Context, key string, value interface{}, expiration time.Duration) (bool, error) {
+	data, err := json.Marshal(value)
+	if err != nil {
+		return false, err
+	}
+
+	cmd := r.client.SetXX(ctx, key, data, expiration)
+	if cmd.Err() != nil {
+		return false, cmd.Err()
+	}
+
+	return cmd.Val(), nil
+}
+
 func (r *Redis) reconnectCluster(ctx context.Context, redisURL string) error {
 	options, err := redis.ParseClusterURL(redisURL)
 	if err != nil {

@@ -268,6 +268,33 @@ func TestRedis_SetNX(t *testing.T) {
 	}
 }
 
+func TestRedis_SetXX(t *testing.T) {
+	redisInitFns := []redisInitFn{redisInit}
+	for _, redisInit := range redisInitFns {
+		t.Run("", func(t *testing.T) {
+			r, err := redisInit(t)
+			assert.Nil(t, err)
+
+			notExist, err := r.SetXX(context.TODO(), "test", 1, time.Minute)
+			assert.Nil(t, err)
+			assert.Equal(t, false, notExist)
+
+			b, err := r.SetNX(context.TODO(), "test", 1, time.Minute)
+			assert.Nil(t, err)
+			assert.Equal(t, true, b)
+
+			exist, err := r.SetXX(context.TODO(), "test", 1, time.Minute)
+			assert.Nil(t, err)
+			assert.Equal(t, true, exist)
+
+			var v []byte
+			err = r.Get(context.TODO(), "test", &v)
+			assert.NotNil(t, err)
+			assert.Equal(t, 1, 1)
+		})
+	}
+}
+
 func redisInit(t *testing.T) (*Redis, error) {
 	mr, err := miniredis.Run()
 	assert.NotNil(t, mr)

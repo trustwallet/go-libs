@@ -16,6 +16,7 @@ type redisClient interface {
 	Del(ctx context.Context, keys ...string) *redis.IntCmd
 	Pipeline() redis.Pipeliner
 	SetNX(ctx context.Context, key string, value interface{}, expiration time.Duration) *redis.BoolCmd
+	SetXX(ctx context.Context, key string, value interface{}, expiration time.Duration) *redis.BoolCmd
 
 	Ping(ctx context.Context) *redis.StatusCmd
 	Scan(ctx context.Context, cursor uint64, match string, count int64) *redis.ScanCmd
