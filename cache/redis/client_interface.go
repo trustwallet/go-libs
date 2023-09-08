@@ -15,6 +15,7 @@ type redisClient interface {
 	Set(ctx context.Context, key string, value interface{}, expiration time.Duration) *redis.StatusCmd
 	Del(ctx context.Context, keys ...string) *redis.IntCmd
 	Pipeline() redis.Pipeliner
+	Watch(ctx context.Context, fn func(tx *redis.Tx) error, keys ...string) error
 
 	Ping(ctx context.Context) *redis.StatusCmd
 	Scan(ctx context.Context, cursor uint64, match string, count int64) *redis.ScanCmd
