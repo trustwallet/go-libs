@@ -18,14 +18,23 @@ import (
 	"time"
 
 	"github.com/alicebob/miniredis/v2"
+	"github.com/redis/go-redis/v9"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
+type redisInitFn func(t *testing.T) (*Redis, error)
+
 func TestInit(t *testing.T) {
-	i, err := redisInit(t)
-	assert.Nil(t, err)
-	assert.NotNil(t, i)
+	redisInitFns := []redisInitFn{redisInit, redisClusterInit}
+
+	for _, redisInit := range redisInitFns {
+		t.Run("", func(t *testing.T) {
+			i, err := redisInit(t)
+			assert.Nil(t, err)
+			assert.NotNil(t, i)
+		})
+	}
 }
 
 func TestInitWithTLS(t *testing.T) {
@@ -44,160 +53,231 @@ func TestInitWithTLS(t *testing.T) {
 }
 
 func TestRedis_Set(t *testing.T) {
-	r, err := redisInit(t)
-	assert.Nil(t, err)
+	redisInitFns := []redisInitFn{redisInit, redisClusterInit}
+	for _, redisInit := range redisInitFns {
+		t.Run("", func(t *testing.T) {
+			r, err := redisInit(t)
+			assert.Nil(t, err)
 
-	testData := struct {
-		Field string
-		F     float64
-	}{"1", 200.1}
+			testData := struct {
+				Field string
+				F     float64
+			}{"1", 200.1}
 
-	err = r.Set(context.TODO(), "test", testData, time.Second)
-	assert.Nil(t, err)
+			err = r.Set(context.TODO(), "test", testData, time.Second)
+			assert.Nil(t, err)
 
-	var newValue struct {
-		Field string
-		F     float64
+			var newValue struct {
+				Field string
+				F     float64
+			}
+			err = r.Get(context.TODO(), "test", &newValue)
+			assert.Nil(t, err)
+			assert.Equal(t, testData, newValue)
+
+			ttl := r.client.TTL(context.TODO(), "test")
+			assert.Equal(t, time.Second, ttl.Val())
+		})
 	}
-	err = r.Get(context.TODO(), "test", &newValue)
-	assert.Nil(t, err)
-	assert.Equal(t, testData, newValue)
-
-	ttl := r.client.TTL(context.TODO(), "test")
-	assert.Equal(t, time.Second, ttl.Val())
 }
 
 func TestRedis_SetBytes_GetBytes(t *testing.T) {
-	r, err := redisInit(t)
-	assert.Nil(t, err)
+	redisInitFns := []redisInitFn{redisInit, redisClusterInit}
+	for _, redisInit := range redisInitFns {
+		t.Run("", func(t *testing.T) {
+			r, err := redisInit(t)
+			assert.Nil(t, err)
 
-	tests := []struct {
-		key  string
-		data []byte
-	}{
-		{
-			key:  "empty_bytes",
-			data: []byte{},
-		},
-		{
-			key:  "nil_bytes",
-			data: nil,
-		},
-		{
-			key:  "random_bytes",
-			data: []byte("348ufksj@#$@agh$$!"),
-		},
-	}
+			tests := []struct {
+				key  string
+				data []byte
+			}{
+				{
+					key:  "empty_bytes",
+					data: []byte{},
+				},
+				{
+					key:  "nil_bytes",
+					data: nil,
+				},
+				{
+					key:  "random_bytes",
+					data: []byte("348ufksj@#$@agh$$!"),
+				},
+			}
 
-	for _, test := range tests {
-		t.Run(test.key, func(t *testing.T) {
-			err := r.SetBytes(context.Background(), test.key, test.data, time.Minute)
-			assert.NoError(t, err)
+			for _, test := range tests {
+				t.Run(test.key, func(t *testing.T) {
+					err := r.SetBytes(context.Background(), test.key, test.data, time.Minute)
+					assert.NoError(t, err)
 
-			got, err := r.GetBytes(context.Background(), test.key)
-			assert.NoError(t, err)
-			if len(test.data) == 0 { // the client returns []byte{} when we expecte []byte(nil) so we compare by len
-				require.Equal(t, 0, len(got))
-			} else {
-				assert.Equal(t, test.data, got)
+					got, err := r.GetBytes(context.Background(), test.key)
+					assert.NoError(t, err)
+					if len(test.data) == 0 { // the client returns []byte{} when we expecte []byte(nil) so we compare by len
+						require.Equal(t, 0, len(got))
+					} else {
+						assert.Equal(t, test.data, got)
+					}
+				})
 			}
 		})
 	}
 }
 
 func TestRedis_MSet_MGet(t *testing.T) {
-	r, err := redisInit(t)
-	assert.Nil(t, err)
+	redisInitFns := []redisInitFn{redisInit, redisClusterInit}
+	for _, redisInit := range redisInitFns {
+		t.Run("", func(t *testing.T) {
+			r, err := redisInit(t)
+			assert.Nil(t, err)
 
-	type testDataType struct {
-		Field string
-		F     float64
+			type testDataType struct {
+				Field string
+				F     float64
+			}
+			testData := map[string]interface{}{
+				"test1": testDataType{"1", 200.1},
+				"test2": testDataType{"1", 200.1},
+			}
+
+			err = r.MSet(context.TODO(), testData, time.Second)
+			assert.Nil(t, err)
+
+			keys := []string{"test1", "test2"}
+			values, err := r.MGet(context.TODO(), keys...)
+			assert.Nil(t, err)
+			assert.Equal(t, len(keys), len(values))
+
+			for i, key := range keys {
+				var data testDataType
+				err := json.Unmarshal(values[i], &data)
+				assert.NoError(t, err)
+				assert.Equal(t, testData[key], data)
+			}
+
+			ttl := r.client.TTL(context.TODO(), "test1")
+			assert.Equal(t, time.Second, ttl.Val())
+			ttl = r.client.TTL(context.TODO(), "test2")
+			assert.Equal(t, time.Second, ttl.Val())
+		})
 	}
-	testData := map[string]interface{}{
-		"test1": testDataType{"1", 200.1},
-		"test2": testDataType{"1", 200.1},
-	}
-
-	err = r.MSet(context.TODO(), testData, time.Second)
-	assert.Nil(t, err)
-
-	keys := []string{"test1", "test2"}
-	values, err := r.MGet(context.TODO(), keys...)
-	assert.Nil(t, err)
-	assert.Equal(t, len(keys), len(values))
-
-	for i, key := range keys {
-		var data testDataType
-		err := json.Unmarshal(values[i], &data)
-		assert.NoError(t, err)
-		assert.Equal(t, testData[key], data)
-	}
-
-	ttl := r.client.TTL(context.TODO(), "test1")
-	assert.Equal(t, time.Second, ttl.Val())
-	ttl = r.client.TTL(context.TODO(), "test2")
-	assert.Equal(t, time.Second, ttl.Val())
 }
 
 func TestRedis_Get(t *testing.T) {
-	r, err := redisInit(t)
-	assert.Nil(t, err)
+	redisInitFns := []redisInitFn{redisInit, redisClusterInit}
+	for _, redisInit := range redisInitFns {
+		t.Run("", func(t *testing.T) {
+			r, err := redisInit(t)
+			assert.Nil(t, err)
 
-	type TestStruct struct {
-		Field string
-		F     float64
+			type TestStruct struct {
+				Field string
+				F     float64
+			}
+			testData := TestStruct{"1", 200.1}
+
+			err = r.Set(context.TODO(), "test", testData, time.Second)
+			assert.Nil(t, err)
+
+			var newValue TestStruct
+			err = r.Get(context.TODO(), "test", &newValue)
+			assert.Nil(t, err)
+			assert.Equal(t, testData, newValue)
+
+			ttl := r.client.TTL(context.TODO(), "test")
+			assert.Equal(t, time.Second, ttl.Val())
+
+			var empty interface{}
+			err = r.Get(context.TODO(), "1", empty)
+			assert.Equal(t, err, ErrNotFound)
+			assert.Nil(t, empty)
+		})
 	}
-	testData := TestStruct{"1", 200.1}
-
-	err = r.Set(context.TODO(), "test", testData, time.Second)
-	assert.Nil(t, err)
-
-	var newValue TestStruct
-	err = r.Get(context.TODO(), "test", &newValue)
-	assert.Nil(t, err)
-	assert.Equal(t, testData, newValue)
-
-	ttl := r.client.TTL(context.TODO(), "test")
-	assert.Equal(t, time.Second, ttl.Val())
-
-	var empty interface{}
-	err = r.Get(context.TODO(), "1", empty)
-	assert.Equal(t, err, ErrNotFound)
-	assert.Nil(t, empty)
 }
 
 func TestRedis_Delete(t *testing.T) {
-	r, err := redisInit(t)
-	assert.Nil(t, err)
-	err = r.Set(context.TODO(), "test", []byte{0, 1}, time.Second)
-	assert.Nil(t, err)
+	redisInitFns := []redisInitFn{redisInit, redisClusterInit}
+	for _, redisInit := range redisInitFns {
+		t.Run("", func(t *testing.T) {
+			r, err := redisInit(t)
+			assert.Nil(t, err)
+			err = r.Set(context.TODO(), "test", []byte{0, 1}, time.Second)
+			assert.Nil(t, err)
 
-	err = r.Delete(context.TODO(), "test")
-	assert.Nil(t, err)
+			err = r.Delete(context.TODO(), "test")
+			assert.Nil(t, err)
 
-	var v []byte
-	err = r.Get(context.TODO(), "test", &v)
-	assert.NotNil(t, err)
-	assert.Equal(t, string([]byte{}), string(v))
+			var v []byte
+			err = r.Get(context.TODO(), "test", &v)
+			assert.NotNil(t, err)
+			assert.Equal(t, string([]byte{}), string(v))
+		})
+	}
+}
+
+func TestRedis_Watch(t *testing.T) {
+	redisInitFns := []redisInitFn{redisInit, redisClusterInit}
+	for _, redisInit := range redisInitFns {
+		t.Run("", func(t *testing.T) {
+			r, err := redisInit(t)
+			assert.Nil(t, err)
+
+			ctx := context.TODO()
+			key := "test"
+			err = r.Watch(ctx, func(tx *redis.Tx) error {
+				n, err := tx.Get(ctx, key).Int()
+				if err != nil && err != redis.Nil {
+					return err
+				}
+
+				// Actual operation (local in optimistic lock).
+				n++
+
+				// Operation is commited only if the watched keys remain unchanged.
+				_, err = tx.TxPipelined(ctx, func(pipe redis.Pipeliner) error {
+					pipe.Set(ctx, key, fmt.Sprintf("%d", n), 0)
+					return nil
+				})
+				return err
+			}, key)
+			assert.Nil(t, err)
+
+			newValue, err := r.GetBytes(context.TODO(), key)
+			assert.Nil(t, err)
+			assert.Equal(t, "1", string(newValue))
+		})
+	}
 }
 
 func TestRedis_IsAvailable(t *testing.T) {
-	r, err := redisInit(t)
-	assert.Nil(t, err)
+	redisInitFns := []redisInitFn{redisInit, redisClusterInit}
+	for _, redisInit := range redisInitFns {
+		t.Run("", func(t *testing.T) {
+			r, err := redisInit(t)
+			assert.Nil(t, err)
 
-	assert.True(t, r.IsAvailable(context.TODO()))
+			assert.True(t, r.IsAvailable(context.TODO()))
+		})
+	}
+
 }
 
 func TestRedis_Reconnect(t *testing.T) {
-	r, err := redisInit(t)
-	assert.Nil(t, err)
+	redisInitFns := []redisInitFn{redisInit, redisClusterInit}
+	for _, redisInit := range redisInitFns {
+		t.Run("", func(t *testing.T) {
+			r, err := redisInit(t)
+			assert.Nil(t, err)
 
-	mr, err := miniredis.Run()
-	assert.NotNil(t, mr)
-	assert.Nil(t, err)
+			mr, err := miniredis.Run()
+			assert.NotNil(t, mr)
+			assert.Nil(t, err)
 
-	err = r.Reconnect(context.TODO(), fmt.Sprintf("redis://%s", mr.Addr()))
-	assert.NoError(t, err)
+			err = r.Reconnect(context.TODO(), fmt.Sprintf("redis://%s", mr.Addr()))
+			assert.NoError(t, err)
+		})
+	}
+
 }
 
 func redisInit(t *testing.T) (*Redis, error) {
@@ -206,6 +286,18 @@ func redisInit(t *testing.T) (*Redis, error) {
 	assert.Nil(t, err)
 
 	c, err := Init(context.TODO(), fmt.Sprintf("redis://%s", mr.Addr()))
+	assert.Nil(t, err)
+	assert.NotNil(t, c)
+
+	return c, nil
+}
+
+func redisClusterInit(t *testing.T) (*Redis, error) {
+	mr, err := miniredis.Run()
+	assert.NotNil(t, mr)
+	assert.Nil(t, err)
+
+	c, err := InitCluster(context.TODO(), fmt.Sprintf("redis://%s", mr.Addr()))
 	assert.Nil(t, err)
 	assert.NotNil(t, c)
 

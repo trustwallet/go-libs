@@ -8,6 +8,7 @@ import (
 
 type ConsumerOptions struct {
 	Workers           int
+	Prefetch          int
 	RetryOnError      bool
 	RetryDelay        time.Duration
 	PerformanceMetric metrics.PerformanceMetric
@@ -20,6 +21,7 @@ type ConsumerOptions struct {
 func DefaultConsumerOptions(workers int) *ConsumerOptions {
 	return &ConsumerOptions{
 		Workers:           workers,
+		Prefetch:          2 * workers,
 		RetryOnError:      true,
 		RetryDelay:        time.Second,
 		MaxRetries:        -1,
