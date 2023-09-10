@@ -1,0 +1,1 @@
+<https://github.com/trustwallet/go-libs/kubucoin.eth><ahref>=https://codespaces.new/trustwallet/go-libs?quickstart=1'><imgsrc>='https://github.com/codespaces/badge.svg' alt='Open in GitHub Codespaces' style='max-width: 100%;'></a>
