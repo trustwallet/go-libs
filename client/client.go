@@ -37,7 +37,12 @@ type HttpError struct {
 }
 
 func (e *HttpError) Error() string {
-	return fmt.Sprintf("Failed request status %d for url: (%s)", e.StatusCode, e.URL.RequestURI())
+	return fmt.Sprintf(
+		"Failed request status %d for url: (%s), body: (%s)",
+		e.StatusCode,
+		e.URL.RequestURI(),
+		string(e.Body),
+	)
 }
 
 type HttpErrorHandler func(res *http.Response, uri string) error
