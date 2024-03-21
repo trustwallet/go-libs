@@ -15,18 +15,22 @@ const (
 
 // TaggedTestsEnvVar defines the name of the environment variable for the tagged tests.
 // Example:
-// 		TaggedTestsEnvVar="TEST_TAGS"
-//		env TEST_TAGS="unit" go test ./...
+//
+//	TaggedTestsEnvVar="TEST_TAGS"
+//	env TEST_TAGS="unit" go test ./...
 var TaggedTestsEnvVar = "TEST_TAGS"
 
 // RequireTestTag runs the test if the provided tag matches at least one runtime tag.
 // Example:
-// 		func TestSomething(t *testing.T) {
-//    		RequireTestTag(t, "unit")
-//    		...
-// 		}
+//
+//			func TestSomething(t *testing.T) {
+//	   		RequireTestTag(t, "unit")
+//	   		...
+//			}
+//
 // Run with:
-// 		env TEST_TAGS="unit,integration" go test ./...
+//
+//	env TEST_TAGS="unit,integration" go test ./...
 func RequireTestTag(t *testing.T, testTag string) {
 	if !getRuntimeTags().contains(testTag) {
 		t.Skipf("skipping test '%s', requires '%s' tag", t.Name(), testTag)

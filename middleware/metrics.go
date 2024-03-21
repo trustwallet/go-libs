@@ -10,8 +10,8 @@ import (
 const labelPath = "path"
 const labelMethod = "method"
 
-func MetricsMiddleware(namespace string, labels prometheus.Labels, reg prometheus.Registerer) gin.HandlerFunc {
-	perfMetric := metrics.NewHttpServerMetric(namespace, []string{labelPath, labelMethod}, labels, reg)
+func MetricsMiddleware(namespace string, reg prometheus.Registerer, labels ...metrics.Label) gin.HandlerFunc {
+	perfMetric := metrics.NewHttpServerMetric(namespace, []string{labelPath, labelMethod}, reg, labels...)
 	return func(c *gin.Context) {
 		path := c.FullPath()
 		method := c.Request.Method

@@ -29,11 +29,16 @@ type performanceMetric struct {
 	executionFailedTotal     *prometheus.CounterVec
 }
 
+type Label struct {
+	Key   string
+	Value string
+}
+
 func NewPerformanceMetric(
 	namespace string,
 	labelNames []string,
-	staticLabels prometheus.Labels,
 	reg prometheus.Registerer,
+	labels ...Label,
 ) PerformanceMetric {
 	executionStarted := prometheus.NewGaugeVec(prometheus.GaugeOpts{
 		Namespace: namespace,
@@ -58,6 +63,11 @@ func NewPerformanceMetric(
 		Name:      executionFailedTotalKey,
 		Help:      "Total number of the executions which failed.",
 	}, labelNames)
+
+	staticLabels := make(map[string]string)
+	for _, label := range labels {
+		staticLabels[label.Key] = label.Value
+	}
 
 	Register(staticLabels, reg, executionStarted, executionDurationSeconds, executionSucceededTotal, executionFailedTotal)
 
