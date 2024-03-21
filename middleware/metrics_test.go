@@ -13,7 +13,7 @@ import (
 func TestMetricsMiddleware(t *testing.T) {
 	r := prometheus.NewRegistry()
 	router := gin.New()
-	router.Use(MetricsMiddleware("", nil, r))
+	router.Use(MetricsMiddleware("", r))
 
 	successGroup := router.Group("/success")
 	successGroup.GET("/:test", func(c *gin.Context) {

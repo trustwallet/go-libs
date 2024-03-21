@@ -32,8 +32,8 @@ type httpServerMetric struct {
 func NewHttpServerMetric(
 	namespace string,
 	labelNames []string,
-	staticLabels prometheus.Labels,
 	reg prometheus.Registerer,
+	labels ...Label,
 ) HttpServerMetric {
 	requestStarted := prometheus.NewGaugeVec(prometheus.GaugeOpts{
 		Namespace: namespace,
@@ -64,6 +64,11 @@ func NewHttpServerMetric(
 		Name:      requestServerErrTotalKey,
 		Help:      "Total number of the 5xx requests.",
 	}, labelNames)
+
+	staticLabels := make(map[string]string)
+	for _, label := range labels {
+		staticLabels[label.Key] = label.Value
+	}
 
 	Register(staticLabels, reg, requestStarted, requestDurationSeconds, requestSucceededTotal, requestClientErrTotal, requestServerErrTotal)
 

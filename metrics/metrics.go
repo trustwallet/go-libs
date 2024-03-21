@@ -29,8 +29,8 @@ type performanceMetric struct {
 	executionFailedTotal     *prometheus.CounterVec
 }
 
-type metricLabel struct {
-	Key string
+type Label struct {
+	Key   string
 	Value string
 }
 
@@ -38,7 +38,7 @@ func NewPerformanceMetric(
 	namespace string,
 	labelNames []string,
 	reg prometheus.Registerer,
-	labels ...metricLabel,
+	labels ...Label,
 ) PerformanceMetric {
 	executionStarted := prometheus.NewGaugeVec(prometheus.GaugeOpts{
 		Namespace: namespace,
