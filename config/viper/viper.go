@@ -35,6 +35,9 @@ func Load(confPath string, receiver interface{}) {
 	}
 }
 
+// viper supports unmarshaling from env vars if the keys are known
+//
+// bindEnvs is a hack to let viper know in advance what keys exists, even if it doesn't exist in config.yml
 func bindEnvs(v reflect.Value, parts ...string) {
 	if v.Kind() == reflect.Ptr {
 		if v.IsNil() {
@@ -56,6 +59,10 @@ func bindEnvs(v reflect.Value, parts ...string) {
 		switch val.Kind() {
 		case reflect.Struct:
 			bindEnvs(val, append(parts, tv)...)
+		case reflect.Map:
+			// bindEnvs hack doesn't work for maps, because we don't know all the possible
+			// values for map keys. Therefore we do nothing to fallback to viper's default key detection.
+			continue
 		default:
 			if err := viper.BindEnv(strings.Join(append(parts, tv), ".")); err != nil {
 				log.Fatal(err)
