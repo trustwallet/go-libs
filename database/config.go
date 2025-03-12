@@ -2,9 +2,12 @@ package database
 
 import (
 	"fmt"
+	"sync/atomic"
 	"time"
 
+	"gorm.io/gorm"
 	gormLogger "gorm.io/gorm/logger"
+	"gorm.io/plugin/dbresolver"
 )
 
 type LogLevel string
@@ -55,6 +58,11 @@ type DBConfig struct {
 	// ConnPool is the connection pool settings for the database connection.
 	// This is optional and can be set to nil if the default connection pool settings are sufficient.
 	ConnPool *DBConnPool `mapstructure:"conn_pool"`
+
+	// ResolverPolicy is the policy for selecting database connection (ConnPool) from Write sources or Read replicas in gorm.
+	// this policy can be rewritten by custom policy with WithResolverPolicy option function, by default random policy is used
+	// available values are "default", "random", "round_robin"
+	ResolverPolicy PolicyName `mapstructure:"resolver_policy"`
 }
 
 var (
@@ -64,7 +72,53 @@ var (
 	defaultConnMaxLifetime = time.Duration(0)
 )
 
-func (cfg *DBConfig) applyDefaultValue() {
+type options struct {
+	ResolverPolicy dbresolver.Policy
+}
+type PolicyName string
+
+const (
+	DefaultPolicyName          PolicyName = "default"
+	RandomPolicyName           PolicyName = "random"
+	RoundRobinPolicyName       PolicyName = "round_robin"
+	StrictRoundRobinPolicyName PolicyName = "strict_round_robin"
+)
+
+var (
+	RandomPolicy           = dbresolver.RandomPolicy{}
+	RoundRobinPolicy       = NewRoundRobinPolicy()
+	StrictRoundRobinPolicy = NewStrictRoundRobinPolicy()
+)
+
+var resolverPolicies = map[PolicyName]dbresolver.Policy{
+	DefaultPolicyName:          RandomPolicy,
+	RandomPolicyName:           RandomPolicy,
+	RoundRobinPolicyName:       RoundRobinPolicy,
+	StrictRoundRobinPolicyName: StrictRoundRobinPolicy,
+}
+
+type PolicyFunc func([]gorm.ConnPool) gorm.ConnPool
+
+func (f PolicyFunc) Resolve(connPools []gorm.ConnPool) gorm.ConnPool {
+	return f(connPools)
+}
+
+func NewRoundRobinPolicy() dbresolver.Policy {
+	var i int
+	return PolicyFunc(func(connPools []gorm.ConnPool) gorm.ConnPool {
+		i = (i + 1) % len(connPools)
+		return connPools[i]
+	})
+}
+
+func NewStrictRoundRobinPolicy() dbresolver.Policy {
+	var i int64
+	return PolicyFunc(func(connPools []gorm.ConnPool) gorm.ConnPool {
+		return connPools[int(atomic.AddInt64(&i, 1))%len(connPools)]
+	})
+}
+
+func (cfg *DBConfig) applyDefaultValue() options {
 	if cfg.LogLevel == "" {
 		cfg.LogLevel = LogLevelError
 	}
@@ -78,4 +132,17 @@ func (cfg *DBConfig) applyDefaultValue() {
 			ConnMaxLifetime: defaultConnMaxLifetime,
 		}
 	}
+	if cfg.ResolverPolicy == "" {
+		cfg.ResolverPolicy = DefaultPolicyName
+	}
+	var (
+		opt options
+		ok  bool
+	)
+	opt.ResolverPolicy, ok = resolverPolicies[cfg.ResolverPolicy]
+	if !ok {
+		opt.ResolverPolicy = resolverPolicies[DefaultPolicyName]
+	}
+
+	return opt
 }

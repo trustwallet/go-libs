@@ -48,7 +48,7 @@ type DBGetter struct {
 // following a write operation may not see the updated data if it is executed on a different read-only replica
 // that has not yet been updated with the new data.
 func NewDBGetter(cfg DBConfig) (*DBGetter, error) {
-	cfg.applyDefaultValue()
+	opt := cfg.applyDefaultValue()
 
 	logLevel, err := newLogLevelFromString(cfg.LogLevel)
 	if err != nil {
@@ -80,6 +80,7 @@ func NewDBGetter(cfg DBConfig) (*DBGetter, error) {
 			Sources:           []gorm.Dialector{postgres.Open(cfg.Url)},
 			Replicas:          replicas,
 			TraceResolverMode: logLevel == gormLogger.Info,
+			Policy:            opt.ResolverPolicy,
 		}).SetConnMaxIdleTime(cfg.ConnPool.ConnMaxIdleTime).
 		SetConnMaxLifetime(cfg.ConnPool.ConnMaxLifetime).
 		SetMaxIdleConns(cfg.ConnPool.MaxIdleConns).
