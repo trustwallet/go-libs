@@ -5,6 +5,7 @@ import (
 	"time"
 
 	gormLogger "gorm.io/gorm/logger"
+	"gorm.io/plugin/dbresolver"
 )
 
 type LogLevel string
@@ -55,6 +56,42 @@ type DBConfig struct {
 	// ConnPool is the connection pool settings for the database connection.
 	// This is optional and can be set to nil if the default connection pool settings are sufficient.
 	ConnPool *DBConnPool `mapstructure:"conn_pool"`
+
+	// ResolverPolicy is the policy for selecting database connection (ConnPool) from Write sources or Read replicas in gorm.
+	// this policy can be rewritten by custom policy with WithResolverPolicy option function, by default random policy is used
+	// available values are "default", "random", "round_robin"
+	ResolverPolicy PolicyName `mapstructure:"resolver_policy"`
+}
+
+type options struct {
+	ResolverPolicy dbresolver.Policy
+}
+type OptionFunc func(*options)
+
+type PolicyName string
+
+const (
+	DefaultPolicyName    PolicyName = "default"
+	RandomPolicyName     PolicyName = "random"
+	RoundRobinPolicyName PolicyName = "round_robin"
+)
+
+var (
+	RandomPolicy     = dbresolver.RandomPolicy{}
+	RoundRobinPolicy = dbresolver.StrictRoundRobinPolicy()
+)
+
+var resolverPolicies = map[PolicyName]dbresolver.Policy{
+	DefaultPolicyName:    RandomPolicy,
+	RandomPolicyName:     RandomPolicy,
+	RoundRobinPolicyName: RoundRobinPolicy,
+}
+
+// WithResolverPolicy - sets options ResolverPolicy for database connection
+func WithResolverPolicy(resolver dbresolver.Policy) OptionFunc {
+	return func(o *options) {
+		o.ResolverPolicy = resolver
+	}
 }
 
 var (
@@ -64,7 +101,19 @@ var (
 	defaultConnMaxLifetime = time.Duration(0)
 )
 
-func (cfg *DBConfig) applyDefaultValue() {
+func (cfg *DBConfig) applyDefaultValue(opts []OptionFunc) options {
+	var (
+		opt options
+		ok  bool
+	)
+	opt.ResolverPolicy, ok = resolverPolicies[cfg.ResolverPolicy]
+	if !ok {
+		opt.ResolverPolicy = resolverPolicies[DefaultPolicyName]
+	}
+	for _, op := range opts {
+		op(&opt)
+	}
+
 	if cfg.LogLevel == "" {
 		cfg.LogLevel = LogLevelError
 	}
@@ -78,4 +127,6 @@ func (cfg *DBConfig) applyDefaultValue() {
 			ConnMaxLifetime: defaultConnMaxLifetime,
 		}
 	}
+
+	return opt
 }

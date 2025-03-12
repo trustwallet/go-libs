@@ -22,8 +22,8 @@ require (
 	golang.org/x/net v0.10.0
 	golang.org/x/sync v0.1.0
 	gorm.io/driver/postgres v1.4.7
-	gorm.io/gorm v1.24.3
-	gorm.io/plugin/dbresolver v1.4.1
+	gorm.io/gorm v1.25.12
+	gorm.io/plugin/dbresolver v1.5.3
 	gotest.tools v2.2.0+incompatible
 )
 
@@ -92,7 +92,7 @@ require (
 	golang.org/x/arch v0.3.0 // indirect
 	golang.org/x/crypto v0.9.0 // indirect
 	golang.org/x/sys v0.8.0 // indirect
-	golang.org/x/text v0.9.0 // indirect
+	golang.org/x/text v0.14.0 // indirect
 	google.golang.org/protobuf v1.30.0 // indirect
 	gopkg.in/ini.v1 v1.62.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
