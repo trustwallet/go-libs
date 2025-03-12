@@ -102,18 +102,6 @@ var (
 )
 
 func (cfg *DBConfig) applyDefaultValue(opts []OptionFunc) options {
-	var (
-		opt options
-		ok  bool
-	)
-	opt.ResolverPolicy, ok = resolverPolicies[cfg.ResolverPolicy]
-	if !ok {
-		opt.ResolverPolicy = resolverPolicies[DefaultPolicyName]
-	}
-	for _, op := range opts {
-		op(&opt)
-	}
-
 	if cfg.LogLevel == "" {
 		cfg.LogLevel = LogLevelError
 	}
@@ -126,6 +114,20 @@ func (cfg *DBConfig) applyDefaultValue(opts []OptionFunc) options {
 			MaxOpenConns:    defaultMaxOpenConns,
 			ConnMaxLifetime: defaultConnMaxLifetime,
 		}
+	}
+	if cfg.ResolverPolicy == "" {
+		cfg.ResolverPolicy = DefaultPolicyName
+	}
+	var (
+		opt options
+		ok  bool
+	)
+	opt.ResolverPolicy, ok = resolverPolicies[cfg.ResolverPolicy]
+	if !ok {
+		opt.ResolverPolicy = resolverPolicies[DefaultPolicyName]
+	}
+	for _, op := range opts {
+		op(&opt)
 	}
 
 	return opt
