@@ -41,3 +41,11 @@ _No anti-patterns recorded yet. Anti-patterns will be captured after implementat
 ## See Also
 - [anti patterns failed approaches](code-conventions/code-style/anti-patterns-failed-approaches.md) <!-- rel:strong -->
 - [patterns validated approaches](patterns/patterns-validated-approaches.md) <!-- rel:strong -->
+- [common mistakes and anti patterns](guides/troubleshooting/common-mistakes-and-anti-patterns.md) <!-- rel:related -->
+### Code-conventions
+
+
+- **[high]** This is a **public GitHub repository**. Never commit: _(source: CLAUDE.md)_
+- **[high]** Each package must be importable independently. Do NOT create imports between sibling packages (e.g. `client` importing `middleware`, `database` importing `metrics` directly). Dependencies flow ONE WAY: utility packages → infrastructure packages → integration packages. _(source: CLAUDE.md)_
+- **[high]** All metric constructors (`NewPerformanceMetric`, `NewHttpServerMetric`, etc.) accept a `prometheus.Registerer` parameter. **Never** use: _(source: CLAUDE.md)_
+- **[high]** The `testy` package provides integration test helpers (real DB + Redis connections). Never import it from non-test (production) code. It should only appear in `_test.go` files. _(source: CLAUDE.md)_

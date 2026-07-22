@@ -1,3 +1,12 @@
+---
+title: Slice Utilities
+category: features
+tags: [slice,filter,partition,search,generic]
+confidence: high
+source: source-analysis
+updated: 2026-07-22
+---
+
 # Slice
 
 <!-- sdd-knowledge-generated -->

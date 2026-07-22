@@ -1,3 +1,12 @@
+---
+title: Dependency Graph
+category: architecture
+tags: [dependency,graph,packages]
+confidence: high
+source: source-analysis
+updated: 2026-07-22
+---
+
 # Dependency Graph
 
 <!-- sdd-knowledge-generated -->

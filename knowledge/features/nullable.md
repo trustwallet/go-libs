@@ -1,3 +1,12 @@
+---
+title: Nullable Types
+category: features
+tags: [nullable,json,serialization]
+confidence: high
+source: source-analysis
+updated: 2026-07-22
+---
+
 # Nullable
 
 <!-- sdd-knowledge-generated -->

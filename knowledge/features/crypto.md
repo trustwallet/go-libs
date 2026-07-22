@@ -1,3 +1,12 @@
+---
+title: Crypto Feature
+category: features
+tags: [crypto,aes,ecdsa,signing]
+confidence: high
+source: source-analysis
+updated: 2026-07-22
+---
+
 # Crypto
 
 <!-- sdd-knowledge-generated -->

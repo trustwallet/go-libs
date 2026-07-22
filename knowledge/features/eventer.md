@@ -1,3 +1,12 @@
+---
+title: Eventer Feature
+category: features
+tags: [eventer,events,logging]
+confidence: high
+source: source-analysis
+updated: 2026-07-22
+---
+
 # Eventer
 
 <!-- sdd-knowledge-generated -->

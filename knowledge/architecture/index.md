@@ -11,6 +11,7 @@
 | Document | Description |
 |----------|-------------|
 | [call-graph.md](call-graph.md) | Call Graph |
+| [call-graph-part-2.md](call-graph-part-2.md) | Call Graph (Part 2) |
 | [client-new-req-builder.md](client-new-req-builder.md) | HTTP Client — NewReqBuilder (God Node) |
 | [database-transactions.md](database-transactions.md) | Database Layer — Context-Scoped Transactions |
 | [dead-code-candidates.md](dead-code-candidates.md) | Dead Code Candidates |

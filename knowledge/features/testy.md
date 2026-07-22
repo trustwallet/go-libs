@@ -1,3 +1,12 @@
+---
+title: Integration Test Helpers
+category: features
+tags: [testy,integration,postgres,redis]
+confidence: high
+source: source-analysis
+updated: 2026-07-22
+---
+
 # Testy
 
 <!-- sdd-knowledge-generated -->

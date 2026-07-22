@@ -1,3 +1,12 @@
+---
+title: Mock HTTP Server
+category: features
+tags: [mock,testing,http]
+confidence: high
+source: source-analysis
+updated: 2026-07-22
+---
+
 # Mock
 
 <!-- sdd-knowledge-generated -->
@@ -26,3 +35,5 @@
 - [config](../libs/config.md) <!-- rel:strong -->
 - [dependency graph](../architecture/dependency-graph.md) <!-- rel:related -->
 - [layers](../architecture/layers.md) <!-- rel:weak -->
+- [overview](../architecture/overview.md) <!-- rel:related -->
+- [project structure](../architecture/project-structure.md) <!-- rel:related -->

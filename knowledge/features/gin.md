@@ -1,3 +1,12 @@
+---
+title: Gin Feature
+category: features
+tags: [gin,hmac,server,auth]
+confidence: high
+source: source-analysis
+updated: 2026-07-22
+---
+
 # Gin
 
 <!-- sdd-knowledge-generated -->

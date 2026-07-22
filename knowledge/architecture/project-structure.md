@@ -1,3 +1,12 @@
+---
+title: Project Structure
+category: architecture
+tags: [project-structure,layout,packages]
+confidence: high
+source: source-analysis
+updated: 2026-07-22
+---
+
 # Project Structure
 
 <!-- sdd-knowledge-generated -->

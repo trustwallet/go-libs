@@ -161,3 +161,10 @@ _struct · `mq/queue.go`:5_
 |-------|------|----------|
 | `name` | `QueueName` | no |
 | `client` | `*Client` | no |
+
+## See Also
+- [database](../../features/database.md) <!-- rel:strong -->
+- [mq](../../features/mq.md) <!-- rel:related -->
+- [common mistakes and anti patterns](../../guides/troubleshooting/common-mistakes-and-anti-patterns.md) <!-- rel:related -->
+- [metrics](../../features/metrics.md) <!-- rel:related -->
+- [blockchain](../../features/blockchain.md) <!-- rel:related -->

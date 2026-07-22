@@ -1,3 +1,12 @@
+---
+title: Worker Feature
+category: features
+tags: [worker,periodic,background,scheduler]
+confidence: high
+source: source-analysis
+updated: 2026-07-22
+---
+
 # Worker
 
 <!-- sdd-knowledge-generated -->

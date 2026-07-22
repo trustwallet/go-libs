@@ -166,3 +166,10 @@ _struct · `mq/options.go`:9_
 | `RetryDelay` | `time.Duration` | no |
 | `PerformanceMetric` | `metrics.PerformanceMetric` | no |
 | `MaxRetries` | `int` | no |
+
+## See Also
+- [blockchain](../../features/blockchain.md) <!-- rel:strong -->
+- [mq](../../features/mq.md) <!-- rel:strong -->
+- [middleware](../../features/middleware.md) <!-- rel:strong -->
+- [worker pattern](../../patterns/worker-pattern.md) <!-- rel:strong -->
+- [common mistakes and anti patterns](../../guides/troubleshooting/common-mistakes-and-anti-patterns.md) <!-- rel:strong -->

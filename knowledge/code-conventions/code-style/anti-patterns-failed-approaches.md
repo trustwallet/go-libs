@@ -26,3 +26,4 @@ _No anti-patterns recorded yet. Anti-patterns will be captured after implementat
 - [patterns validated approaches](../../patterns/patterns-validated-approaches.md) <!-- rel:strong -->
 - [learnings](../../learnings.md) <!-- rel:strong -->
 - [constitution](../../constitution.md) <!-- rel:weak -->
+- [common mistakes and anti patterns](../../guides/troubleshooting/common-mistakes-and-anti-patterns.md) <!-- rel:related -->

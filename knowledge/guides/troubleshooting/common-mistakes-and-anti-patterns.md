@@ -42,3 +42,9 @@ AES-GCM provides both confidentiality and integrity (authenticated encryption). 
 - TLS configuration for Redis is passed as `redis.WithTLS(cfg)` / `redis.WithClusterTLS(cfg)` — TLS is opt-in, not required.
 - For production Redis TLS, use at minimum `&tls.Config{MinVersion: tls.VersionTLS12}`.
 
+## See Also
+- [crypto and auth](../../security/crypto-and-auth.md) <!-- rel:strong -->
+- [metrics system](../../architecture/metrics-system.md) <!-- rel:strong -->
+- [overview](../../architecture/overview.md) <!-- rel:related -->
+- [constraints](../../code-conventions/constraints.md) <!-- rel:related -->
+- [anti patterns failed approaches](../../code-conventions/code-style/anti-patterns-failed-approaches.md) <!-- rel:related -->

@@ -1,3 +1,12 @@
+---
+title: Logging Feature
+category: features
+tags: [logging,logrus,viper]
+confidence: high
+source: source-analysis
+updated: 2026-07-22
+---
+
 # Logging
 
 <!-- sdd-knowledge-generated -->

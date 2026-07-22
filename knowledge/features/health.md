@@ -1,3 +1,12 @@
+---
+title: Health Check Feature
+category: features
+tags: [health,http,healthcheck]
+confidence: high
+source: source-analysis
+updated: 2026-07-22
+---
+
 # Health
 
 <!-- sdd-knowledge-generated -->

@@ -19,6 +19,8 @@
 | [security](security/index.md) | Security |
 | [tests](tests/index.md) | Tests |
 
+| [guides](guides/index.md) | Guides |
+
 
 ## Project Identity
 

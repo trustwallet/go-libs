@@ -1,3 +1,12 @@
+---
+title: Cache Feature (Redis)
+category: features
+tags: [cache,redis,cluster,tls]
+confidence: high
+source: source-analysis
+updated: 2026-07-22
+---
+
 # Cache
 
 <!-- sdd-knowledge-generated -->

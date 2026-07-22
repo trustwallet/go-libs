@@ -1,3 +1,12 @@
+---
+title: CTask Concurrent Tasks
+category: features
+tags: [ctask,concurrent,parallel,fan-out]
+confidence: high
+source: source-analysis
+updated: 2026-07-22
+---
+
 # Ctask
 
 <!-- sdd-knowledge-generated -->

@@ -28,6 +28,8 @@ For the structured knowledge base, see [knowledge/constitution.md](knowledge/con
 - [security](knowledge/security/index.md) — Security
 - [tests](knowledge/tests/index.md) — Tests
 
+- [guides](knowledge/guides/index.md) — Guides
+
 ## Learnings
 
 This repo may keep a living archive of incident-derived rules in ~~[`learnings/`](learnings/)~~ — each file a postmortem of a real bug or a non-obvious pattern that bit once and would bite again: root cause, the rule that prevents recurrence, and tags for matching. The folder is **optional and may be absent** — create it the first time you have a learning worth saving.

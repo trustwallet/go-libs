@@ -1,3 +1,12 @@
+---
+title: Architectural Layers
+category: architecture
+tags: [layers,architecture]
+confidence: high
+source: source-analysis
+updated: 2026-07-22
+---
+
 # Architectural Layers
 
 <!-- sdd-knowledge-generated -->

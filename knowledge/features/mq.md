@@ -1,3 +1,12 @@
+---
+title: Message Queue Feature
+category: features
+tags: [mq,rabbitmq,amqp,publish,consume]
+confidence: high
+source: source-analysis
+updated: 2026-07-22
+---
+
 # Mq
 
 <!-- sdd-knowledge-generated -->

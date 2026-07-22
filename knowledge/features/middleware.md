@@ -1,3 +1,12 @@
+---
+title: Gin Middleware Feature
+category: features
+tags: [gin,middleware,metrics,cache,sentry]
+confidence: high
+source: source-analysis
+updated: 2026-07-22
+---
+
 # Middleware
 
 <!-- sdd-knowledge-generated -->

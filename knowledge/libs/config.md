@@ -1,3 +1,12 @@
+---
+title: Config Library
+category: libs
+tags: [config,viper]
+confidence: high
+source: source-analysis
+updated: 2026-07-22
+---
+
 # Config
 
 <!-- sdd-knowledge-generated -->

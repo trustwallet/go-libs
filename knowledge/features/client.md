@@ -1,3 +1,12 @@
+---
+title: HTTP Client Feature
+category: features
+tags: [http,client,jsonrpc,metrics]
+confidence: high
+source: source-analysis
+updated: 2026-07-22
+---
+
 # Client
 
 <!-- sdd-knowledge-generated -->
@@ -105,3 +114,4 @@ classDiagram
 - [client new req builder](../architecture/client-new-req-builder.md) <!-- rel:related -->
 - [models](../architecture/data/models.md) <!-- rel:related -->
 - [entities](../architecture/data/entities.md) <!-- rel:weak -->
+- [call graph part 2](../architecture/call-graph-part-2.md) <!-- rel:related -->

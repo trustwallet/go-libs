@@ -1,3 +1,12 @@
+---
+title: Metrics Feature
+category: features
+tags: [metrics,prometheus,performance]
+confidence: high
+source: source-analysis
+updated: 2026-07-22
+---
+
 # Metrics
 
 <!-- sdd-knowledge-generated -->

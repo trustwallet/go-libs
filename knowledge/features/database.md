@@ -1,3 +1,12 @@
+---
+title: Database Feature
+category: features
+tags: [database,postgres,gorm,migration]
+confidence: high
+source: source-analysis
+updated: 2026-07-22
+---
+
 # Database
 
 <!-- sdd-knowledge-generated -->

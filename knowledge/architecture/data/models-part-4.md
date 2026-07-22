@@ -163,3 +163,10 @@ _struct · `logging/formatter_strict_text.go`:8_
 ## Token
 
 _struct · `blockchain/binance/model.go`:74_
+
+## See Also
+- [client](../../features/client.md) <!-- rel:strong -->
+- [blockchain](../../features/blockchain.md) <!-- rel:related -->
+- [common mistakes and anti patterns](../../guides/troubleshooting/common-mistakes-and-anti-patterns.md) <!-- rel:weak -->
+- [constraints](../../code-conventions/constraints.md) <!-- rel:weak -->
+- [eventer](../../features/eventer.md) <!-- rel:weak -->

@@ -1,3 +1,12 @@
+---
+title: HTTP Lib Feature
+category: features
+tags: [httplib,server,downloader]
+confidence: high
+source: source-analysis
+updated: 2026-07-22
+---
+
 # Httplib
 
 <!-- sdd-knowledge-generated -->
