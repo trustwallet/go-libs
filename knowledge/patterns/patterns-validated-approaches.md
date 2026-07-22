@@ -25,3 +25,5 @@ _No patterns recorded yet. Patterns will be captured after implementation sessio
 
 ## See Also
 - [anti patterns failed approaches](../code-conventions/code-style/anti-patterns-failed-approaches.md) <!-- rel:strong -->
+- [learnings](../learnings.md) <!-- rel:strong -->
+- [constitution](../constitution.md) <!-- rel:related -->

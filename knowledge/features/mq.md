@@ -86,3 +86,9 @@ classDiagram
 
 **Key Types**: consumer, Consumer, MessageProcessor, exchange, Exchange, Client, ConnectionClient, ConsumerOptions, queue, Queue, DeclareConfig, PublishConfig
 
+## See Also
+- [call graph](../architecture/call-graph.md) <!-- rel:strong -->
+- [models](../architecture/data/models.md) <!-- rel:related -->
+- [mq pattern](../patterns/mq-pattern.md) <!-- rel:related -->
+- [overview](../architecture/overview.md) <!-- rel:related -->
+- [config](../libs/config.md) <!-- rel:weak -->

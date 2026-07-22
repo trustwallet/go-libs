@@ -59,3 +59,9 @@ classDiagram
 
 **Key Types**: HttpServerMetric, httpServerMetric, PerformanceMetric, performanceMetric, NullablePerformanceMetric, MetricsPusherClient, Pusher, pusher
 
+## See Also
+- [call graph](../architecture/call-graph.md) <!-- rel:strong -->
+- [metrics system](../architecture/metrics-system.md) <!-- rel:strong -->
+- [overview](../architecture/overview.md) <!-- rel:related -->
+- [models](../architecture/data/models.md) <!-- rel:related -->
+- [config](../libs/config.md) <!-- rel:related -->

@@ -2,8 +2,12 @@
 
 ## What this repo is
 
-- Stack: Go
-- Knowledge base: 2 categories — code-conventions, patterns
+- **Domain**: Public shared Go utility library for Trust Wallet backend services — infrastructure helpers (HTTP, caching, DB, messaging, metrics, workers, crypto).
+- **Route here**: anything about the go-libs packages themselves — `cache/redis`, `client` (HTTP + JSON-RPC), `database` (GORM/Postgres, migrations), `metrics` (Prometheus), `middleware` (Gin), `mq` (RabbitMQ/AMQP), `worker` (periodic background jobs), `testy` (integration test helpers), `crypto` (AES/ECDSA), `logging`, `gin`, `health`, `slice`, `set`, `ctask`, `nullable`, `eventer`, `httplib`. Adding, modifying, or debugging any of these packages belongs here.
+- **Do not route here**: domain-specific business logic or crypto primitives (those belong in `go-primitives`); the backend microservices that consume go-libs (separate private repos); wallet-core or mobile code; blockchain-specific coin types or addresses.
+- **Consumers**: Trust Wallet Go backend microservices that import `github.com/trustwallet/go-libs` (private repos, multiple teams); any public Go project that adopts these utilities.
+- **Ships**: Go module `github.com/trustwallet/go-libs` — importable packages (no binaries, no CLI, no HTTP service).
+- **Agent map**: understanding a package → `knowledge/features/<package>.md`; architecture + god-nodes → `knowledge/architecture/`; patterns → `knowledge/patterns/`; security → `knowledge/security/`; test helpers → `knowledge/tests/`.
 
 ## Repo Manifest (for agents)
 
@@ -18,9 +22,15 @@ For the structured knowledge base, see [knowledge/constitution.md](knowledge/con
 - [code-conventions](knowledge/code-conventions/index.md) — Code conventions, style rules, and decision records
 - [patterns](knowledge/patterns/index.md) — Coding patterns, recipes, and proven approaches
 
+- [architecture](knowledge/architecture/index.md) — Architecture
+- [features](knowledge/features/index.md) — Features
+- [libs](knowledge/libs/index.md) — Libs
+- [security](knowledge/security/index.md) — Security
+- [tests](knowledge/tests/index.md) — Tests
+
 ## Learnings
 
-This repo may keep a living archive of incident-derived rules in [`learnings/`](learnings/) — each file a postmortem of a real bug or a non-obvious pattern that bit once and would bite again: root cause, the rule that prevents recurrence, and tags for matching. The folder is **optional and may be absent** — create it the first time you have a learning worth saving.
+This repo may keep a living archive of incident-derived rules in ~~[`learnings/`](learnings/)~~ — each file a postmortem of a real bug or a non-obvious pattern that bit once and would bite again: root cause, the rule that prevents recurrence, and tags for matching. The folder is **optional and may be absent** — create it the first time you have a learning worth saving.
 
 **Before** investigating any bug, regression, or "weird behavior", *if a `learnings/` directory exists*:
 
@@ -73,6 +83,9 @@ The `search_knowledge` tool searches an org-wide knowledge base spanning 200+ re
 
 ## Constraints
 
-- [TODO: Add project-specific constraints]
+- This is a **public repo** — never commit secrets, tokens, private DSNs, or any internal infrastructure details.
+- Consumers import packages individually — avoid creating circular imports between packages (e.g. `client` must not import `middleware`).
+- All metric constructors accept a `prometheus.Registerer` — never use `prometheus.DefaultRegisterer` or `prometheus.MustRegister` with global metrics.
+- The `testy` package is test-only — never import it from non-test code.
 
 <!-- sdd-knowledge-generated -->

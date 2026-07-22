@@ -60,3 +60,9 @@ flowchart TD
 
 **Key Types**: WorkerOptions, Builder, builder, Worker, worker
 
+## See Also
+- [call graph](../architecture/call-graph.md) <!-- rel:strong -->
+- [worker pattern](../patterns/worker-pattern.md) <!-- rel:strong -->
+- [dependency graph](../architecture/dependency-graph.md) <!-- rel:strong -->
+- [overview](../architecture/overview.md) <!-- rel:strong -->
+- [config](../libs/config.md) <!-- rel:strong -->
