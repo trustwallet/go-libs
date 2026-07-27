@@ -27,11 +27,6 @@ A no-op implementation of `PerformanceMetric`. Use when metrics are disabled or 
 
 ### Code-conventions
 
-**From [Anti-Patterns (failed approaches)](../../code-conventions/anti-patterns-failed-approaches.md):**
-<!-- Add failed approaches here. Each anti-pattern should include:
-- **type**: anti-pattern
-- **discovered**: YYYY-MM-DD
-
 ### Security
 
 **From [Security — Crypto and Auth Patterns](../../security/security-crypto-and-auth-patterns.md):**
@@ -47,4 +42,3 @@ AES-GCM provides both confidentiality and integrity (authenticated encryption). 
 - [metrics system](../../architecture/metrics-system.md) <!-- rel:strong -->
 - [overview](../../architecture/overview.md) <!-- rel:related -->
 - [constraints](../../code-conventions/constraints.md) <!-- rel:related -->
-- [anti patterns failed approaches](../../code-conventions/code-style/anti-patterns-failed-approaches.md) <!-- rel:related -->
