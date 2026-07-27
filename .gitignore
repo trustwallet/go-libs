@@ -19,3 +19,6 @@ vendor/
 
 bin/*
 .DS_Store
+index.scip
+index.scip.json
+knowledge/.relations.json
