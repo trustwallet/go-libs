@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"sync/atomic"
 )
 
 var requestID = int64(0)
@@ -117,6 +118,5 @@ func (rs RpcRequests) fillDefaultValues() RpcRequests {
 }
 
 func genID() int64 {
-	requestID++
-	return requestID
+	return atomic.AddInt64(&requestID, 1)
 }
