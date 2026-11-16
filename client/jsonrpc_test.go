@@ -7,6 +7,7 @@ import (
 )
 
 func TestRpcRequests_fillDefaultValues(t *testing.T) {
+	previousID := genID()
 	tests := []struct {
 		name string
 		rs   RpcRequests
@@ -15,14 +16,14 @@ func TestRpcRequests_fillDefaultValues(t *testing.T) {
 		{
 			"test 1",
 			RpcRequests{{Method: "method1", Params: "params1"}},
-			RpcRequests{{Method: "method1", Params: "params1", JsonRpc: JsonRpcVersion, Id: 1}},
+			RpcRequests{{Method: "method1", Params: "params1", JsonRpc: JsonRpcVersion, Id: previousID + 1}},
 		}, {
 			"test 2",
 			RpcRequests{
 				{Method: "method1", Params: "params1"}, {Method: "method2", Params: "params2"}},
 			RpcRequests{
-				{Method: "method1", Params: "params1", JsonRpc: JsonRpcVersion, Id: 2},
-				{Method: "method2", Params: "params2", JsonRpc: JsonRpcVersion, Id: 3},
+				{Method: "method1", Params: "params1", JsonRpc: JsonRpcVersion, Id: previousID + 2},
+				{Method: "method2", Params: "params2", JsonRpc: JsonRpcVersion, Id: previousID + 3},
 			},
 		},
 	}
